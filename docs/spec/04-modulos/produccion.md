@@ -65,3 +65,22 @@ realmente se consumió, produjo y mermó.
 - Terminar con 170 KG producidos y 4 KG de merma genera los movimientos de RN-PRO-04 y deja la
   existencia de tortilla del lote en +170.
 - Publicar "Tortilla v2" deja "v1" en `Obsoleta` y las órdenes ya liberadas siguen usando v1.
+
+## Decisiones de implementación
+- **Almacenes por defecto:** consumo `MP`; destino `PT` para terminados y `MP` para semiterminados (la masa queda
+  donde la consumen las órdenes del siguiente nivel, multinivel por inventario `[SUP-12]`). Ambos se pueden cambiar
+  al planear; no se aceptan almacenes de ruta (`PRO-011`).
+- **Receta al liberar:** si la receta planeada dejó de ser Vigente antes de liberar, se toma la Vigente actual; ya
+  liberada, la orden conserva su versión (criterio de RN-PRO-01).
+- **Mermas al terminar (RN-PRO-04):** la merma del producto de la orden se registra como `EntradaProduccion` por
+  `producida + merma` y `Merma` del mismo lote, de modo que el lote queda con la cantidad producida (buena) y el costo
+  de la merma se absorbe en el costo unitario (RN-PRO-05). La merma de un componente sale del almacén de consumo
+  (FEFO) con el costo promedio vigente.
+- **Variación (RN-PRO-08):** el teórico se ajusta a la cantidad producida
+  (`teórico planeado × producida / planeada`) antes de compararlo con el real.
+- **RN-PRO-06:** con `produccion.permitir_consumo_sin_existencia = true` el kardex permite dejar negativo el almacén
+  de consumo (`RegistrarMovimientosRequest.PermitirNegativo`).
+- Códigos: `PRO-001` transición inválida, `PRO-002` sin existencia, `PRO-003` receta, `PRO-004` receta no editable,
+  `PRO-005` producto no producible, `PRO-006` orden, `PRO-007` motivo, `PRO-008` sin receta vigente,
+  `PRO-009` producida inválida, `PRO-010` línea, `PRO-011` almacén, `PRO-012` producto ajeno a la orden,
+  `PRO-013` componentes inválidos.

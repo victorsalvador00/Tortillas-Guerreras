@@ -52,6 +52,10 @@ public sealed record LineaMovimiento(
     DateOnly? FechaCaducidad = null,
     string? Notas = null);
 
+/// <param name="PermitirNegativo">
+/// Permite que las salidas dejen negativo un almacén que normalmente no lo admite (p. ej. producción con
+/// <c>produccion.permitir_consumo_sin_existencia</c>, RN-PRO-06 [SUP-12]).
+/// </param>
 public sealed record RegistrarMovimientosRequest(
     DocumentoInventario DocumentoTipo,
     Guid DocumentoId,
@@ -60,7 +64,8 @@ public sealed record RegistrarMovimientosRequest(
     Guid UsuarioId,
     IReadOnlyList<LineaMovimiento> Lineas,
     Guid? DispositivoId = null,
-    string? Notas = null);
+    string? Notas = null,
+    bool PermitirNegativo = false);
 
 /// <param name="QuedoNegativo">La existencia resultante quedó negativa (solo posible en almacenes de ruta, RN-INV-03).</param>
 public sealed record MovimientoRegistrado(

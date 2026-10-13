@@ -129,7 +129,7 @@ internal sealed class InventarioService(
             if (linea.Lote is not null)
             {
                 var fila = existencias[new Llave(linea.AlmacenId, linea.ProductoId, linea.Lote)];
-                if (fila.Cantidad + linea.Cantidad < 0 && !almacen.PermiteNegativo)
+                if (fila.Cantidad + linea.Cantidad < 0 && !almacen.PermiteNegativo && !request.PermitirNegativo)
                 {
                     return Insuficiente(producto, almacen, fila.Cantidad, -linea.Cantidad);
                 }
@@ -144,7 +144,7 @@ internal sealed class InventarioService(
                 .Where(e => e.AlmacenId == linea.AlmacenId && e.ProductoId == linea.ProductoId && e.Cantidad > 0)).ToList();
             var pendiente = -linea.Cantidad;
             var disponible = lotes.Sum(l => l.Cantidad);
-            if (disponible < pendiente && !almacen.PermiteNegativo)
+            if (disponible < pendiente && !almacen.PermiteNegativo && !request.PermitirNegativo)
             {
                 return Insuficiente(producto, almacen, disponible, pendiente);
             }
@@ -163,7 +163,7 @@ internal sealed class InventarioService(
 
             if (pendiente > 0)
             {
-                // Solo en almacenes que permiten negativo (ruta, RN-INV-03): el faltante queda en el lote más reciente.
+                // Solo si se permite negativo (ruta, RN-INV-03, o PermitirNegativo): el faltante queda en el lote más reciente.
                 var destino = ReglasInventario.OrdenFefo(existencias.Values
                     .Where(e => e.AlmacenId == linea.AlmacenId && e.ProductoId == linea.ProductoId)).LastOrDefault();
                 if (destino is null)
@@ -271,7 +271,7 @@ internal sealed class InventarioService(
             Notas = linea.Notas ?? request.Notas,
             FechaCaducidad = fila.FechaCaducidad,
         };
-        return (movimiento, fila.Cantidad < 0 && almacen.PermiteNegativo);
+        return (movimiento, fila.Cantidad < 0 && (almacen.PermiteNegativo || request.PermitirNegativo));
     }
 
     private static void AjustarTotal(Dictionary<Guid, decimal> totales, Guid productoId, decimal cantidad)
