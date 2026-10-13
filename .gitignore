@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+*.trx
+
+# Node
+node_modules/
+dist/
+.turbo/
+coverage/
+*.tsbuildinfo
+.expo/
+web-build/
+
+# Entorno
+.env
+.env.*
+!.env.example
+logs/
+
+# SO / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

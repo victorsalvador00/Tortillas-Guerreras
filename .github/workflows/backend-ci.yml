@@ -1,0 +1,29 @@
+name: backend-ci
+
+on:
+  pull_request:
+    paths: ["backend/**", "global.json", ".github/workflows/backend-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["backend/**", "global.json", ".github/workflows/backend-ci.yml"]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restaurar
+        run: dotnet restore backend/TortillasGuerreras.sln
+      - name: Compilar
+        run: dotnet build backend/TortillasGuerreras.sln --no-restore -c Release
+      - name: Pruebas (Testcontainers usa el Docker del runner)
+        run: dotnet test --solution backend/TortillasGuerreras.sln --no-build -c Release --report-trx --results-directory TestResults
+      - name: Publicar resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-pruebas
+          path: "**/TestResults/*.trx"
