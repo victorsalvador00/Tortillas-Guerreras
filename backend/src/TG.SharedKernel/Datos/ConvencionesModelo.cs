@@ -59,6 +59,24 @@ public static class ConvencionesModelo
     public static string SnakeCase(string nombre) =>
         string.Concat(nombre.Select((c, i) => i > 0 && char.IsUpper(c) && !char.IsUpper(nombre[i - 1]) ? "_" + char.ToLowerInvariant(c) : char.ToLowerInvariant(c).ToString()));
 
+    /// <summary>
+    /// Las llaves <c>Guid</c> las asigna la aplicación (UUID v7, regla 6): así EF trata como nuevas las entidades
+    /// agregadas a una colección de un agregado ya cargado. Se llama al final de <c>OnModelCreating</c>.
+    /// </summary>
+    public static ModelBuilder UsarIdsDeAplicacion(this ModelBuilder builder)
+    {
+        foreach (var entidad in builder.Model.GetEntityTypes())
+        {
+            var llave = entidad.FindPrimaryKey();
+            if (llave is { Properties.Count: 1 } && llave.Properties[0].ClrType == typeof(Guid))
+            {
+                llave.Properties[0].ValueGenerated = ValueGenerated.Never;
+            }
+        }
+
+        return builder;
+    }
+
     /// <summary>Concurrencia optimista con la columna de sistema <c>xmin</c>.</summary>
     public static void ConcurrenciaXmin<T>(this EntityTypeBuilder<T> builder) where T : class, IConcurrencia =>
         builder.Property(e => e.Version).IsRowVersion();

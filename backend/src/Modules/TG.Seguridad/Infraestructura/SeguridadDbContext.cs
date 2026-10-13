@@ -61,5 +61,7 @@ public sealed class SeguridadDbContext(DbContextOptions<SeguridadDbContext> opti
             e.HasIndex(r => r.TokenHash).IsUnique().HasDatabaseName("ux_refresh_tokens_token_hash");
             e.HasIndex(r => r.UsuarioId).HasDatabaseName("ix_refresh_tokens_usuario_id");
         });
+
+        builder.UsarIdsDeAplicacion();
     }
 }

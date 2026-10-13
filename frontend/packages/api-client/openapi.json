@@ -629,10 +629,1562 @@
           }
         }
       }
+    },
+    "/api/v1/catalogos/unidades": {
+      "get": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "listarUnidades",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnidadDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "crearUnidad",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarUnidadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/unidades/{id}": {
+      "put": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "actualizarUnidad",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarUnidadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/unidades/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "desactivarUnidad",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/unidades/{id}/activar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "activarUnidad",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnidadDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/productos": {
+      "get": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "listarProductos",
+        "parameters": [
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoProducto"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "esVendible",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "esComprable",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "esProducible",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfProductoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "crearProducto",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarProductoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/productos/{id}": {
+      "get": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "obtenerProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "actualizarProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarProductoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/productos/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "desactivarProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/productos/{id}/activar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "activarProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/motivos-merma": {
+      "get": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "listarMotivosMerma",
+        "parameters": [
+          {
+            "name": "aplica",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MotivoMermaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "crearMotivoMerma",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarMotivoMermaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotivoMermaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/motivos-merma/{id}": {
+      "put": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "actualizarMotivoMerma",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarMotivoMermaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotivoMermaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/motivos-merma/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "desactivarMotivoMerma",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotivoMermaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/motivos-merma/{id}/activar": {
+      "post": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "activarMotivoMerma",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotivoMermaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/parametros": {
+      "get": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "listarParametros",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ParametroDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogos/parametros/{clave}": {
+      "put": {
+        "tags": [
+          "Catálogos"
+        ],
+        "operationId": "actualizarParametro",
+        "parameters": [
+          {
+            "name": "clave",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarParametroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParametroDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/almacenes": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "listarAlmacenes",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoAlmacen"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmacenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "crearAlmacen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarAlmacenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/almacenes/{id}": {
+      "put": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "actualizarAlmacen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarAlmacenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmacenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/existencias": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "listarExistencias",
+        "parameters": [
+          {
+            "name": "almacenId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "soloConExistencia",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfExistenciaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/kardex": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "consultarKardex",
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "almacenId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "documentoTipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DocumentoInventario"
+            }
+          },
+          {
+            "name": "documentoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfMovimientoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/valuacion": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "consultarValuacion",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "incluirRutas",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValuacionTotalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/ajustes": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "listarAjustes",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "almacenId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AjusteResumenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "registrarAjuste",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarAjusteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoDocumentoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/traspasos": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "listarTraspasos",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraspasoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "registrarTraspaso",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarTraspasoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraspasoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/traspasos/{id}": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "obtenerTraspaso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraspasoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/traspasos/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "cancelarTraspaso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraspasoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/conteos": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "listarConteos",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoConteo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConteoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "abrirConteo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbrirConteoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConteoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/conteos/{id}": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "obtenerConteo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConteoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/conteos/{id}/partidas": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "capturarConteo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapturarConteoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConteoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/conteos/{id}/cerrar": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "cerrarConteo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConteoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/conteos/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "cancelarConteo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConteoDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AbrirConteoRequest": {
+        "required": [
+          "almacenId",
+          "notas"
+        ],
+        "type": "object",
+        "properties": {
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ActualizarParametroRequest": {
+        "required": [
+          "valor"
+        ],
+        "type": "object",
+        "properties": {
+          "valor": {
+            "type": "string"
+          }
+        }
+      },
+      "AjusteResumenDto": {
+        "required": [
+          "documentoId",
+          "folio",
+          "fechaOperativa",
+          "fechaHora",
+          "almacenCodigo",
+          "partidas",
+          "costoTotal",
+          "notas",
+          "motivoMermaId"
+        ],
+        "type": "object",
+        "properties": {
+          "documentoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "almacenCodigo": {
+            "type": "string"
+          },
+          "partidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "costoTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "AlmacenDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "tipo",
+          "rutaId",
+          "permiteNegativo",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAlmacen"
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "permiteNegativo": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "AprobarDispositivoRequest": {
         "required": [
           "usuarioId"
@@ -660,6 +2212,218 @@
           },
           "contrasenaNueva": {
             "type": "string"
+          }
+        }
+      },
+      "CapturarConteoRequest": {
+        "required": [
+          "productoId",
+          "lote",
+          "cantidadContada"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cantidadContada": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ConteoDto": {
+        "required": [
+          "id",
+          "folio",
+          "almacenId",
+          "almacen",
+          "fechaOperativa",
+          "estado",
+          "notas",
+          "creadoEn",
+          "cerradoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacen": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoConteo"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cerradoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConteoPartidaDto"
+            }
+          }
+        }
+      },
+      "ConteoPartidaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cantidadSistema",
+          "cantidadContada",
+          "diferencia",
+          "capturadoEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidadSistema": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadContada": {
+            "type": "number",
+            "format": "double"
+          },
+          "diferencia": {
+            "type": "number",
+            "format": "double"
+          },
+          "capturadoEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConversionDto": {
+        "required": [
+          "unidadId",
+          "unidadClave",
+          "unidadNombre",
+          "factorABase",
+          "usoCompra",
+          "usoVenta",
+          "usoProduccion",
+          "predeterminadaVenta"
+        ],
+        "type": "object",
+        "properties": {
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadClave": {
+            "type": "string"
+          },
+          "unidadNombre": {
+            "type": "string"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "usoCompra": {
+            "type": "boolean"
+          },
+          "usoVenta": {
+            "type": "boolean"
+          },
+          "usoProduccion": {
+            "type": "boolean"
+          },
+          "predeterminadaVenta": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConversionRequest": {
+        "required": [
+          "unidadId",
+          "factorABase",
+          "usoCompra",
+          "usoVenta",
+          "usoProduccion",
+          "predeterminadaVenta"
+        ],
+        "type": "object",
+        "properties": {
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "usoCompra": {
+            "type": "boolean"
+          },
+          "usoVenta": {
+            "type": "boolean"
+          },
+          "usoProduccion": {
+            "type": "boolean"
+          },
+          "predeterminadaVenta": {
+            "type": "boolean"
           }
         }
       },
@@ -790,6 +2554,291 @@
           }
         }
       },
+      "DocumentoInventario": {
+        "enum": [
+          "Recepcion",
+          "OrdenProduccion",
+          "Envio",
+          "Venta",
+          "Retorno",
+          "Liquidacion",
+          "Ajuste",
+          "Traspaso",
+          "ConteoFisico"
+        ]
+      },
+      "EstadoConteo": {
+        "enum": [
+          "Abierto",
+          "Cerrado",
+          "Cancelado"
+        ]
+      },
+      "EstadoTraspaso": {
+        "enum": [
+          "Registrado",
+          "Cancelado"
+        ]
+      },
+      "ExistenciaDto": {
+        "required": [
+          "almacenId",
+          "almacenCodigo",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cantidad",
+          "fechaCaducidad",
+          "stockMinimo"
+        ],
+        "type": "object",
+        "properties": {
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenCodigo": {
+            "type": "string"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "fechaCaducidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "stockMinimo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "GuardarAlmacenRequest": {
+        "required": [
+          "codigo",
+          "nombre",
+          "tipo",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAlmacen"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarMotivoMermaRequest": {
+        "required": [
+          "clave",
+          "nombre",
+          "aplicaProduccion",
+          "aplicaAlmacen",
+          "aplicaRuta",
+          "aplicaRetorno"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "aplicaProduccion": {
+            "type": "boolean"
+          },
+          "aplicaAlmacen": {
+            "type": "boolean"
+          },
+          "aplicaRuta": {
+            "type": "boolean"
+          },
+          "aplicaRetorno": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarProductoRequest": {
+        "required": [
+          "sku",
+          "nombre",
+          "descripcion",
+          "tipo",
+          "unidadBaseId",
+          "esComprable",
+          "esProducible",
+          "esVendible",
+          "manejaLote",
+          "vidaUtilDias",
+          "claveProdServSat",
+          "objetoImpuestoSat",
+          "tasaIva",
+          "tasaIeps",
+          "codigoBarras",
+          "stockMinimo",
+          "conversiones"
+        ],
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoProducto"
+          },
+          "unidadBaseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "esComprable": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "esProducible": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "esVendible": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "manejaLote": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "vidaUtilDias": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "claveProdServSat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "objetoImpuestoSat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIeps": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "codigoBarras": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stockMinimo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "conversiones": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ConversionRequest"
+            }
+          }
+        }
+      },
+      "GuardarUnidadRequest": {
+        "required": [
+          "clave",
+          "nombre",
+          "tipo",
+          "claveSat",
+          "decimales"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoUnidad"
+          },
+          "claveSat": {
+            "type": "string"
+          },
+          "decimales": {
+            "type": "integer",
+            "format": "int16"
+          }
+        }
+      },
       "GuardarUsuarioRequest": {
         "required": [
           "usuario",
@@ -898,6 +2947,233 @@
           }
         }
       },
+      "MotivoMermaDto": {
+        "required": [
+          "id",
+          "clave",
+          "nombre",
+          "aplicaProduccion",
+          "aplicaAlmacen",
+          "aplicaRuta",
+          "aplicaRetorno",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "aplicaProduccion": {
+            "type": "boolean"
+          },
+          "aplicaAlmacen": {
+            "type": "boolean"
+          },
+          "aplicaRuta": {
+            "type": "boolean"
+          },
+          "aplicaRetorno": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MovimientoDto": {
+        "required": [
+          "id",
+          "fechaHora",
+          "fechaOperativa",
+          "tipo",
+          "almacenId",
+          "almacenCodigo",
+          "productoId",
+          "sku",
+          "producto",
+          "lote",
+          "cantidad",
+          "costoUnitario",
+          "costoTotal",
+          "existenciaResultante",
+          "documentoTipo",
+          "documentoId",
+          "documentoFolio",
+          "motivoMermaId",
+          "notas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMovimiento"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenCodigo": {
+            "type": "string"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "existenciaResultante": {
+            "type": "number",
+            "format": "double"
+          },
+          "documentoTipo": {
+            "$ref": "#/components/schemas/DocumentoInventario"
+          },
+          "documentoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentoFolio": {
+            "type": "string"
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PaginadoOfExistenciaDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExistenciaDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfMovimientoDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovimientoDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfProductoDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductoDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfUsuarioDto": {
         "required": [
           "items",
@@ -924,6 +3200,93 @@
           "tamano": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ParametroDto": {
+        "required": [
+          "clave",
+          "valor",
+          "tipo",
+          "descripcion"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoParametro"
+          },
+          "descripcion": {
+            "type": "string"
+          }
+        }
+      },
+      "PartidaAjusteRequest": {
+        "required": [
+          "productoId",
+          "lote",
+          "cantidad",
+          "costoUnitario",
+          "fechaCaducidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitario": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "fechaCaducidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PartidaTraspasoRequest": {
+        "required": [
+          "productoId",
+          "lote",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -1014,6 +3377,120 @@
           "ios"
         ]
       },
+      "ProductoDto": {
+        "required": [
+          "id",
+          "sku",
+          "nombre",
+          "descripcion",
+          "tipo",
+          "unidadBaseId",
+          "unidadBaseClave",
+          "esComprable",
+          "esProducible",
+          "esVendible",
+          "manejaLote",
+          "vidaUtilDias",
+          "claveProdServSat",
+          "objetoImpuestoSat",
+          "tasaIva",
+          "tasaIeps",
+          "codigoBarras",
+          "stockMinimo",
+          "activo",
+          "conversiones"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoProducto"
+          },
+          "unidadBaseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadBaseClave": {
+            "type": "string"
+          },
+          "esComprable": {
+            "type": "boolean"
+          },
+          "esProducible": {
+            "type": "boolean"
+          },
+          "esVendible": {
+            "type": "boolean"
+          },
+          "manejaLote": {
+            "type": "boolean"
+          },
+          "vidaUtilDias": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "claveProdServSat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "objetoImpuestoSat": {
+            "type": "string"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIeps": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "codigoBarras": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stockMinimo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "conversiones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversionDto"
+            }
+          }
+        }
+      },
       "RefreshRequest": {
         "required": [
           "refreshToken"
@@ -1022,6 +3499,92 @@
         "properties": {
           "refreshToken": {
             "type": "string"
+          }
+        }
+      },
+      "RegistrarAjusteRequest": {
+        "required": [
+          "almacenId",
+          "motivoMermaId",
+          "notas",
+          "esMerma",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "motivoMermaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notas": {
+            "type": "string"
+          },
+          "esMerma": {
+            "type": "boolean"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaAjusteRequest"
+            }
+          }
+        }
+      },
+      "RegistrarTraspasoRequest": {
+        "required": [
+          "almacenOrigenId",
+          "almacenDestinoId",
+          "notas",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "almacenOrigenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaTraspasoRequest"
+            }
+          }
+        }
+      },
+      "ResultadoDocumentoDto": {
+        "required": [
+          "documentoId",
+          "folio",
+          "movimientos"
+        ],
+        "type": "object",
+        "properties": {
+          "documentoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "movimientos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovimientoDto"
+            }
           }
         }
       },
@@ -1111,6 +3674,185 @@
           }
         }
       },
+      "TipoAlmacen": {
+        "enum": [
+          "MateriaPrima",
+          "ProductoTerminado",
+          "General",
+          "Ruta"
+        ]
+      },
+      "TipoMovimiento": {
+        "enum": [
+          "EntradaCompra",
+          "DevolucionProveedor",
+          "EntradaProduccion",
+          "SalidaConsumo",
+          "Merma",
+          "TraspasoSalida",
+          "TraspasoEntrada",
+          "Venta",
+          "RetornoCliente",
+          "AjusteEntrada",
+          "AjusteSalida"
+        ]
+      },
+      "TipoParametro": {
+        "enum": [
+          "int",
+          "decimal",
+          "bool",
+          "text"
+        ]
+      },
+      "TipoProducto": {
+        "enum": [
+          "MateriaPrima",
+          "Empaque",
+          "Semiterminado",
+          "Terminado",
+          "Reventa"
+        ]
+      },
+      "TipoUnidad": {
+        "enum": [
+          "Masa",
+          "Volumen",
+          "Pieza"
+        ]
+      },
+      "TraspasoDto": {
+        "required": [
+          "id",
+          "folio",
+          "almacenOrigenId",
+          "almacenOrigen",
+          "almacenDestinoId",
+          "almacenDestino",
+          "fechaOperativa",
+          "estado",
+          "notas",
+          "creadoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "almacenOrigenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenOrigen": {
+            "type": "string"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestino": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoTraspaso"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraspasoPartidaDto"
+            }
+          }
+        }
+      },
+      "TraspasoPartidaDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "UnidadDto": {
+        "required": [
+          "id",
+          "clave",
+          "nombre",
+          "tipo",
+          "claveSat",
+          "decimales",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoUnidad"
+          },
+          "claveSat": {
+            "type": "string"
+          },
+          "decimales": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "UsuarioDto": {
         "required": [
           "id",
@@ -1156,6 +3898,73 @@
             "format": "date-time"
           }
         }
+      },
+      "ValuacionDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "tipo",
+          "unidad",
+          "existencia",
+          "costoPromedio",
+          "valor"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "existencia": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoPromedio": {
+            "type": "number",
+            "format": "double"
+          },
+          "valor": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ValuacionTotalDto": {
+        "required": [
+          "fecha",
+          "total",
+          "productos"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "productos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuacionDto"
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -1174,6 +3983,12 @@
   "tags": [
     {
       "name": "Seguridad"
+    },
+    {
+      "name": "Catálogos"
+    },
+    {
+      "name": "Inventario"
     }
   ]
 }

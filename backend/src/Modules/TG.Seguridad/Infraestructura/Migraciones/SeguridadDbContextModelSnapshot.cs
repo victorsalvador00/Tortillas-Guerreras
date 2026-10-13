@@ -156,7 +156,6 @@ namespace TG.Seguridad.Infraestructura.Migraciones
             modelBuilder.Entity("TG.Seguridad.Dominio.Dispositivo", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -234,7 +233,6 @@ namespace TG.Seguridad.Infraestructura.Migraciones
             modelBuilder.Entity("TG.Seguridad.Dominio.Permiso", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -261,7 +259,6 @@ namespace TG.Seguridad.Infraestructura.Migraciones
             modelBuilder.Entity("TG.Seguridad.Dominio.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -310,7 +307,6 @@ namespace TG.Seguridad.Infraestructura.Migraciones
             modelBuilder.Entity("TG.Seguridad.Dominio.Rol", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -365,7 +361,6 @@ namespace TG.Seguridad.Infraestructura.Migraciones
             modelBuilder.Entity("TG.Seguridad.Dominio.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 

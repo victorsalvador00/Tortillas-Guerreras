@@ -11,34 +11,34 @@ Instrucciones para Claude Code:
 
 ## Fase 0 — Fundaciones
 
-- [ ] **T-0.1 Estructura del repositorio.** Crear `backend/` (solución, `TG.Api`,
+- [x] **T-0.1 Estructura del repositorio.** Crear `backend/` (solución, `TG.Api`,
   `TG.SharedKernel`, proyectos vacíos de los 9 módulos, 3 proyectos de pruebas), `frontend/`
   (pnpm workspace con `apps/web`, `apps/portal`, `apps/ruta`, `packages/api-client`,
   `packages/shared`, `packages/ui`), `deploy/docker-compose.dev.yml`, `.editorconfig`,
   `Directory.Build.props` (nullable, warnings as errors en código nuevo), `global.json` (.NET 10).
   *Acepta:* `dotnet build` y `pnpm -r build` pasan; `docker compose up` levanta PostgreSQL.
-- [ ] **T-0.2 SharedKernel.** `Result<T>`, errores con código, `IUnitOfWork` con conexión
+- [x] **T-0.2 SharedKernel.** `Result<T>`, errores con código, `IUnitOfWork` con conexión
   compartida, interceptor de auditoría, generador de folios por secuencia
   (`<PREFIJO>-000001`), `TimeProvider`, helper de `fecha_operativa`, secuencia `sync.version_seq`
   e interceptor de `version_sync`. *Lee:* 01, 02. *Acepta:* pruebas unitarias de folios y
   `fecha_operativa` en cambio de día (23:59 vs 00:01 hora de México).
-- [ ] **T-0.3 Host de API.** Minimal APIs, ProblemDetails, OpenAPI + Scalar, Serilog, health check
+- [x] **T-0.3 Host de API.** Minimal APIs, ProblemDetails, OpenAPI + Scalar, Serilog, health check
   `/salud`, CORS para web/portal, rate limiting, Hangfire con PostgreSQL y dashboard protegido.
-- [ ] **T-0.4 Seguridad.** Identity en esquema `seguridad`, login/refresh/logout, permisos por
+- [x] **T-0.4 Seguridad.** Identity en esquema `seguridad`, login/refresh/logout, permisos por
   política, roles semilla, dispositivos. *Lee:* `04-modulos/seguridad-catalogos.md`.
   *Acepta:* RN-SEG-01 a 05 con pruebas.
-- [ ] **T-0.5 Pruebas de arquitectura.** NetArchTest: ningún módulo referencia internos de otro.
-- [ ] **T-0.6 CI.** `backend-ci.yml` y `frontend-ci.yml`. *Lee:* 08.
+- [x] **T-0.5 Pruebas de arquitectura.** NetArchTest: ningún módulo referencia internos de otro.
+- [x] **T-0.6 CI.** `backend-ci.yml` y `frontend-ci.yml`. *Lee:* 08.
 - [ ] **T-0.7 Web base.** Vite + React + TanStack Router/Query + shadcn/ui + Tailwind; layout con
   menú por permisos; login; cliente generado con Orval desde OpenAPI. *Lee:* 07.
 
 ## Fase 1 — Catálogos e inventario
 
-- [ ] **T-1.1 Catálogos.** Unidades, productos con conversiones, motivos de merma, parámetros;
+- [x] **T-1.1 Catálogos.** Unidades, productos con conversiones, motivos de merma, parámetros;
   datos semilla de `03-modelo-datos.md`. *Acepta:* RN-CAT-01 a 06.
-- [ ] **T-1.2 Inventario núcleo.** Almacenes, `IInventarioService`, kardex, existencias con bloqueo,
+- [x] **T-1.2 Inventario núcleo.** Almacenes, `IInventarioService`, kardex, existencias con bloqueo,
   costo promedio, FEFO. *Acepta:* RN-INV-01 a 07 y los dos criterios del módulo.
-- [ ] **T-1.3 Ajustes, traspasos y conteos.** *Acepta:* RN-INV-08 a 10.
+- [x] **T-1.3 Ajustes, traspasos y conteos.** *Acepta:* RN-INV-08 a 10.
 - [ ] **T-1.4 Web: catálogos e inventario.** Pantallas de 07 para Catálogos e Inventario.
 
 ## Fase 2 — Compras

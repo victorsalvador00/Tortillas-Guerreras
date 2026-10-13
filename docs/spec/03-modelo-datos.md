@@ -35,6 +35,8 @@ estos campos extra en el usuario:
 | ultimo_sync_en | timestamptz null | |
 | ultimo_consecutivo | integer | último consecutivo de folio recibido (control) |
 | activo | boolean | un dispositivo inactivo no puede sincronizar |
+| operaciones_pendientes | integer | pendientes reportados en el último contacto (RN-LOG-09) |
+| solicitado_por | uuid null | usuario que registró el teléfono |
 
 **refresh_tokens**: `id`, `usuario_id`, `dispositivo_id null`, `token_hash text`, `expira_en`,
 `revocado_en null`, `reemplazado_por uuid null`.
@@ -56,6 +58,7 @@ Vendedor, Facturacion, Supervisor.
 | tipo | text | `Masa`, `Volumen`, `Pieza` |
 | clave_sat | text | `KGM`, `GRM`, `TNE`, `LTR`, `MLT`, `H87`, `XPK`, `XBG`, `XBX` |
 | decimales | smallint | decimales permitidos en captura (KG = 3, PZA = 0) |
+| activo | boolean | borrado lógico |
 
 **productos**
 
@@ -215,7 +218,8 @@ Vendedor, Facturacion, Supervisor.
 | activo | boolean | |
 
 **existencias**: PK (`almacen_id`, `producto_id`, `lote`), `cantidad numeric(18,4)`,
-`actualizado_en`, `xmin`. `lote = ''` cuando el producto no maneja lote.
+`fecha_caducidad date null` (FEFO, RN-INV-07; se copia en traspasos), `fecha_entrada timestamptz` (FIFO cuando no
+hay caducidad), `actualizado_en`, `xmin`. `lote = ''` cuando el producto no maneja lote.
 
 **costos_producto**: `producto_id PK`, `costo_promedio numeric(18,6)`, `actualizado_en`.
 Costo promedio ponderado global por producto `[SUP-06]`.
@@ -242,8 +246,12 @@ Costo promedio ponderado global por producto `[SUP-06]`.
 | usuario_id | uuid | |
 | dispositivo_id | uuid null | |
 | notas | text null | |
+| fecha_caducidad | date null | caducidad del lote al momento del movimiento |
 
-Índices: (`producto_id`, `almacen_id`, `fecha_hora`), (`documento_tipo`, `documento_id`).
+Índices: (`producto_id`, `almacen_id`, `fecha_hora`), (`documento_tipo`, `documento_id`), (`fecha_operativa`).
+
+Los ajustes manuales no tienen tabla propia: son movimientos con `documento_tipo = Ajuste`, folio `AJ-000001`
+(secuencia `inventario.folio_aj_seq`), motivo y nota obligatorios (RN-INV-08).
 
 Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`,
 `SalidaConsumo`, `Merma`, `TraspasoSalida`, `TraspasoEntrada`, `Venta`, `RetornoCliente`,
@@ -254,8 +262,8 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 **traspasos_partidas**: `traspaso_id`, `producto_id`, `lote`, `cantidad_base`.
 
 **conteos_fisicos**: `id`, `folio CF-`, `almacen_id`, `fecha_operativa`, `estado` (`Abierto`,
-`Cerrado`, `Cancelado`). **conteos_partidas**: `conteo_id`, `producto_id`, `lote`,
-`cantidad_sistema`, `cantidad_contada`, `diferencia`.
+`Cerrado`, `Cancelado`), `notas`, `cerrado_en`, `cerrado_por`, `xmin`. **conteos_partidas**: `conteo_id`, `producto_id`,
+`lote`, `cantidad_sistema`, `cantidad_contada`, `diferencia`, `capturado_en`.
 
 ---
 
@@ -520,7 +528,10 @@ Valores **de ejemplo**; reemplazar con los reales del cliente.
 | Tostada v1 | 60 PAQ de PT-TOSTADA | 50 KG SEM-MASA, 6 L MP-ACEITE | 4 % |
 
 **Motivos de merma:** Masa pasada/agria, Tortilla rota o deforme, Falla de máquina, Producto
-caducado, Contaminación, Devolución no vendible, Daño en transporte, Faltante de ruta, Otro.
+caducado, Contaminación, Devolución no vendible, Daño en transporte, Faltante de ruta, Reproceso (RN-LOG-07,
+`[SUP-13]`), Otro.
+
+**Folios:** secuencia por prefijo `<esquema>.folio_<prefijo>_seq` creada en la migración de cada módulo.
 
 **Canales:** INST, AUTO, TRAD. **Listas de precio:** una por canal. **Clientes:** 5 por ruta, más un
 "Público en general" genérico por ruta. **Usuarios:** uno por rol (contraseña de desarrollo).
