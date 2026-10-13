@@ -38,6 +38,14 @@ Clientes, precios, pedidos y ventas (en ruta desde la app o desde la web).
 - **RN-VEN-10** Cada ruta tiene un cliente genérico "Público en general" para ventas sin cliente
   registrado.
 
+### Aclaraciones de implementación
+- RN-VEN-02: la incidencia por diferencia de total es `TotalDistinto`. RN-VEN-04 en app: `CreditoExcedido`.
+- RN-VEN-05/06 aplican solo a ventas de la app y no a clientes genéricos. La ubicación propuesta se guarda en
+  `clientes.latitud_propuesta/longitud_propuesta` hasta aprobarse.
+- RN-VEN-07: el contra-movimiento es `RetornoCliente` (+) con el mismo costo, documento `Venta` de la venta original.
+- Cobros [SUP-08]: saldo = ventas a crédito registradas − cobros registrados; el cobro se aplica FIFO a las ventas
+  a crédito con saldo (o a las indicadas). Folios `VTA-`, `PED-`, `COB-` y clientes `CLI-`.
+
 ## Endpoints (`/api/v1/ventas`)
 | Método | Ruta | Permiso |
 |---|---|---|
