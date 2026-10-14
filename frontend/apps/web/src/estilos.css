@@ -1,0 +1,5 @@
+@import '@tg/ui/tema.css';
+@import 'leaflet/dist/leaflet.css';
+
+/* Tailwind escanea también los componentes compartidos. */
+@source '../../../packages/ui/src';

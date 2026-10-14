@@ -1,0 +1,498 @@
+/*
+ * Tema de TortillasGuerreras: mismo diseño que el Sistema de Gestión Operativa (SGO AR) — barra superior azul,
+ * fondo lavanda, contenido en tarjetas blancas con sombra suave, campos y botones en píldora, menú lateral con
+ * etiquetas inclinadas y tema oscuro "neón azul". Colores base de Material 3 (paleta azure) como variables CSS.
+ *
+ * Sin data-theme sigue al sistema; con data-theme="light" | "dark" lo fija el usuario.
+ */
+@import 'tailwindcss';
+@import 'material-symbols/outlined.css';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  color-scheme: light;
+
+  /* Material 3 · azure (claro) */
+  --tg-primary: #005cbb;
+  --tg-on-primary: #ffffff;
+  --tg-primary-container: #d7e3ff;
+  --tg-on-primary-container: #001b3f;
+  --tg-surface: #f9f9ff;
+  --tg-on-surface: #1a1b1f;
+  --tg-on-surface-variant: #44474e;
+  --tg-outline: #74777f;
+  --tg-outline-variant: #c4c6d0;
+  --tg-surface-container-lowest: #ffffff;
+  --tg-surface-container-low: #f3f3fa;
+  --tg-surface-container: #ededf4;
+  --tg-surface-container-high: #e7e8ee;
+  --tg-error: #ba1a1a;
+  --tg-error-container: #ffdad6;
+  --tg-on-error-container: #410002;
+  --tg-scrim: rgb(0 0 0 / 40%);
+
+  /* Tokens propios (equivalentes a --sgo-*) */
+  --tg-page-bg: #f3f4f9;
+  --tg-card-bg: #ffffff;
+  --tg-card-border: transparent;
+  --tg-card-radius: 14px;
+  --tg-card-shadow: 0 2px 12px rgb(35 40 80 / 7%);
+  --tg-row-alt: #f8f9fc;
+  --tg-row-hover: #eef1fa;
+  --tg-row-divider: #eceef5;
+  --tg-pill-bg: #ffffff;
+  --tg-pill-border: #dfe3ee;
+  --tg-soft-bg: #eceff7;
+  --tg-topbar-bg: #005cbb;
+  --tg-topbar-ink: #ffffff;
+  --tg-sidebar-bg: #ffffff;
+  --tg-sidebar-ink: #1a1b1f;
+  --tg-sidebar-muted: #44474e;
+  --tg-glow: none;
+  --tg-focus-glow: none;
+  --tg-primary-shadow: 0 4px 12px rgb(0 92 187 / 32%);
+
+  /* Etiquetas de estado */
+  --tg-status-gray-bg: #eceff1;
+  --tg-status-gray-fg: #37474f;
+  --tg-status-blue-bg: #e3f2fd;
+  --tg-status-blue-fg: #0d47a1;
+  --tg-status-yellow-bg: #fff8e1;
+  --tg-status-yellow-fg: #7a5a00;
+  --tg-status-green-bg: #e8f5e9;
+  --tg-status-green-fg: #1b5e20;
+  --tg-status-orange-bg: #fff3e0;
+  --tg-status-orange-fg: #a64200;
+  --tg-status-red-bg: #ffebee;
+  --tg-status-red-fg: #b71c1c;
+
+  /* Etiqueta del menú lateral */
+  --tg-tag-bar: #eef3fd;
+  --tg-tag-bar-active: #dce7fd;
+  --tg-tag-glow: rgb(79 134 255 / 30%);
+  --tg-tag-block-from: #d3e1fd;
+  --tg-tag-block-to: #b3cbfb;
+  --tg-tag-block-active-from: #4f86ff;
+  --tg-tag-block-active-to: #0045a8;
+  --tg-tag-icon: #003b8e;
+  --tg-tag-icon-active: #ffffff;
+  --tg-tag-text-active: #002a6b;
+  --tg-tag-dots: #0045a8;
+
+  --tg-topbar-height: 64px;
+  --tg-sidebar-width: 256px;
+  --tg-sidebar-collapsed-width: 72px;
+}
+
+/* Tema oscuro "neón azul": menú y barra en azul brillante; las pantallas en neutros oscuros. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --tg-primary: #4f86ff;
+  --tg-on-primary: #000000;
+  --tg-primary-container: #0b2a73;
+  --tg-on-primary-container: #cfe2ff;
+  --tg-surface: #111318;
+  --tg-on-surface: #e3e2e6;
+  --tg-on-surface-variant: #c4c6d0;
+  --tg-outline: #8e9099;
+  --tg-outline-variant: #44474e;
+  --tg-surface-container-lowest: #0c0e13;
+  --tg-surface-container-low: #191c20;
+  --tg-surface-container: #1d2024;
+  --tg-surface-container-high: #282a2f;
+  --tg-error: #ffb4ab;
+  --tg-error-container: #93000a;
+  --tg-on-error-container: #ffdad6;
+
+  --tg-page-bg: #0d0f14;
+  --tg-card-bg: #14171e;
+  --tg-card-border: #44474e;
+  --tg-card-shadow: none;
+  --tg-row-alt: rgb(255 255 255 / 3%);
+  --tg-row-hover: rgb(255 255 255 / 7%);
+  --tg-row-divider: rgb(255 255 255 / 10%);
+  --tg-pill-bg: #10141d;
+  --tg-pill-border: #8e9099;
+  --tg-soft-bg: rgb(42 99 255 / 14%);
+  --tg-topbar-bg: #0a1733;
+  --tg-topbar-ink: #90befe;
+  --tg-sidebar-bg: #111318;
+  --tg-sidebar-ink: #90befe;
+  --tg-sidebar-muted: #6f9dff;
+  --tg-glow: 0 0 6px rgb(42 99 255 / 45%);
+  --tg-focus-glow: 0 0 8px 2px rgb(42 99 255 / 45%);
+  --tg-primary-shadow: 0 4px 12px rgb(79 134 255 / 32%);
+
+  --tg-status-gray-bg: #2c3338;
+  --tg-status-gray-fg: #cfd8dc;
+  --tg-status-blue-bg: #0d2a4a;
+  --tg-status-blue-fg: #9ccbf7;
+  --tg-status-yellow-bg: #3a2f00;
+  --tg-status-yellow-fg: #ffe082;
+  --tg-status-green-bg: #12331a;
+  --tg-status-green-fg: #a5d6a7;
+  --tg-status-orange-bg: #3e2100;
+  --tg-status-orange-fg: #ffb870;
+  --tg-status-red-bg: #3d1214;
+  --tg-status-red-fg: #f4a3a3;
+
+  --tg-tag-bar: #0a1733;
+  --tg-tag-bar-active: #071a46;
+  --tg-tag-glow: rgb(42 99 255 / 55%);
+  --tg-tag-block-from: #164bb8;
+  --tg-tag-block-to: #0b2a73;
+  --tg-tag-block-active-from: #19d3ff;
+  --tg-tag-block-active-to: #2a63ff;
+  --tg-tag-icon: #90befe;
+  --tg-tag-icon-active: #001233;
+  --tg-tag-text-active: #cfe2ff;
+  --tg-tag-dots: #19d3ff;
+}
+
+@theme inline {
+  --font-sans: Roboto, 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --color-primary: var(--tg-primary);
+  --color-on-primary: var(--tg-on-primary);
+  --color-primary-container: var(--tg-primary-container);
+  --color-on-primary-container: var(--tg-on-primary-container);
+  --color-surface: var(--tg-surface);
+  --color-on-surface: var(--tg-on-surface);
+  --color-muted: var(--tg-on-surface-variant);
+  --color-outline: var(--tg-outline);
+  --color-outline-variant: var(--tg-outline-variant);
+  --color-container-lowest: var(--tg-surface-container-lowest);
+  --color-container-low: var(--tg-surface-container-low);
+  --color-container: var(--tg-surface-container);
+  --color-container-high: var(--tg-surface-container-high);
+  --color-error: var(--tg-error);
+  --color-error-container: var(--tg-error-container);
+  --color-page: var(--tg-page-bg);
+  --color-card: var(--tg-card-bg);
+  --color-card-border: var(--tg-card-border);
+  --color-soft: var(--tg-soft-bg);
+  --color-pill: var(--tg-pill-bg);
+  --color-pill-border: var(--tg-pill-border);
+  --color-row-alt: var(--tg-row-alt);
+  --color-row-hover: var(--tg-row-hover);
+  --color-row-divider: var(--tg-row-divider);
+  --color-topbar: var(--tg-topbar-bg);
+  --color-topbar-ink: var(--tg-topbar-ink);
+  --radius-card: var(--tg-card-radius);
+  --radius-pill: 24px;
+  --shadow-card: var(--tg-card-shadow);
+  --shadow-primary: var(--tg-primary-shadow);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--tg-page-bg);
+    color: var(--tg-on-surface);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.43;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--tg-primary);
+    outline-offset: 2px;
+    box-shadow: var(--tg-focus-glow);
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* Íconos Material Symbols (subconjunto de la fuente "outlined"). */
+.icono {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ───── Menú lateral: etiqueta inclinada con bloque tras el ícono y tres cuadritos en la página actual ───── */
+.tg-nav-item {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 48px;
+  margin-block: 3px;
+  padding: 0 16px 0 20px;
+  color: var(--tg-sidebar-ink);
+  text-decoration: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tg-nav-item .icono {
+  color: var(--tg-tag-icon);
+  width: 24px;
+  font-size: 22px;
+}
+
+.tg-nav-tag {
+  position: absolute;
+  inset: 7px 6px 7px 4px;
+  z-index: -1;
+  pointer-events: none;
+  transition: filter 150ms ease;
+}
+
+.tg-nav-tag::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  background: var(--tg-tag-bar);
+  transition: background 150ms ease;
+}
+
+.tg-nav-tag-block {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  width: 56px;
+  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+  background: linear-gradient(135deg, var(--tg-tag-block-from), var(--tg-tag-block-to));
+}
+
+.tg-nav-tag-dots {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 16px;
+  height: 14px;
+  translate: 0 -50%;
+  color: var(--tg-tag-dots);
+  opacity: 0;
+}
+
+.tg-nav-tag-dots::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+  background: currentColor;
+}
+
+.tg-nav-tag-dots::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -9px;
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  box-shadow:
+    -2px 5px 0 currentColor,
+    -4px 10px 0 currentColor;
+}
+
+.tg-nav-item:hover .tg-nav-tag,
+.tg-nav-item:focus-visible .tg-nav-tag {
+  filter: drop-shadow(0 0 4px var(--tg-tag-glow));
+}
+
+.tg-nav-item:hover .tg-nav-tag::before,
+.tg-nav-item:focus-visible .tg-nav-tag::before {
+  background:
+    radial-gradient(ellipse at 55% 50%, var(--tg-tag-glow), transparent 70%),
+    var(--tg-tag-bar);
+}
+
+.tg-nav-item[aria-current='page'] .icono {
+  color: var(--tg-tag-icon-active);
+}
+
+.tg-nav-item[aria-current='page'] .tg-nav-tag {
+  filter: drop-shadow(0 0 6px var(--tg-tag-glow));
+}
+
+.tg-nav-item[aria-current='page'] .tg-nav-tag::before {
+  background:
+    radial-gradient(ellipse at 55% 50%, var(--tg-tag-glow), transparent 70%),
+    var(--tg-tag-bar-active);
+}
+
+.tg-nav-item[aria-current='page'] .tg-nav-tag-block {
+  background: linear-gradient(135deg, var(--tg-tag-block-active-from), var(--tg-tag-block-active-to));
+}
+
+.tg-nav-item[aria-current='page'] .tg-nav-tag-dots {
+  opacity: 1;
+}
+
+.tg-nav-item[aria-current='page'] .tg-nav-label {
+  color: var(--tg-tag-text-active);
+  font-weight: 500;
+}
+
+.tg-nav-collapsed .tg-nav-item {
+  justify-content: center;
+  padding: 0;
+}
+
+.tg-nav-collapsed .tg-nav-tag::before,
+.tg-nav-collapsed .tg-nav-tag-dots {
+  display: none;
+}
+
+.tg-nav-collapsed .tg-nav-tag-block {
+  left: 50%;
+  width: 48px;
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg-nav-tag,
+  .tg-nav-tag::before {
+    transition: none;
+  }
+}
+
+/* Esqueleto de carga */
+.tg-skeleton {
+  display: block;
+  height: 20px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--tg-surface-container) 25%,
+    var(--tg-surface-container-high) 50%,
+    var(--tg-surface-container) 75%
+  );
+  background-size: 200% 100%;
+  animation: tg-shimmer 1.2s infinite linear;
+}
+
+@keyframes tg-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes tg-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg-skeleton {
+    animation: none;
+  }
+}
+
+/* Campos con etiqueta flotante sobre el borde (estilo "outlined" en píldora). */
+.tg-campo {
+  position: relative;
+}
+
+.tg-campo > .tg-control {
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 20px 0;
+  border: 1px solid var(--tg-pill-border);
+  border-radius: 24px;
+  background: var(--tg-pill-bg);
+  color: var(--tg-on-surface);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.tg-campo > .tg-control:hover {
+  border-color: var(--tg-on-surface);
+}
+
+.tg-campo > .tg-control:focus {
+  border-color: var(--tg-primary);
+  box-shadow: inset 0 0 0 1px var(--tg-primary);
+}
+
+.tg-campo > .tg-control[aria-invalid='true'] {
+  border-color: var(--tg-error);
+  box-shadow: inset 0 0 0 1px var(--tg-error);
+}
+
+.tg-campo > .tg-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tg-campo > label {
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  max-width: calc(100% - 40px);
+  overflow: hidden;
+  color: var(--tg-on-surface-variant);
+  font-size: 1rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition:
+    top 120ms ease,
+    font-size 120ms ease;
+}
+
+.tg-campo > .tg-control:focus + label,
+.tg-campo > .tg-control:not(:placeholder-shown) + label,
+.tg-campo[data-lleno='true'] > label {
+  top: 7px;
+  font-size: 0.75rem;
+}
+
+.tg-campo > .tg-control:focus + label {
+  color: var(--tg-primary);
+}
+
+.tg-campo > textarea.tg-control {
+  min-height: 96px;
+  padding-top: 26px;
+  resize: vertical;
+}
+
+.tg-campo-compacto > .tg-control {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.tg-campo-compacto > label {
+  display: none;
+}

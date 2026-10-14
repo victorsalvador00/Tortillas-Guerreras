@@ -36,6 +36,36 @@ internal sealed class TransformadorDocumentoOpenApi : IOpenApiDocumentTransforme
     }
 }
 
+/// <summary>
+/// Las propiedades que aceptan <c>null</c> no son obligatorias en el documento: el cliente TS generado puede omitirlas
+/// en lugar de enviar <c>null</c> explícito.
+/// </summary>
+internal sealed class TransformadorOpcionalesOpenApi : IOpenApiSchemaTransformer
+{
+    public Task TransformAsync(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
+    {
+        if (schema.Properties is null || schema.Required is null || schema.Required.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        foreach (var (nombre, propiedad) in schema.Properties)
+        {
+            if (AceptaNulo(propiedad))
+            {
+                schema.Required.Remove(nombre);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static bool AceptaNulo(IOpenApiSchema propiedad) =>
+        (propiedad.Type is { } tipo && tipo.HasFlag(JsonSchemaType.Null))
+        || (propiedad.OneOf?.Any(AceptaNulo) ?? false)
+        || (propiedad.AnyOf?.Any(AceptaNulo) ?? false);
+}
+
 /// <summary><c>/salud</c>: la API responde y PostgreSQL acepta consultas.</summary>
 internal sealed class SaludBaseDatos(IUnitOfWork unitOfWork) : IHealthCheck
 {

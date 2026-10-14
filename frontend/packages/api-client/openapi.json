@@ -2056,14 +2056,2865 @@
           }
         }
       }
+    },
+    "/api/v1/compras/proveedores": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarProveedores",
+        "parameters": [
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfProveedorDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "crearProveedor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarProveedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/proveedores/{id}": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "obtenerProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "actualizarProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarProveedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/proveedores/{id}/precios": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarPreciosProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrecioProveedorDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/proveedores/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "desactivarProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/proveedores/{id}/activar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "activarProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/ordenes-compra": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarOrdenesCompra",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoOrdenCompra"
+            }
+          },
+          {
+            "name": "proveedorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfOrdenCompraResumenDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "crearOrdenCompra",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarOrdenCompraRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/ordenes-compra/{id}": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "obtenerOrdenCompra",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "actualizarOrdenCompra",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarOrdenCompraRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/ordenes-compra/{id}/autorizar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "autorizarOrdenCompra",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/ordenes-compra/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "cancelarOrdenCompra",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/ordenes-compra/{id}/cerrar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "cerrarOrdenCompra",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenCompraDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/recepciones": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarRecepciones",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoRecepcion"
+            }
+          },
+          {
+            "name": "proveedorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ordenCompraId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfRecepcionResumenDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "registrarRecepcion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarRecepcionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecepcionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/recepciones/{id}": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "obtenerRecepcion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecepcionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/recepciones/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "cancelarRecepcion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecepcionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/lineas": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "listarLineas",
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LineaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "crearLinea",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarLineaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/lineas/{id}": {
+      "put": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "actualizarLinea",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarLineaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/recetas": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "listarRecetas",
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoReceta"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecetaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "crearReceta",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarRecetaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/recetas/{id}": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "obtenerReceta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "actualizarReceta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarRecetaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/recetas/{id}/nueva-version": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "nuevaVersionReceta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/recetas/{id}/publicar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "publicarReceta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "listarOrdenesProduccion",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "turno",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Turno"
+            }
+          },
+          {
+            "name": "lineaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoOrden"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "planearOrdenProduccion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanearOrdenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "obtenerOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "actualizarOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanearOrdenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/liberar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "liberarOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/iniciar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "iniciarOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "cancelarOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/mermas": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "registrarMermaProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarMermaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/consumos": {
+      "put": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "capturarConsumosProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapturarConsumosRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/ordenes/{id}/terminar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "terminarOrdenProduccion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerminarOrdenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/reportes/variacion": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "reporteVariacionProduccion",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteVariacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/canales": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarCanales",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CanalDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "crearCanal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarCanalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanalDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/canales/{id}": {
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "actualizarCanal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarCanalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanalDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/listas-precio": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarListasPrecio",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListaPrecioDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "crearListaPrecio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarListaPrecioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaPrecioDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/listas-precio/{id}": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "obtenerListaPrecio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaPrecioDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "actualizarListaPrecio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarListaPrecioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaPrecioDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/listas-precio/{id}/partidas": {
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "guardarPartidasListaPrecio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartidasListaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaPrecioDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/clientes": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarClientes",
+        "parameters": [
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "canalId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "ubicacionPorAprobar",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "esGenerico",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfClienteDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "crearCliente",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/clientes/{id}": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "obtenerCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "actualizarCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/clientes/{id}/saldo": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "obtenerSaldoCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaldoClienteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/clientes/{id}/aprobar-ubicacion": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "aprobarUbicacionCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprobarUbicacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/pedidos": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarPedidos",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoPedido"
+            }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfPedidoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "crearPedido",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarPedidoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/pedidos/{id}": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "obtenerPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "actualizarPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarPedidoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/pedidos/{id}/confirmar": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "confirmarPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/pedidos/{id}/asignar": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "asignarPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsignarPedidoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/pedidos/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "cancelarPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PedidoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/ventas": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarVentas",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoVenta"
+            }
+          },
+          {
+            "name": "requiereRevision",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "origen",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/OrigenVenta"
+            }
+          },
+          {
+            "name": "folio",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfVentaDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "registrarVenta",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarVentaWebRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VentaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/ventas/{id}": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "obtenerVenta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VentaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/ventas/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "cancelarVenta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelarVentaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VentaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/cobros": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarCobros",
+        "parameters": [
+          {
+            "name": "clienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfCobroDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "registrarCobro",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarCobroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CobroRegistrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/incidencias": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarIncidencias",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoIncidencia"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoIncidencia"
+            }
+          },
+          {
+            "name": "entidadId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfIncidenciaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/incidencias/{id}/revisar": {
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "revisarIncidencia",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisarIncidenciaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "AbrirConteoRequest": {
         "required": [
-          "almacenId",
-          "notas"
+          "almacenId"
         ],
         "type": "object",
         "properties": {
@@ -2098,9 +4949,7 @@
           "fechaHora",
           "almacenCodigo",
           "partidas",
-          "costoTotal",
-          "notas",
-          "motivoMermaId"
+          "costoTotal"
         ],
         "type": "object",
         "properties": {
@@ -2151,7 +5000,6 @@
           "codigo",
           "nombre",
           "tipo",
-          "rutaId",
           "permiteNegativo",
           "activo"
         ],
@@ -2186,12 +5034,47 @@
         }
       },
       "AprobarDispositivoRequest": {
-        "required": [
-          "usuarioId"
-        ],
         "type": "object",
         "properties": {
           "usuarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "AprobarUbicacionRequest": {
+        "type": "object",
+        "properties": {
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "AsignarPedidoRequest": {
+        "required": [
+          "rutaId"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "envioId": {
             "type": [
               "null",
               "string"
@@ -2215,10 +5098,62 @@
           }
         }
       },
+      "CanalDto": {
+        "required": [
+          "id",
+          "clave",
+          "nombre",
+          "requiereFacturaDefault",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "requiereFacturaDefault": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CancelarVentaRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
+          }
+        }
+      },
+      "CapturarConsumosRequest": {
+        "required": [
+          "consumos"
+        ],
+        "type": "object",
+        "properties": {
+          "consumos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumoRealRequest"
+            }
+          }
+        }
+      },
       "CapturarConteoRequest": {
         "required": [
           "productoId",
-          "lote",
           "cantidadContada"
         ],
         "type": "object",
@@ -2239,6 +5174,447 @@
           }
         }
       },
+      "ClienteDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "canalId",
+          "canal",
+          "listaPrecioId",
+          "listaPrecio",
+          "condicionPago",
+          "diasCredito",
+          "requiereFactura",
+          "ubicacionAprobada",
+          "esGenerico",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "listaPrecioId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listaPrecio": {
+            "type": "string"
+          },
+          "condicionPago": {
+            "$ref": "#/components/schemas/CondicionPago"
+          },
+          "diasCredito": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limiteCredito": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "requiereFactura": {
+            "type": "boolean"
+          },
+          "rfc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "razonSocial": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "regimenFiscal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codigoPostalFiscal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "usoCfdi": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailFacturacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefono": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "calle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "colonia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "municipio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codigoPostal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "ubicacionAprobada": {
+            "type": "boolean"
+          },
+          "latitudPropuesta": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitudPropuesta": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "esGenerico": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CobroAplicacionDto": {
+        "required": [
+          "ventaId",
+          "folio",
+          "importe"
+        ],
+        "type": "object",
+        "properties": {
+          "ventaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CobroDto": {
+        "required": [
+          "id",
+          "folio",
+          "clienteId",
+          "cliente",
+          "fechaOperativa",
+          "formaPago",
+          "importe",
+          "estado",
+          "aplicaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "formaPago": {
+            "$ref": "#/components/schemas/FormaPago"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCobro"
+          },
+          "aplicaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CobroAplicacionDto"
+            }
+          }
+        }
+      },
+      "CobroRegistrado": {
+        "required": [
+          "cobroId",
+          "folio",
+          "importe",
+          "saldoCliente",
+          "duplicado"
+        ],
+        "type": "object",
+        "properties": {
+          "cobroId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "saldoCliente": {
+            "type": "number",
+            "format": "double"
+          },
+          "duplicado": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ComponenteDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "factorABase",
+          "cantidad",
+          "cantidadBase",
+          "unidadBase",
+          "orden"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidadBase": {
+            "type": "string"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int16"
+          }
+        }
+      },
+      "ComponenteRequest": {
+        "required": [
+          "productoId",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CondicionPago": {
+        "enum": [
+          "Contado",
+          "Credito"
+        ]
+      },
+      "ConsumoDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "cantidadTeoricaBase",
+          "costoUnitario"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidadTeoricaBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadRealBase": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "loteConsumido": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costoUnitario": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ConsumoRealRequest": {
+        "required": [
+          "productoId",
+          "cantidadRealBase"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidadRealBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "loteConsumido": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ConteoDto": {
         "required": [
           "id",
@@ -2247,9 +5623,7 @@
           "almacen",
           "fechaOperativa",
           "estado",
-          "notas",
           "creadoEn",
-          "cerradoEn",
           "partidas"
         ],
         "type": "object",
@@ -2430,7 +5804,6 @@
       "CrearRolRequest": {
         "required": [
           "nombre",
-          "descripcion",
           "permisos"
         ],
         "type": "object",
@@ -2455,13 +5828,8 @@
       "DispositivoDto": {
         "required": [
           "id",
-          "codigo",
           "nombre",
-          "usuarioId",
-          "usuarioNombre",
           "plataforma",
-          "versionApp",
-          "ultimoSyncEn",
           "ultimoConsecutivo",
           "operacionesPendientes",
           "activo",
@@ -2530,7 +5898,6 @@
       "DispositivoSesionDto": {
         "required": [
           "id",
-          "codigo",
           "nombre",
           "activo"
         ],
@@ -2567,6 +5934,12 @@
           "ConteoFisico"
         ]
       },
+      "EstadoCobro": {
+        "enum": [
+          "Registrado",
+          "Cancelado"
+        ]
+      },
       "EstadoConteo": {
         "enum": [
           "Abierto",
@@ -2574,10 +5947,64 @@
           "Cancelado"
         ]
       },
+      "EstadoIncidencia": {
+        "enum": [
+          "Abierta",
+          "Revisada"
+        ]
+      },
+      "EstadoOrden": {
+        "enum": [
+          "Planeada",
+          "Liberada",
+          "EnProceso",
+          "Terminada",
+          "Cancelada"
+        ]
+      },
+      "EstadoOrdenCompra": {
+        "enum": [
+          "Borrador",
+          "Autorizada",
+          "RecibidaParcial",
+          "Recibida",
+          "Cerrada",
+          "Cancelada"
+        ]
+      },
+      "EstadoPedido": {
+        "enum": [
+          "Capturado",
+          "Confirmado",
+          "Asignado",
+          "Entregado",
+          "EntregadoParcial",
+          "Cancelado"
+        ]
+      },
+      "EstadoRecepcion": {
+        "enum": [
+          "Registrada",
+          "Cancelada"
+        ]
+      },
+      "EstadoReceta": {
+        "enum": [
+          "Borrador",
+          "Vigente",
+          "Obsoleta"
+        ]
+      },
       "EstadoTraspaso": {
         "enum": [
           "Registrado",
           "Cancelado"
+        ]
+      },
+      "EstadoVenta": {
+        "enum": [
+          "Registrada",
+          "Cancelada"
         ]
       },
       "ExistenciaDto": {
@@ -2589,9 +6016,7 @@
           "producto",
           "unidad",
           "lote",
-          "cantidad",
-          "fechaCaducidad",
-          "stockMinimo"
+          "cantidad"
         ],
         "type": "object",
         "properties": {
@@ -2638,6 +6063,13 @@
           }
         }
       },
+      "FormaPago": {
+        "enum": [
+          "Efectivo",
+          "Transferencia",
+          "Credito"
+        ]
+      },
       "GuardarAlmacenRequest": {
         "required": [
           "codigo",
@@ -2655,6 +6087,216 @@
           },
           "tipo": {
             "$ref": "#/components/schemas/TipoAlmacen"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarCanalRequest": {
+        "required": [
+          "clave",
+          "nombre",
+          "requiereFacturaDefault",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "requiereFacturaDefault": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarClienteRequest": {
+        "required": [
+          "nombre",
+          "canalId",
+          "listaPrecioId",
+          "condicionPago",
+          "diasCredito",
+          "requiereFactura",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listaPrecioId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "condicionPago": {
+            "$ref": "#/components/schemas/CondicionPago"
+          },
+          "diasCredito": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limiteCredito": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "requiereFactura": {
+            "type": "boolean"
+          },
+          "rfc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "razonSocial": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "regimenFiscal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codigoPostalFiscal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "usoCfdi": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailFacturacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefono": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "calle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "colonia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "municipio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codigoPostal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarLineaRequest": {
+        "required": [
+          "codigo",
+          "nombre",
+          "tipo",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLinea"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuardarListaPrecioRequest": {
+        "required": [
+          "nombre",
+          "vigenteDesde",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vigenteDesde": {
+            "type": "string",
+            "format": "date"
           },
           "activo": {
             "type": "boolean"
@@ -2692,25 +6334,95 @@
           }
         }
       },
+      "GuardarOrdenCompraRequest": {
+        "required": [
+          "proveedorId",
+          "almacenDestinoId",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fecha": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "fechaEntregaEsperada": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaOrdenCompraRequest"
+            }
+          }
+        }
+      },
+      "GuardarPedidoRequest": {
+        "required": [
+          "clienteId",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaEntrega": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "ordenCompraCliente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaPedidoRequest"
+            }
+          }
+        }
+      },
       "GuardarProductoRequest": {
         "required": [
           "sku",
           "nombre",
-          "descripcion",
           "tipo",
           "unidadBaseId",
-          "esComprable",
-          "esProducible",
-          "esVendible",
-          "manejaLote",
-          "vidaUtilDias",
-          "claveProdServSat",
-          "objetoImpuestoSat",
-          "tasaIva",
-          "tasaIeps",
-          "codigoBarras",
-          "stockMinimo",
-          "conversiones"
+          "tasaIva"
         ],
         "type": "object",
         "properties": {
@@ -2811,6 +6523,95 @@
           }
         }
       },
+      "GuardarProveedorRequest": {
+        "required": [
+          "codigo",
+          "razonSocial",
+          "diasCredito"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "nombreComercial": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rfc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contacto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefono": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "diasCredito": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GuardarRecetaRequest": {
+        "required": [
+          "productoId",
+          "nombre",
+          "rendimientoCantidad",
+          "mermaEsperadaPct",
+          "componentes"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "rendimientoCantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "mermaEsperadaPct": {
+            "type": "number",
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "componentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponenteRequest"
+            }
+          }
+        }
+      },
       "GuardarUnidadRequest": {
         "required": [
           "clave",
@@ -2843,10 +6644,8 @@
         "required": [
           "usuario",
           "nombreCompleto",
-          "email",
           "activo",
-          "roles",
-          "contrasena"
+          "roles"
         ],
         "type": "object",
         "properties": {
@@ -2876,6 +6675,41 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "HistorialPrecioDto": {
+        "required": [
+          "fecha",
+          "folioRecepcion",
+          "unidad",
+          "cantidad",
+          "precioUnitario",
+          "costoUnitarioBase"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "folioRecepcion": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitarioBase": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -2924,11 +6758,188 @@
           }
         }
       },
+      "IncidenciaDto": {
+        "required": [
+          "id",
+          "tipo",
+          "entidadTipo",
+          "entidadId",
+          "detalle",
+          "estado",
+          "creadoEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoIncidencia"
+          },
+          "entidadTipo": {
+            "type": "string"
+          },
+          "entidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "referencia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "detalle": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoIncidencia"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revisadaPor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "revisadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "notasRevision": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "JsonElement": { },
+      "LineaDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "tipo",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLinea"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ListaPrecioDto": {
+        "required": [
+          "id",
+          "nombre",
+          "vigenteDesde",
+          "activo",
+          "totalPartidas",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vigenteDesde": {
+            "type": "string",
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "totalPartidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListaPrecioPartidaDto"
+            }
+          }
+        }
+      },
+      "ListaPrecioPartidaDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "precioUnitario"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "LoginRequest": {
         "required": [
           "usuario",
-          "contrasena",
-          "dispositivoId"
+          "contrasena"
         ],
         "type": "object",
         "properties": {
@@ -2944,6 +6955,60 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "MermaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "cantidadBase",
+          "motivoMermaId",
+          "motivo",
+          "registradaEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "motivoMermaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registradaEn": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -3005,9 +7070,7 @@
           "existenciaResultante",
           "documentoTipo",
           "documentoId",
-          "documentoFolio",
-          "motivoMermaId",
-          "notas"
+          "documentoFolio"
         ],
         "type": "object",
         "properties": {
@@ -3087,6 +7150,445 @@
           }
         }
       },
+      "MovimientoOrdenDto": {
+        "required": [
+          "id",
+          "tipo",
+          "almacenId",
+          "productoId",
+          "sku",
+          "producto",
+          "lote",
+          "cantidad",
+          "costoUnitario",
+          "costoTotal"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMovimiento"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "OrdenCompraDto": {
+        "required": [
+          "id",
+          "folio",
+          "proveedorId",
+          "proveedor",
+          "fecha",
+          "almacenDestinoId",
+          "almacenDestino",
+          "estado",
+          "subtotal",
+          "iva",
+          "total",
+          "creadoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaEntregaEsperada": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestino": {
+            "type": "string"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoOrdenCompra"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "autorizadaPor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "autorizadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaOrdenCompraDto"
+            }
+          }
+        }
+      },
+      "OrdenCompraResumenDto": {
+        "required": [
+          "id",
+          "folio",
+          "proveedorId",
+          "proveedor",
+          "fecha",
+          "estado",
+          "total",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaEntregaEsperada": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoOrdenCompra"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "partidas": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "OrdenDto": {
+        "required": [
+          "id",
+          "folio",
+          "fechaOperativa",
+          "turno",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "recetaId",
+          "receta",
+          "recetaVersion",
+          "cantidadPlaneada",
+          "almacenConsumoId",
+          "almacenConsumo",
+          "almacenDestinoId",
+          "almacenDestino",
+          "lote",
+          "estado",
+          "mermaTotal",
+          "consumos",
+          "mermas",
+          "movimientos"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "recetaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receta": {
+            "type": "string"
+          },
+          "recetaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lineaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "linea": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cantidadPlaneada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadProducida": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "almacenConsumoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenConsumo": {
+            "type": "string"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestino": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoOrden"
+          },
+          "liberadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "iniciadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "terminadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "costoTotal": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "costoUnitario": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "mermaTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "consumos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumoDto"
+            }
+          },
+          "mermas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MermaDto"
+            }
+          },
+          "movimientos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovimientoOrdenDto"
+            }
+          }
+        }
+      },
+      "OrigenVenta": {
+        "enum": [
+          "App",
+          "Web"
+        ]
+      },
+      "PaginadoOfClienteDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClienteDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfCobroDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CobroDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfExistenciaDto": {
         "required": [
           "items",
@@ -3100,6 +7602,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ExistenciaDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfIncidenciaDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncidenciaDto"
             }
           },
           "total": {
@@ -3145,6 +7676,64 @@
           }
         }
       },
+      "PaginadoOfOrdenCompraResumenDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrdenCompraResumenDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfPedidoDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PedidoDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfProductoDto": {
         "required": [
           "items",
@@ -3158,6 +7747,64 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProductoDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfProveedorDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProveedorDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfRecepcionResumenDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecepcionResumenDto"
             }
           },
           "total": {
@@ -3203,6 +7850,35 @@
           }
         }
       },
+      "PaginadoOfVentaDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VentaDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ParametroDto": {
         "required": [
           "clave",
@@ -3229,10 +7905,7 @@
       "PartidaAjusteRequest": {
         "required": [
           "productoId",
-          "lote",
-          "cantidad",
-          "costoUnitario",
-          "fechaCaducidad"
+          "cantidad"
         ],
         "type": "object",
         "properties": {
@@ -3266,10 +7939,312 @@
           }
         }
       },
+      "PartidaListaRequest": {
+        "required": [
+          "productoId",
+          "unidadId",
+          "precioUnitario"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PartidaOrdenCompraDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "unidadBase",
+          "factorABase",
+          "cantidad",
+          "cantidadBase",
+          "precioUnitario",
+          "tasaIva",
+          "importe",
+          "iva",
+          "cantidadRecibidaBase",
+          "manejaLote"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "unidadBase": {
+            "type": "string"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadRecibidaBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "manejaLote": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PartidaOrdenCompraRequest": {
+        "required": [
+          "productoId",
+          "unidadId",
+          "cantidad",
+          "precioUnitario"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PartidaPedidoRequest": {
+        "required": [
+          "productoId",
+          "unidadId",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PartidaRecepcionDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "unidadBase",
+          "factorABase",
+          "cantidad",
+          "cantidadBase",
+          "precioUnitario",
+          "costoUnitarioBase"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ordenCompraPartidaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "unidadBase": {
+            "type": "string"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitarioBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaCaducidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PartidaRecepcionRequest": {
+        "required": [
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "ordenCompraPartidaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaCaducidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PartidasListaRequest": {
+        "required": [
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaListaRequest"
+            }
+          }
+        }
+      },
       "PartidaTraspasoRequest": {
         "required": [
           "productoId",
-          "lote",
           "cantidad"
         ],
         "type": "object",
@@ -3290,12 +8265,176 @@
           }
         }
       },
+      "PedidoDto": {
+        "required": [
+          "id",
+          "folio",
+          "clienteId",
+          "cliente",
+          "fecha",
+          "estado",
+          "subtotal",
+          "iva",
+          "ieps",
+          "total",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaEntrega": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoPedido"
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "envioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "ordenCompraCliente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PedidoPartidaDto"
+            }
+          }
+        }
+      },
+      "PedidoPartidaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "cantidad",
+          "cantidadBase",
+          "precioUnitario",
+          "tasaIva",
+          "importe",
+          "cantidadEntregadaBase"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIeps": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadEntregadaBase": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "PerfilDto": {
         "required": [
           "id",
           "usuario",
           "nombreCompleto",
-          "email",
           "roles",
           "permisos",
           "dispositivo"
@@ -3371,18 +8510,127 @@
           }
         }
       },
+      "PlanearOrdenRequest": {
+        "required": [
+          "productoId",
+          "turno",
+          "cantidadPlaneada"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recetaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "lineaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cantidadPlaneada": {
+            "type": "number",
+            "format": "double"
+          },
+          "almacenConsumoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "almacenDestinoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "PlataformaDispositivo": {
         "enum": [
           "android",
           "ios"
         ]
       },
+      "PrecioProveedorDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "ultimoPrecio",
+          "historial"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "ultimoPrecio": {
+            "type": "number",
+            "format": "double"
+          },
+          "ultimaCompraEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "historial": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistorialPrecioDto"
+            }
+          }
+        }
+      },
       "ProductoDto": {
         "required": [
           "id",
           "sku",
           "nombre",
-          "descripcion",
           "tipo",
           "unidadBaseId",
           "unidadBaseClave",
@@ -3390,13 +8638,8 @@
           "esProducible",
           "esVendible",
           "manejaLote",
-          "vidaUtilDias",
-          "claveProdServSat",
           "objetoImpuestoSat",
           "tasaIva",
-          "tasaIeps",
-          "codigoBarras",
-          "stockMinimo",
           "activo",
           "conversiones"
         ],
@@ -3491,6 +8734,285 @@
           }
         }
       },
+      "ProveedorDto": {
+        "required": [
+          "id",
+          "codigo",
+          "razonSocial",
+          "diasCredito",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "nombreComercial": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rfc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contacto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefono": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "diasCredito": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecepcionDto": {
+        "required": [
+          "id",
+          "folio",
+          "proveedorId",
+          "proveedor",
+          "almacenId",
+          "almacen",
+          "fechaOperativa",
+          "estado",
+          "subtotal",
+          "creadoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "ordenCompraId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "ordenCompraFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacen": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "facturaProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoRecepcion"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canceladaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaRecepcionDto"
+            }
+          }
+        }
+      },
+      "RecepcionResumenDto": {
+        "required": [
+          "id",
+          "folio",
+          "proveedorId",
+          "proveedor",
+          "fechaOperativa",
+          "estado",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "ordenCompraFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "facturaProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoRecepcion"
+          },
+          "partidas": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RecetaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadBase",
+          "version",
+          "nombre",
+          "rendimientoCantidad",
+          "mermaEsperadaPct",
+          "estado",
+          "creadoEn",
+          "componentes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadBase": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "rendimientoCantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "mermaEsperadaPct": {
+            "type": "number",
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoReceta"
+          },
+          "vigenteDesde": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "componentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponenteDto"
+            }
+          }
+        }
+      },
       "RefreshRequest": {
         "required": [
           "refreshToken"
@@ -3534,11 +9056,123 @@
           }
         }
       },
+      "RegistrarCobroRequest": {
+        "required": [
+          "clienteId",
+          "formaPago",
+          "importe"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formaPago": {
+            "$ref": "#/components/schemas/FormaPago"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "ventaIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "RegistrarMermaRequest": {
+        "required": [
+          "productoId",
+          "cantidadBase",
+          "motivoMermaId"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "motivoMermaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RegistrarRecepcionRequest": {
+        "required": [
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "ordenCompraId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "proveedorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "almacenId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "facturaProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaRecepcionRequest"
+            }
+          }
+        }
+      },
       "RegistrarTraspasoRequest": {
         "required": [
           "almacenOrigenId",
           "almacenDestinoId",
-          "notas",
           "partidas"
         ],
         "type": "object",
@@ -3561,6 +9195,81 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PartidaTraspasoRequest"
+            }
+          }
+        }
+      },
+      "RegistrarVentaWebRequest": {
+        "required": [
+          "clienteId",
+          "almacenId",
+          "condicionPago",
+          "formaPago",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "condicionPago": {
+            "$ref": "#/components/schemas/CondicionPago"
+          },
+          "formaPago": {
+            "$ref": "#/components/schemas/FormaPago"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaPedidoRequest"
+            }
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ReporteVariacionDto": {
+        "required": [
+          "desde",
+          "hasta",
+          "umbral",
+          "ordenes"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "umbral": {
+            "type": "number",
+            "format": "double"
+          },
+          "ordenes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariacionOrdenDto"
             }
           }
         }
@@ -3588,11 +9297,21 @@
           }
         }
       },
+      "RevisarIncidenciaRequest": {
+        "type": "object",
+        "properties": {
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RolDto": {
         "required": [
           "id",
           "nombre",
-          "descripcion",
           "permisos",
           "usuarios"
         ],
@@ -3620,6 +9339,37 @@
           "usuarios": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "SaldoClienteDto": {
+        "required": [
+          "clienteId",
+          "saldo"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "saldo": {
+            "type": "number",
+            "format": "double"
+          },
+          "limiteCredito": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "disponible": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -3655,8 +9405,7 @@
       "SolicitarDispositivoRequest": {
         "required": [
           "nombre",
-          "plataforma",
-          "versionApp"
+          "plataforma"
         ],
         "type": "object",
         "properties": {
@@ -3674,12 +9423,52 @@
           }
         }
       },
+      "TerminarOrdenRequest": {
+        "required": [
+          "cantidadProducida"
+        ],
+        "type": "object",
+        "properties": {
+          "cantidadProducida": {
+            "type": "number",
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "TipoAlmacen": {
         "enum": [
           "MateriaPrima",
           "ProductoTerminado",
           "General",
           "Ruta"
+        ]
+      },
+      "TipoIncidencia": {
+        "enum": [
+          "ExistenciaNegativaRuta",
+          "GpsFueraDeRango",
+          "GpsImpreciso",
+          "SinGps",
+          "PrecioDistinto",
+          "UbicacionPorAprobar",
+          "DiferenciaLiquidacion",
+          "CreditoExcedido",
+          "TotalDistinto"
+        ]
+      },
+      "TipoLinea": {
+        "enum": [
+          "Molino",
+          "Tortilladora",
+          "Freidora",
+          "Empaque",
+          "Otro"
         ]
       },
       "TipoMovimiento": {
@@ -3721,6 +9510,12 @@
           "Pieza"
         ]
       },
+      "TipoVenta": {
+        "enum": [
+          "VentaRuta",
+          "EntregaPedido"
+        ]
+      },
       "TraspasoDto": {
         "required": [
           "id",
@@ -3731,7 +9526,6 @@
           "almacenDestino",
           "fechaOperativa",
           "estado",
-          "notas",
           "creadoEn",
           "partidas"
         ],
@@ -3816,6 +9610,13 @@
           }
         }
       },
+      "Turno": {
+        "enum": [
+          "Matutino",
+          "Vespertino",
+          "Nocturno"
+        ]
+      },
       "UnidadDto": {
         "required": [
           "id",
@@ -3858,10 +9659,8 @@
           "id",
           "usuario",
           "nombreCompleto",
-          "email",
           "activo",
-          "roles",
-          "bloqueadoHasta"
+          "roles"
         ],
         "type": "object",
         "properties": {
@@ -3965,6 +9764,384 @@
             }
           }
         }
+      },
+      "VariacionComponenteDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "teoricoPlaneado",
+          "teoricoAjustado",
+          "real",
+          "diferencia",
+          "fueraDeUmbral"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "teoricoPlaneado": {
+            "type": "number",
+            "format": "double"
+          },
+          "teoricoAjustado": {
+            "type": "number",
+            "format": "double"
+          },
+          "real": {
+            "type": "number",
+            "format": "double"
+          },
+          "diferencia": {
+            "type": "number",
+            "format": "double"
+          },
+          "variacionPct": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "fueraDeUmbral": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VariacionOrdenDto": {
+        "required": [
+          "ordenId",
+          "folio",
+          "fechaOperativa",
+          "turno",
+          "productoId",
+          "sku",
+          "producto",
+          "cantidadPlaneada",
+          "cantidadProducida",
+          "mermaTotal",
+          "fueraDeUmbral",
+          "componentes"
+        ],
+        "type": "object",
+        "properties": {
+          "ordenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "cantidadPlaneada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadProducida": {
+            "type": "number",
+            "format": "double"
+          },
+          "mermaTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "costoUnitario": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "fueraDeUmbral": {
+            "type": "boolean"
+          },
+          "componentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariacionComponenteDto"
+            }
+          }
+        }
+      },
+      "VentaDto": {
+        "required": [
+          "id",
+          "folio",
+          "origen",
+          "tipo",
+          "clienteId",
+          "cliente",
+          "almacenId",
+          "vendedorId",
+          "fechaHoraServidor",
+          "fechaOperativa",
+          "condicionPago",
+          "formaPago",
+          "subtotal",
+          "ieps",
+          "iva",
+          "total",
+          "requiereRevision",
+          "estado",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "origen": {
+            "$ref": "#/components/schemas/OrigenVenta"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoVenta"
+          },
+          "pedidoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "rutaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dispositivoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vendedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaHoraDispositivo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fechaHoraServidor": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "condicionPago": {
+            "$ref": "#/components/schemas/CondicionPago"
+          },
+          "formaPago": {
+            "$ref": "#/components/schemas/FormaPago"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalApp": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "precisionM": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "distanciaClienteM": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "requiereRevision": {
+            "type": "boolean"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoVenta"
+          },
+          "motivoCancelacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "facturaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VentaPartidaDto"
+            }
+          }
+        }
+      },
+      "VentaPartidaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "cantidad",
+          "cantidadBase",
+          "lote",
+          "precioUnitario",
+          "tasaIva",
+          "importe",
+          "ieps",
+          "iva"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIeps": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -3989,6 +10166,15 @@
     },
     {
       "name": "Inventario"
+    },
+    {
+      "name": "Compras"
+    },
+    {
+      "name": "Producción"
+    },
+    {
+      "name": "Ventas"
     }
   ]
 }

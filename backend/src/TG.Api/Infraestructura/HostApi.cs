@@ -76,6 +76,7 @@ public static class HostApi
         servicios.AddOpenApi("v1", o =>
         {
             o.AddDocumentTransformer<TransformadorDocumentoOpenApi>();
+            o.AddSchemaTransformer<TransformadorOpcionalesOpenApi>();
         });
 
         servicios.AddCors(o => o.AddPolicy(PoliticaCors, p => p
