@@ -12891,6 +12891,19 @@
             "type": "number",
             "format": "double"
           },
+          "envioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "envioFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "versionSync": {
             "type": "integer",
             "format": "int64"

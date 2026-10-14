@@ -409,6 +409,8 @@ export * from './pedidoPartidaDtoTasaIeps';
 export * from './pedidoPartidaSync';
 export * from './pedidoPartidaSyncTasaIeps';
 export * from './pedidoSync';
+export * from './pedidoSyncEnvioFolio';
+export * from './pedidoSyncEnvioId';
 export * from './pedidoSyncFechaEntrega';
 export * from './perfilDto';
 export * from './perfilDtoDispositivo';

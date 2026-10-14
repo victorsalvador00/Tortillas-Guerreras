@@ -6,6 +6,8 @@
  * OpenAPI spec version: v1
  */
 import type { PedidoSyncFechaEntrega } from './pedidoSyncFechaEntrega';
+import type { PedidoSyncEnvioId } from './pedidoSyncEnvioId';
+import type { PedidoSyncEnvioFolio } from './pedidoSyncEnvioFolio';
 import type { PedidoPartidaSync } from './pedidoPartidaSync';
 
 export interface PedidoSync {
@@ -15,6 +17,8 @@ export interface PedidoSync {
   fechaEntrega?: PedidoSyncFechaEntrega;
   estado: string;
   total: number;
+  envioId?: PedidoSyncEnvioId;
+  envioFolio?: PedidoSyncEnvioFolio;
   versionSync: number;
   partidas: PedidoPartidaSync[];
 }
