@@ -72,7 +72,7 @@ public sealed class UnitOfWork : IUnitOfWork, IAsyncDisposable, IDisposable
         }
         catch
         {
-            await _transaccion.RollbackAsync(CancellationToken.None);
+            await RevertirSinFallarAsync();
             LimpiarSeguimiento();
             throw;
         }
@@ -108,6 +108,19 @@ public sealed class UnitOfWork : IUnitOfWork, IAsyncDisposable, IDisposable
 
         contexto.Database.UseTransaction(_transaccion);
         _enlistados.Add(contexto);
+    }
+
+    /// <summary>Un error de Npgsql puede dejar la transacción ya cerrada: revertir no debe ocultar el error original.</summary>
+    private async Task RevertirSinFallarAsync()
+    {
+        try
+        {
+            await _transaccion!.RollbackAsync(CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException or NpgsqlException)
+        {
+            // La conexión ya descartó la transacción.
+        }
     }
 
     /// <summary>Tras revertir, lo que quedó en los contextos ya no refleja la base de datos.</summary>
