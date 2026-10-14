@@ -142,7 +142,7 @@ public sealed class EnviosHandler(
             await db.SaveChangesAsync(c);
             if (r.PedidoIds is { Count: > 0 })
             {
-                var vinculo = await ventas.VincularPedidosEnvioAsync(r.PedidoIds, envio.Id, c);
+                var vinculo = await ventas.VincularPedidosEnvioAsync(r.PedidoIds, envio.Id, envio.RutaId, c);
                 if (!vinculo.EsExito)
                 {
                     return Result<Guid>.Falla(vinculo.Error!);
@@ -203,7 +203,7 @@ public sealed class EnviosHandler(
             await db.SaveChangesAsync(c);
             if (r.PedidoIds is { Count: > 0 })
             {
-                var vinculo = await ventas.VincularPedidosEnvioAsync(r.PedidoIds, envio.Id, c);
+                var vinculo = await ventas.VincularPedidosEnvioAsync(r.PedidoIds, envio.Id, envio.RutaId, c);
                 if (!vinculo.EsExito)
                 {
                     return Result.Falla(vinculo.Error!);
@@ -302,8 +302,13 @@ public sealed class EnviosHandler(
             return Error.Conflicto(ErroresLogistica.EstadoEnvio, "Solo se cancela una carga en estado Preparado.");
         }
 
-        envio.Estado = EstadoEnvio.Cancelado;
-        await db.SaveChangesAsync(ct);
+        await unitOfWork.EjecutarAsync(async c =>
+        {
+            envio.Estado = EstadoEnvio.Cancelado;
+            await db.SaveChangesAsync(c);
+            await ventas.DesvincularPedidosEnvioAsync(envio.Id, c);
+            return Result.Exito();
+        }, ct);
         return await ObtenerAsync(id, ct);
     }
 

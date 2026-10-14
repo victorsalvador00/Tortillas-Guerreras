@@ -450,6 +450,60 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
         envios.ShouldAllBe(e => e.Estado == EstadoEnvio.EnRuta || e.Estado == EstadoEnvio.Liquidado);
     }
 
+    private sealed record IdPrueba(Guid Id);
+
+    private sealed record CanalPrueba(Guid Id, string Clave);
+
+    private sealed record PedidoPrueba(Guid Id, string Folio, string Estado, Guid? RutaId, Guid? EnvioId);
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-11")]
+    public async Task CargaConPedidos_LosLiga_RechazaOtraRutaYOtraCarga_YAlCancelarLosLibera()
+    {
+        var admin = await api.ClienteAsync();
+        var ruta = await CrearRutaAsync();
+        var otraRuta = await CrearRutaAsync();
+        var producto = await admin.CrearProductoAsync(tipo: "Reventa", unidad: "PZA");
+        var canal = (await admin.GetOkAsync<List<CanalPrueba>>("/api/v1/ventas/canales")).Single(c => c.Clave == "TRAD").Id;
+        var lista = await admin.PostOkAsync<IdPrueba>("/api/v1/ventas/listas-precio",
+            new { nombre = DatosPrueba.Unico("LISTA"), canalId = canal, vigenteDesde = "2026-01-01", activo = true });
+        await admin.PutOkAsync<IdPrueba>($"/api/v1/ventas/listas-precio/{lista.Id}/partidas",
+            new { partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, precioUnitario = 10m } } });
+        var cliente = await admin.PostOkAsync<IdPrueba>("/api/v1/ventas/clientes", new
+        {
+            nombre = DatosPrueba.Unico("Cliente"), canalId = canal, listaPrecioId = lista.Id, condicionPago = "Contado",
+            diasCredito = 0, requiereFactura = false, activo = true,
+        });
+        var pedido = await admin.PostOkAsync<PedidoPrueba>("/api/v1/ventas/pedidos", new
+        {
+            clienteId = cliente.Id, partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 10 } },
+        });
+        await admin.PostOkAsync<PedidoPrueba>($"/api/v1/ventas/pedidos/{pedido.Id}/confirmar");
+        await admin.PostOkAsync<PedidoPrueba>($"/api/v1/ventas/pedidos/{pedido.Id}/asignar", new { rutaId = ruta.Id });
+        object Carga(RutaPrueba r) => new
+        {
+            rutaId = r.Id, tipo = "CargaInicial", pedidoIds = new[] { pedido.Id },
+            partidas = new[] { new { productoId = producto.Id, cantidad = 10m } },
+        };
+
+        await (await admin.PostJsonAsync("/api/v1/logistica/envios", Carga(otraRuta))).DebeFallarAsync(HttpStatusCode.Conflict, "VEN-018");
+
+        var carga = await admin.PostOkAsync<EnvioPrueba>("/api/v1/logistica/envios", Carga(ruta));
+        var ligados = await admin.GetOkAsync<PaginaPrueba<PedidoPrueba>>($"/api/v1/ventas/pedidos?envioId={carga.Id}");
+        ligados.Items.ShouldHaveSingleItem().Id.ShouldBe(pedido.Id);
+        (await admin.GetOkAsync<PaginaPrueba<PedidoPrueba>>($"/api/v1/ventas/pedidos?rutaId={ruta.Id}&sinCarga=true")).Total.ShouldBe(0);
+
+        await (await admin.PostJsonAsync("/api/v1/logistica/envios", Carga(ruta))).DebeFallarAsync(HttpStatusCode.Conflict, "VEN-018");
+
+        await admin.PostOkAsync<EnvioPrueba>($"/api/v1/logistica/envios/{carga.Id}/cancelar");
+        var liberado = await admin.GetOkAsync<PedidoPrueba>($"/api/v1/ventas/pedidos/{pedido.Id}");
+        liberado.Estado.ShouldBe("Asignado");
+        liberado.RutaId.ShouldBe(ruta.Id);
+        liberado.EnvioId.ShouldBeNull();
+        (await admin.GetOkAsync<PaginaPrueba<PedidoPrueba>>($"/api/v1/ventas/pedidos?rutaId={ruta.Id}&sinCarga=true"))
+            .Items.ShouldContain(p => p.Id == pedido.Id);
+    }
+
     private static StringContent Contenido(object cuerpo) =>
         new(System.Text.Json.JsonSerializer.Serialize(cuerpo, ExtensionesHttp.Json), System.Text.Encoding.UTF8, "application/json");
 }

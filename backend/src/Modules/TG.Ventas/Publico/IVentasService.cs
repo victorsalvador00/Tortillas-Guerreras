@@ -293,8 +293,14 @@ public interface IVentasService
     /// <summary>Quita la factura de sus ventas (factura cancelada).</summary>
     Task LiberarFacturaAsync(Guid facturaId, CancellationToken ct);
 
-    /// <summary>Liga pedidos asignados a un envío (carga) de Logística.</summary>
-    Task<Result> VincularPedidosEnvioAsync(IReadOnlyCollection<Guid> pedidoIds, Guid envioId, CancellationToken ct);
+    /// <summary>
+    /// RN-LOG-11: liga pedidos `Confirmado`/`Asignado` de la misma ruta a un envío (carga) de Logística. Falla con VEN-018
+    /// si alguno es de otra ruta o ya va en otra carga.
+    /// </summary>
+    Task<Result> VincularPedidosEnvioAsync(IReadOnlyCollection<Guid> pedidoIds, Guid envioId, Guid rutaId, CancellationToken ct);
+
+    /// <summary>RN-LOG-11: la carga se canceló; sus pedidos pendientes quedan asignados a la ruta, sin carga.</summary>
+    Task DesvincularPedidosEnvioAsync(Guid envioId, CancellationToken ct);
 }
 
 /// <summary>Para que otros módulos registren incidencias (p. ej. <c>DiferenciaLiquidacion</c>).</summary>
@@ -339,4 +345,5 @@ public static class ErroresVentas
     public const string Duplicado = "VEN-015";
     public const string NoEncontrado = "VEN-016";
     public const string VentaCancelada = "VEN-017";
+    public const string PedidoOtraCarga = "VEN-018";
 }

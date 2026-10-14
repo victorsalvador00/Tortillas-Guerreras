@@ -13,6 +13,8 @@ clienteId?: string;
 rutaId?: string;
 desde?: string;
 hasta?: string;
+envioId?: string;
+sinCarga?: boolean;
 pagina?: number;
 tamano?: number;
 };

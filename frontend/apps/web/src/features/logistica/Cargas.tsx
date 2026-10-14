@@ -6,10 +6,12 @@ import {
   useCrearEnvio,
   useDespacharEnvio,
   useListarEnvios,
+  useListarPedidos,
   useObtenerEnvio,
   type EnvioDto,
   type EnvioPartidaDto,
   type EstadoEnvio,
+  type PedidoDto,
   type ProductoDto,
   type TipoEnvio,
 } from '@tg/api-client';
@@ -20,6 +22,7 @@ import {
   Boton,
   BotonIcono,
   Campo,
+  Casilla,
   Dato,
   Datos,
   DialogoConfirmacion,
@@ -122,6 +125,46 @@ interface PartidaCaptura {
 let siguienteClave = 1;
 const partidaVacia = (): PartidaCaptura => ({ clave: siguienteClave++, producto: null, cantidad: '', lote: '' });
 
+interface TotalPedidos {
+  productoId: string;
+  sku: string;
+  producto: string;
+  cantidadBase: number;
+}
+
+/** Suma, por producto y en unidad base, lo que falta entregar de los pedidos elegidos. */
+function totalesDePedidos(pedidos: PedidoDto[]): TotalPedidos[] {
+  const porProducto = new Map<string, TotalPedidos>();
+  for (const pedido of pedidos) {
+    for (const p of pedido.partidas) {
+      const pendiente = p.cantidadBase - p.cantidadEntregadaBase;
+      if (pendiente <= 0) continue;
+      const total = porProducto.get(p.productoId);
+      if (total) total.cantidadBase += pendiente;
+      else porProducto.set(p.productoId, { productoId: p.productoId, sku: p.sku, producto: p.producto, cantidadBase: pendiente });
+    }
+  }
+  return [...porProducto.values()].sort((a, b) => a.sku.localeCompare(b.sku));
+}
+
+const columnasTotales: ColumnDef<TotalPedidos, unknown>[] = [
+  { header: 'SKU', accessorKey: 'sku' },
+  { header: 'Producto', accessorKey: 'producto' },
+  {
+    header: 'Cantidad (unidad base)',
+    accessorKey: 'cantidadBase',
+    cell: ({ row }) => formatoCantidad(row.original.cantidadBase),
+    meta: { alinear: 'fin' },
+  },
+];
+
+const columnasPedidosCarga: ColumnDef<PedidoDto, unknown>[] = [
+  { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
+  { header: 'Cliente', accessorKey: 'cliente' },
+  { header: 'Entrega', id: 'entrega', cell: ({ row }) => formatoFecha(row.original.fechaEntrega ?? row.original.fecha) },
+  { header: 'Estado', accessorKey: 'estado', cell: ({ row }) => <EtiquetaEstado estado={row.original.estado} /> },
+];
+
 export function CargaNueva() {
   const navegar = useNavigate();
   const crear = useCrearEnvio();
@@ -132,15 +175,49 @@ export function CargaNueva() {
   const [partidas, setPartidas] = useState<PartidaCaptura[]>([partidaVacia()]);
   const [error, setError] = useState<string | null>(null);
   const [intento, setIntento] = useState(false);
+  const [elegidos, setElegidos] = useState<Set<string>>(new Set());
 
+  // Pedidos asignados a la ruta que aún no van en ninguna carga y se entregan a más tardar ese día (RN-LOG-11).
+  const pedidos = useListarPedidos(
+    { rutaId, estado: 'Asignado', sinCarga: true, hasta: fecha || undefined, tamano: 100 },
+    { query: { enabled: !!rutaId } },
+  );
+  const disponibles = useMemo(() => (rutaId ? (pedidos.data?.items ?? []) : []), [rutaId, pedidos.data]);
+  const pedidosElegidos = useMemo(() => disponibles.filter((p) => elegidos.has(p.id)), [disponibles, elegidos]);
+  const totales = useMemo(() => totalesDePedidos(pedidosElegidos), [pedidosElegidos]);
+  const conPedidos = pedidosElegidos.length > 0;
+  const todos = disponibles.length > 0 && pedidosElegidos.length === disponibles.length;
+  const alternar = (id: string, incluir: boolean) =>
+    setElegidos((actual) => {
+      const nuevo = new Set(actual);
+      if (incluir) nuevo.add(id);
+      else nuevo.delete(id);
+      return nuevo;
+    });
+
+  const vacia = (p: PartidaCaptura) => !p.producto && p.cantidad === '';
   const validas = partidas.filter((p) => p.producto && Number(p.cantidad) > 0);
+  // Con pedidos elegidos el producto adicional es opcional: se ignoran los renglones vacíos.
+  const incompletas = partidas.filter((p) => !(p.producto && Number(p.cantidad) > 0) && !(conPedidos && vacia(p)));
+  const exigir = (p: PartidaCaptura) => intento && !(conPedidos && vacia(p));
+  const productosEnCarga = new Set([...totales.map((t) => t.productoId), ...validas.map((p) => p.producto!.id)]).size;
   const actualizar = (clave: number, cambio: Partial<PartidaCaptura>) =>
     setPartidas((ps) => ps.map((p) => (p.clave === clave ? { ...p, ...cambio } : p)));
 
   const guardar = async () => {
     setIntento(true);
     setError(null);
-    if (!rutaId || validas.length === 0) return;
+    if (!rutaId || incompletas.length > 0 || (validas.length === 0 && !conPedidos)) return;
+    // Producto de los pedidos + producto adicional; el mismo producto sin lote va en un solo renglón.
+    const lineas = new Map<string, { productoId: string; cantidad: number; lote: string | null }>();
+    const sumar = (productoId: string, cantidad: number, lote: string | null) => {
+      const clave = `${productoId}|${lote ?? ''}`;
+      const linea = lineas.get(clave);
+      if (linea) linea.cantidad += cantidad;
+      else lineas.set(clave, { productoId, cantidad, lote });
+    };
+    totales.forEach((t) => sumar(t.productoId, t.cantidadBase, null));
+    validas.forEach((p) => sumar(p.producto!.id, Number(p.cantidad), p.lote.trim() || null));
     try {
       const envio = await crear.mutateAsync({
         data: {
@@ -148,7 +225,8 @@ export function CargaNueva() {
           tipo,
           fechaOperativa: fecha || null,
           notas: notas || null,
-          partidas: validas.map((p) => ({ productoId: p.producto!.id, cantidad: Number(p.cantidad), lote: p.lote.trim() || null })),
+          partidas: [...lineas.values()],
+          pedidoIds: pedidosElegidos.map((p) => p.id),
         },
       });
       toast.success(`Carga ${envio.folio} preparada. Despáchala cuando salga la camioneta.`);
@@ -169,14 +247,74 @@ export function CargaNueva() {
         {error && <Aviso tipo="error">{error}</Aviso>}
         <Tarjeta titulo="Datos de la carga">
           <div className="grid gap-4 sm:grid-cols-2">
-            <SelectorRuta vacio="Elige la ruta" value={rutaId} onChange={setRutaId} error={intento && !rutaId ? 'Elige la ruta.' : undefined} />
+            <SelectorRuta
+              vacio="Elige la ruta"
+              value={rutaId}
+              onChange={(v) => (setRutaId(v), setElegidos(new Set()))}
+              error={intento && !rutaId ? 'Elige la ruta.' : undefined}
+            />
             <Selector etiqueta="Tipo" opciones={TIPOS_ENVIO} value={tipo} onChange={(e) => setTipo(e.target.value as TipoEnvio)} />
-            <Campo etiqueta="Fecha operativa" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <Campo
+              etiqueta="Fecha operativa"
+              type="date"
+              value={fecha}
+              onChange={(e) => (setFecha(e.target.value), setElegidos(new Set()))}
+            />
             <Campo etiqueta="Notas (opcional)" value={notas} onChange={(e) => setNotas(e.target.value)} />
           </div>
         </Tarjeta>
+        {rutaId && (
+          <Tarjeta
+            titulo="Pedidos asignados a la ruta"
+            subtitulo="Pendientes de cargar, con entrega hasta la fecha operativa. Lo que piden se suma a la carga."
+            acciones={
+              disponibles.length > 1 && (
+                <Boton
+                  variante="secundario"
+                  tamano="chico"
+                  icono={todos ? 'remove_done' : 'done_all'}
+                  onClick={() => setElegidos(todos ? new Set() : new Set(disponibles.map((p) => p.id)))}
+                >
+                  {todos ? 'Quitar todos' : 'Incluir todos'}
+                </Boton>
+              )
+            }
+          >
+            {pedidos.isLoading ? (
+              <p className="m-0 text-muted">Buscando pedidos…</p>
+            ) : disponibles.length === 0 ? (
+              <p className="m-0 text-muted">No hay pedidos asignados a esta ruta pendientes de cargar.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-row-divider">
+                {disponibles.map((p) => (
+                  <Casilla
+                    key={p.id}
+                    className="py-2.5"
+                    checked={elegidos.has(p.id)}
+                    onChange={(e) => alternar(p.id, e.target.checked)}
+                    etiqueta={
+                      <span className="flex flex-wrap gap-x-3">
+                        <span className="font-medium">{p.folio}</span>
+                        <span>{p.cliente}</span>
+                        <span className="text-muted">Entrega {formatoFecha(p.fechaEntrega ?? p.fecha)}</span>
+                      </span>
+                    }
+                    descripcion={p.partidas.map((x) => `${formatoCantidad(x.cantidad)} ${x.unidad} ${x.producto}`).join(' · ')}
+                  />
+                ))}
+              </div>
+            )}
+            {conPedidos && (
+              <div className="mt-4">
+                <h3 className="mb-2 text-sm font-medium">Producto para los pedidos elegidos</h3>
+                <TablaDatos columnas={columnasTotales} datos={totales} idFila={(t) => t.productoId} ordenable={false} />
+              </div>
+            )}
+          </Tarjeta>
+        )}
         <Tarjeta
-          titulo="Productos"
+          titulo={conPedidos ? 'Producto adicional para venta en ruta' : 'Productos'}
+          subtitulo={conPedidos ? 'Opcional: lo que la camioneta lleva además de los pedidos.' : undefined}
           acciones={
             <Boton variante="secundario" tamano="chico" icono="add" onClick={() => setPartidas((ps) => [...ps, partidaVacia()])}>
               Agregar producto
@@ -191,7 +329,7 @@ export function CargaNueva() {
                   producto={p.producto}
                   filtro={{ esVendible: true }}
                   onCambiar={(producto) => actualizar(p.clave, { producto })}
-                  error={intento && !p.producto ? 'Elige el producto.' : undefined}
+                  error={exigir(p) && !p.producto ? 'Elige el producto.' : undefined}
                 />
                 <Campo
                   etiqueta={`Cantidad${p.producto ? ` (${p.producto.unidadBaseClave})` : ''}`}
@@ -200,7 +338,7 @@ export function CargaNueva() {
                   inputMode="decimal"
                   value={p.cantidad}
                   onChange={(e) => actualizar(p.clave, { cantidad: e.target.value })}
-                  error={intento && !(Number(p.cantidad) > 0) ? 'Mayor que cero.' : undefined}
+                  error={exigir(p) && !(Number(p.cantidad) > 0) ? 'Mayor que cero.' : undefined}
                 />
                 <Campo
                   etiqueta="Lote (opcional)"
@@ -212,14 +350,20 @@ export function CargaNueva() {
                   icono="delete"
                   etiqueta="Quitar producto"
                   className="mt-2"
-                  disabled={partidas.length === 1}
-                  onClick={() => setPartidas((ps) => ps.filter((x) => x.clave !== p.clave))}
+                  disabled={partidas.length === 1 && vacia(p)}
+                  onClick={() => setPartidas((ps) => (ps.length === 1 ? [partidaVacia()] : ps.filter((x) => x.clave !== p.clave)))}
                 />
               </div>
             ))}
           </div>
         </Tarjeta>
-        <BarraAccion resumen={`${validas.length} producto(s) en la carga`}>
+        <BarraAccion
+          resumen={
+            conPedidos
+              ? `${pedidosElegidos.length} pedido(s) · ${productosEnCarga} producto(s) en la carga`
+              : `${validas.length} producto(s) en la carga`
+          }
+        >
           <Boton variante="texto" onClick={() => navegar({ to: '/logistica/cargas' })}>
             Cancelar
           </Boton>
@@ -233,9 +377,11 @@ export function CargaNueva() {
 }
 
 export function CargaDetalle() {
+  const navegar = useNavigate();
   const { id } = useParams({ strict: false }) as { id: string };
   const { tienePermiso } = useSesion();
   const consulta = useObtenerEnvio(id);
+  const pedidos = useListarPedidos({ envioId: id, tamano: 100 }, { query: { enabled: tienePermiso('ventas.pedidos') } });
   const movimientos = useConsultarKardex({ documentoTipo: 'Envio', documentoId: id, tamano: 200 }, { query: { enabled: tienePermiso('inventario.ver') } });
   const despachar = useDespacharEnvio();
   const cancelar = useCancelarEnvio();
@@ -294,6 +440,18 @@ export function CargaDetalle() {
             </Tarjeta>
             <h2 className="mb-2 text-base font-medium">Productos</h2>
             <TablaDatos columnas={columnas} datos={envio.partidas} idFila={(p) => p.id} ordenable={false} />
+            {(pedidos.data?.items.length ?? 0) > 0 && (
+              <>
+                <h2 className="mt-6 mb-2 text-base font-medium">Pedidos que lleva</h2>
+                <TablaDatos
+                  columnas={columnasPedidosCarga}
+                  datos={pedidos.data?.items}
+                  idFila={(p) => p.id}
+                  ordenable={false}
+                  alClicFila={(p) => navegar({ to: '/ventas/pedidos/$id', params: { id: p.id } })}
+                />
+              </>
+            )}
             {envio.estado !== 'Preparado' && envio.estado !== 'Cancelado' && tienePermiso('inventario.ver') && (
               <>
                 <h2 className="mt-6 mb-2 text-base font-medium">Movimientos de inventario</h2>

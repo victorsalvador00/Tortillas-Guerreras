@@ -55,8 +55,10 @@ public sealed class PedidosHandler(
     IGeneradorFolios folios,
     IFechaOperativa fechaOperativa)
 {
+    /// <param name="envioId">Pedidos que van en esa carga.</param>
+    /// <param name="sinCarga">Solo pedidos que todavía no van en ninguna carga.</param>
     public async Task<Paginado<PedidoDto>> ListarAsync(EstadoPedido? estado, Guid? clienteId, Guid? rutaId, DateOnly? desde,
-        DateOnly? hasta, int? pagina, int? tamano, CancellationToken ct)
+        DateOnly? hasta, Guid? envioId, bool? sinCarga, int? pagina, int? tamano, CancellationToken ct)
     {
         var consulta = db.Pedidos.AsNoTracking().Include(p => p.Partidas).AsQueryable();
         if (estado is not null)
@@ -72,6 +74,16 @@ public sealed class PedidosHandler(
         if (rutaId is not null)
         {
             consulta = consulta.Where(p => p.RutaId == rutaId);
+        }
+
+        if (envioId is not null)
+        {
+            consulta = consulta.Where(p => p.EnvioId == envioId);
+        }
+
+        if (sinCarga == true)
+        {
+            consulta = consulta.Where(p => p.EnvioId == null);
         }
 
         if (desde is not null)

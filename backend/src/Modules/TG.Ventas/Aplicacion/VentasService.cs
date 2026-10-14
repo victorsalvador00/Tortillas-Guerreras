@@ -729,7 +729,7 @@ public sealed class VentasService(
         await db.Ventas.Where(v => v.FacturaId == facturaId)
             .ExecuteUpdateAsync(s => s.SetProperty(v => v.FacturaId, (Guid?)null), ct);
 
-    public async Task<Result> VincularPedidosEnvioAsync(IReadOnlyCollection<Guid> pedidoIds, Guid envioId, CancellationToken ct)
+    public async Task<Result> VincularPedidosEnvioAsync(IReadOnlyCollection<Guid> pedidoIds, Guid envioId, Guid rutaId, CancellationToken ct)
     {
         var pedidos = await db.Pedidos.Where(p => pedidoIds.Contains(p.Id)).ToListAsync(ct);
         if (pedidos.Count != pedidoIds.Distinct().Count())
@@ -743,14 +743,38 @@ public sealed class VentasService(
             return Error.Conflicto(ErroresVentas.EstadoPedido, $"El pedido {invalido.Folio} está {invalido.Estado}.");
         }
 
+        var otraRuta = pedidos.FirstOrDefault(p => p.RutaId is { } r && r != rutaId);
+        if (otraRuta is not null)
+        {
+            return Error.Conflicto(ErroresVentas.PedidoOtraCarga, $"El pedido {otraRuta.Folio} está asignado a otra ruta.");
+        }
+
+        var otraCarga = pedidos.FirstOrDefault(p => p.EnvioId is { } e && e != envioId);
+        if (otraCarga is not null)
+        {
+            return Error.Conflicto(ErroresVentas.PedidoOtraCarga, $"El pedido {otraCarga.Folio} ya va en otra carga.");
+        }
+
         foreach (var pedido in pedidos)
         {
+            pedido.RutaId = rutaId;
             pedido.EnvioId = envioId;
             pedido.Estado = EstadoPedido.Asignado;
         }
 
         await db.SaveChangesAsync(ct);
         return Result.Exito();
+    }
+
+    public async Task DesvincularPedidosEnvioAsync(Guid envioId, CancellationToken ct)
+    {
+        var pedidos = await db.Pedidos.Where(p => p.EnvioId == envioId && p.Estado == EstadoPedido.Asignado).ToListAsync(ct);
+        foreach (var pedido in pedidos)
+        {
+            pedido.EnvioId = null;
+        }
+
+        await db.SaveChangesAsync(ct);
     }
 
     internal static VentaInfo AInfo(Venta v) => new(

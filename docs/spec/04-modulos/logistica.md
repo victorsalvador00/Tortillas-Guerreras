@@ -46,6 +46,12 @@ producto y efectivo.
   pendientes de sincronizar reportadas en su último contacto (`sync` lo informa); se puede forzar
   con permiso `logistica.forzar_cierre`.
 - **RN-LOG-10** Una liquidación cerrada no se reabre; correcciones posteriores son ajustes.
+- **RN-LOG-11** Una carga puede llevar pedidos `Confirmado`/`Asignado` de su misma ruta (`pedidoIds` al crearla).
+  La pantalla "Nueva carga" ofrece los pedidos `Asignado` de la ruta sin carga y con entrega
+  (`fecha_entrega`, o `fecha` si no tiene) hasta la fecha operativa; lo pendiente de entregar de los
+  elegidos se suma a las partidas, más el producto adicional para venta en ruta. Un pedido va en una
+  sola carga (VEN-018 si es de otra ruta o ya va en otra carga). Al cancelar la carga sus pedidos
+  quedan `Asignado` a la ruta, sin carga.
 
 ## Endpoints (`/api/v1/logistica`)
 | Método | Ruta | Permiso |

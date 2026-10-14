@@ -53,6 +53,7 @@ Clientes, precios, pedidos y ventas (en ruta desde la app o desde la web).
 | GET/POST/PUT | `/clientes` | `ventas.clientes` |
 | POST | `/clientes/{id}/aprobar-ubicacion` | `ventas.supervisar` |
 | GET/POST/PUT | `/pedidos`, `POST /pedidos/{id}/confirmar`, `/asignar`, `/cancelar` | `ventas.pedidos` |
+| GET | `/pedidos?estado&clienteId&rutaId&desde&hasta&envioId&sinCarga` (filtros de la lista; `envioId`/`sinCarga` para las cargas, RN-LOG-11) | `ventas.pedidos` |
 | GET/POST | `/ventas` | `ventas.ver` / `ventas.registrar` |
 | POST | `/ventas/{id}/cancelar` | `ventas.cancelar` |
 | GET/POST | `/cobros` | `ventas.cobrar` |

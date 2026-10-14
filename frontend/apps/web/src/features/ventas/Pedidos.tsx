@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import {
   mensajeError,
   obtenerProducto,
@@ -327,6 +327,15 @@ export function PedidoDetalle() {
                   <Dato etiqueta="Estado"><EtiquetaEstado estado={p.estado} /></Dato>
                   <Dato etiqueta="Entrega">{formatoFecha(p.fechaEntrega)}</Dato>
                   <Dato etiqueta="Ruta">{rutas.find((r) => r.rutaId === p.rutaId)?.codigo ?? 'Sin asignar'}</Dato>
+                  <Dato etiqueta="Carga">
+                    {p.envioId ? (
+                      <Link to="/logistica/cargas/$id" params={{ id: p.envioId }} className="text-primary">
+                        Ver carga
+                      </Link>
+                    ) : (
+                      'Sin carga'
+                    )}
+                  </Dato>
                   <Dato etiqueta="OC del cliente">{p.ordenCompraCliente || '—'}</Dato>
                   {p.notas && <Dato etiqueta="Notas" className="col-span-2">{p.notas}</Dato>}
                 </Datos>

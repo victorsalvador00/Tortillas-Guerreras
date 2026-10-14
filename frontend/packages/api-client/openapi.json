@@ -4240,6 +4240,21 @@
             }
           },
           {
+            "name": "envioId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sinCarga",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "pagina",
             "in": "query",
             "schema": {
