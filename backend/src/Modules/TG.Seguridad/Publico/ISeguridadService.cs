@@ -17,4 +17,7 @@ public interface ISeguridadService
     Task<IReadOnlyDictionary<Guid, string>> NombresUsuariosAsync(IEnumerable<Guid> ids, CancellationToken ct);
 
     Task<bool> UsuarioTieneRolAsync(Guid usuarioId, string rol, CancellationToken ct);
+
+    /// <summary>Id del usuario por su nombre de usuario (semillas y asignaciones).</summary>
+    Task<Guid?> UsuarioPorNombreAsync(string usuario, CancellationToken ct);
 }

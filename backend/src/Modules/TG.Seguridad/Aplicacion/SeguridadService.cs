@@ -58,6 +58,13 @@ internal sealed class SeguridadService(SeguridadDbContext db, TimeProvider reloj
             .AnyAsync(n => n == normalizado, ct);
     }
 
+    public async Task<Guid?> UsuarioPorNombreAsync(string usuario, CancellationToken ct)
+    {
+        var normalizado = usuario.Trim().ToUpperInvariant();
+        return await db.Users.AsNoTracking().Where(u => u.NormalizedUserName == normalizado).Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync(ct);
+    }
+
     private static DispositivoInfo AInfo(Dispositivo d) =>
         new(d.Id, d.Codigo, d.Nombre, d.UsuarioId, d.Activo, d.UltimoConsecutivo, d.OperacionesPendientes, d.UltimoSyncEn);
 }
