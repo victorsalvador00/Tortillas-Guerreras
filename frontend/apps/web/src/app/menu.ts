@@ -17,6 +17,7 @@ export const MENU: SeccionMenu[] = [
     etiqueta: 'General',
     opciones: [
       { etiqueta: 'Tablero', ruta: '/', icono: 'space_dashboard', permiso: 'tablero.ver' },
+      { etiqueta: 'Reportes', ruta: '/reportes', icono: 'bar_chart', permiso: ['tablero.ver', 'ventas.ver', 'produccion.ver', 'inventario.ver', 'logistica.ver'] },
       { etiqueta: 'Mapa de entregas', ruta: '/mapa', icono: 'map', permiso: ['ventas.ver', 'logistica.ver'] },
     ],
   },

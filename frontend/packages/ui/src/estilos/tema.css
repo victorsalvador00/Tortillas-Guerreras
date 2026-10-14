@@ -80,6 +80,11 @@
   --tg-tag-text-active: #002a6b;
   --tg-tag-dots: #0045a8;
 
+  /* Series de gráficas: espacios categóricos validados (CVD) en orden fijo. */
+  --tg-serie-1: #2a78d6;
+  --tg-serie-2: #eb6834;
+  --tg-serie-3: #1baf7a;
+
   --tg-topbar-height: 64px;
   --tg-sidebar-width: 256px;
   --tg-sidebar-collapsed-width: 72px;
@@ -148,6 +153,10 @@
   --tg-tag-icon-active: #001233;
   --tg-tag-text-active: #cfe2ff;
   --tg-tag-dots: #19d3ff;
+
+  --tg-serie-1: #3987e5;
+  --tg-serie-2: #d95926;
+  --tg-serie-3: #199e70;
 }
 
 @theme inline {

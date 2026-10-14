@@ -6,7 +6,7 @@ import {
   useCrearRuta,
   useCrearVehiculo,
   useListarRutas,
-  useListarUsuarios,
+  useListarVendedores,
   useListarVehiculos,
   type RutaDto,
   type VehiculoDto,
@@ -17,7 +17,6 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
-import { useSesion } from '@/app/sesion';
 import { aplicarErroresApi } from './comunes-logistica';
 
 // ───────────────────────────── Vehículos ─────────────────────────────
@@ -136,14 +135,12 @@ const esquemaRuta = z.object({
 });
 type DatosRuta = z.infer<typeof esquemaRuta>;
 
-/** Usuarios con rol Vendedor. La lista de usuarios requiere `seguridad.usuarios`; sin él solo se muestra el actual. */
+/** Usuarios activos con rol Vendedor (GET /logistica/vendedores). */
 function useVendedores(actual?: { id: string; nombre: string } | null) {
-  const { tienePermiso } = useSesion();
-  const puede = tienePermiso('seguridad.usuarios');
-  const { data } = useListarUsuarios({ tamano: 200 }, { query: { enabled: puede } });
-  const opciones = (data?.items ?? []).filter((u) => u.activo && u.roles.includes('Vendedor')).map((u) => ({ valor: u.id, etiqueta: u.nombreCompleto }));
+  const { data } = useListarVendedores();
+  const opciones = (data ?? []).map((u) => ({ valor: u.id, etiqueta: u.nombreCompleto }));
   if (actual && !opciones.some((o) => o.valor === actual.id)) opciones.unshift({ valor: actual.id, etiqueta: actual.nombre });
-  return { opciones, puede };
+  return { opciones, puede: true };
 }
 
 export function DialogoRuta({ ruta, abierto, onCambiar }: { ruta: RutaDto | null; abierto: boolean; onCambiar: (a: boolean) => void }) {
