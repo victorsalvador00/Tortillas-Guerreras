@@ -8,8 +8,10 @@ import {
   type FocusEvent,
   type InputHTMLAttributes,
 } from 'react';
+import * as Popover from '@radix-ui/react-popover';
 import { cn } from '../utils';
 import { Icono } from './basicos';
+import { Calendario } from './calendario';
 
 /** "2026-11-03" → "03/11/2026". */
 export function isoADmy(iso: string | null | undefined): string {
@@ -42,7 +44,8 @@ type PropsEntrada = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
  * Fecha siempre en DD/MM/AAAA, sin depender del idioma del navegador (el `<input type="date">` nativo la muestra en
  * MM/DD/AAAA en Chrome en inglés). El valor sigue siendo ISO (`yyyy-MM-dd`) en un input oculto que recibe `ref`,
  * `name`, `value`/`defaultValue`, `onChange` y `onBlur`, así que funciona igual con `register()` de React Hook Form
- * que controlado; el botón de calendario abre el selector nativo.
+ * que controlado. El botón abre un calendario propio en español: el selector nativo de Chrome sale en inglés y
+ * bloquea la página mientras está abierto.
  */
 export const EntradaFecha = forwardRef<
   HTMLInputElement,
@@ -52,9 +55,12 @@ export const EntradaFecha = forwardRef<
   useImperativeHandle(ref, () => oculto.current!, []);
   const [texto, setTexto] = useState(() => isoADmy((value ?? defaultValue ?? '') as string));
   const editando = useRef(false);
+  const [abierto, setAbierto] = useState(false);
   const ultimoIso = useRef<string>((value ?? defaultValue ?? '') as string);
 
-  // Sincroniza el texto cuando el valor cambia por fuera (controlado o `reset` de React Hook Form).
+  // Sincroniza el texto cuando el valor cambia por fuera (controlado o `reset` de React Hook Form). Sin dependencias
+  // a propósito: `reset` cambia el input oculto sin pasar por props; la comparación con `ultimoIso` evita el ciclo.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const iso = value !== undefined ? String(value ?? '') : (oculto.current?.value ?? '');
     if (!editando.current && iso !== ultimoIso.current) {
@@ -109,41 +115,44 @@ export const EntradaFecha = forwardRef<
       />
       <input
         ref={oculto}
-        type="date"
+        type="hidden"
         name={name}
-        min={min}
-        max={max}
-        tabIndex={-1}
-        aria-hidden
         disabled={disabled}
         {...(value !== undefined ? { value: (value ?? '') as string } : { defaultValue: defaultValue as string | undefined })}
-        onChange={(e) => {
-          ultimoIso.current = e.target.value;
-          setTexto(isoADmy(e.target.value));
-          onChange?.(e);
-        }}
-        className="pointer-events-none absolute right-2 bottom-0 h-px w-px opacity-0"
       />
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label={etiquetaCalendario}
-        title={etiquetaCalendario}
-        onClick={() => {
-          const nodo = oculto.current;
-          if (!nodo) return;
-          try {
-            nodo.showPicker();
-          } catch {
-            nodo.focus();
-          }
-        }}
-        className={cn(
-          'absolute top-1/2 right-3 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-muted hover:bg-row-hover disabled:cursor-not-allowed',
-        )}
-      >
-        <Icono nombre="calendar_month" tamano={20} />
-      </button>
+      <Popover.Root open={abierto} onOpenChange={setAbierto}>
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={etiquetaCalendario}
+            title={etiquetaCalendario}
+            className={cn(
+              'absolute top-1/2 right-3 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-muted hover:bg-row-hover disabled:cursor-not-allowed',
+            )}
+          >
+            <Icono nombre="calendar_month" tamano={20} />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            align="end"
+            sideOffset={6}
+            className="z-50 rounded-xl border border-outline-variant bg-card text-on-surface shadow-[0_8px_24px_rgb(0_0_0/18%)]"
+          >
+            <Calendario
+              valor={ultimoIso.current}
+              min={min as string | undefined}
+              max={max as string | undefined}
+              onElegir={(iso) => {
+                setTexto(isoADmy(iso));
+                emitir(iso);
+                setAbierto(false);
+              }}
+            />
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </>
   );
 });
