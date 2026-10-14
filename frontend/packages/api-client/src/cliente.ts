@@ -101,6 +101,8 @@ async function ejecutar(config: ConfigSolicitud, opciones?: RequestInit): Promis
   let body: BodyInit | undefined;
   if (config.data !== undefined) {
     if (config.data instanceof FormData) {
+      // El navegador pone el boundary; un Content-Type fijo lo rompería.
+      delete headers['Content-Type'];
       body = config.data;
     } else {
       headers['Content-Type'] = 'application/json';

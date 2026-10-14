@@ -88,6 +88,7 @@ export const MENU: SeccionMenu[] = [
       { etiqueta: 'Unidades', ruta: '/catalogos/unidades', icono: 'straighten' },
       { etiqueta: 'Motivos de merma', ruta: '/catalogos/motivos-merma', icono: 'delete_sweep' },
       { etiqueta: 'Parámetros', ruta: '/catalogos/parametros', icono: 'settings', permiso: 'catalogos.editar' },
+      { etiqueta: 'Carga inicial', ruta: '/catalogos/importar', icono: 'upload_file', permiso: 'catalogos.editar' },
     ],
   },
   {

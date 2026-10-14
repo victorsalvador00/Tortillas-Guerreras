@@ -1,4 +1,5 @@
 // Archivo generado por scripts/indice.mjs; no editar.
+export * from './carga-inicial/carga-inicial';
 export * from './catálogos/catálogos';
 export * from './compras/compras';
 export * from './facturación/facturación';

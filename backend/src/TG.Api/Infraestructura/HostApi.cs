@@ -127,6 +127,7 @@ public static class HostApi
         servicios.AddFacturacionModule(configuracion);
         servicios.AddSincronizacionModule(configuracion);
         servicios.AddScoped<ConsultasTablero>();
+        servicios.AddScoped<ImportadorCsv>();
 
         if (HangfireHabilitado(configuracion))
         {
@@ -178,6 +179,7 @@ public static class HostApi
         api.MapFacturacionEndpoints();
         api.MapSincronizacionEndpoints();
         api.MapTableroEndpoints();
+        api.MapImportacionEndpoints();
         return app;
     }
 

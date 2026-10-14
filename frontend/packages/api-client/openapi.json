@@ -6795,6 +6795,285 @@
           }
         }
       }
+    },
+    "/api/v1/importacion/productos": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarProductos",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/clientes": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarClientes",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/proveedores": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarProveedores",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/recetas": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarRecetas",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/existencias": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarExistencias",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/{entidad}/plantilla": {
+      "get": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "descargarPlantillaImportacion",
+        "parameters": [
+          {
+            "name": "entidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/{entidad}/columnas": {
+      "get": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "columnasImportacion",
+        "parameters": [
+          {
+            "name": "entidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ColumnaPlantilla"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7751,6 +8030,25 @@
           },
           "duplicado": {
             "type": "boolean"
+          }
+        }
+      },
+      "ColumnaPlantilla": {
+        "required": [
+          "nombre",
+          "obligatoria",
+          "descripcion"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "obligatoria": {
+            "type": "boolean"
+          },
+          "descripcion": {
+            "type": "string"
           }
         }
       },
@@ -8747,6 +9045,28 @@
             "items": {
               "$ref": "#/components/schemas/EnvioPartidaSync"
             }
+          }
+        }
+      },
+      "ErrorImportacionDto": {
+        "required": [
+          "fila",
+          "mensaje"
+        ],
+        "type": "object",
+        "properties": {
+          "fila": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "campo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mensaje": {
+            "type": "string"
           }
         }
       },
@@ -10099,6 +10419,10 @@
             }
           }
         }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
       },
       "IncidenciaDto": {
         "required": [
@@ -13874,6 +14198,47 @@
           }
         }
       },
+      "ResultadoImportacionDto": {
+        "required": [
+          "entidad",
+          "validarSolo",
+          "aplicado",
+          "filas",
+          "creados",
+          "actualizados",
+          "errores"
+        ],
+        "type": "object",
+        "properties": {
+          "entidad": {
+            "type": "string"
+          },
+          "validarSolo": {
+            "type": "boolean"
+          },
+          "aplicado": {
+            "type": "boolean"
+          },
+          "filas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorImportacionDto"
+            }
+          }
+        }
+      },
       "ResultadoOperacion": {
         "required": [
           "opId",
@@ -15629,6 +15994,9 @@
     },
     {
       "name": "Reportes"
+    },
+    {
+      "name": "Carga inicial"
     }
   ]
 }
