@@ -133,6 +133,10 @@ async function aError(respuesta: Response): Promise<ErrorApi> {
       : respuesta.status === 404
         ? 'No se encontró el recurso.'
         : 'Ocurrió un error inesperado. Intenta de nuevo.');
+  // Sin ProblemDetails y con 5xx: el API no respondió (apagado, proxy o red caída).
+  if (respuesta.status >= 500 && cuerpo.codigo === undefined) {
+    return new ErrorApi(respuesta.status, 'No hay conexión con el servidor. Verifica que el API esté en marcha e intenta de nuevo.', 'GEN-RED');
+  }
   const codigo = (cuerpo.codigo as string | undefined) ?? `HTTP-${respuesta.status}`;
   return new ErrorApi(
     respuesta.status,
