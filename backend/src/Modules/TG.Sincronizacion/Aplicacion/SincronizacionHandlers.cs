@@ -372,7 +372,8 @@ public sealed class PushHandler(
                     var d = Leer<EntregarPedidoDatos>(op) ?? throw new JsonException();
                     var entrega = await ventas.EntregarPedidoAsync(new EntregarPedidoComando(
                         OrigenVenta.App, d.PedidoId, ruta.AlmacenId, ctx.UsuarioId, fecha, Enum.Parse<FormaPago>(d.FormaPago),
-                        d.Partidas.Select(p => new PartidaEntregaComando(p.PedidoPartidaId, p.Cantidad)).ToList(),
+                        // La app manda también las partidas no entregadas (cantidad 0).
+                        d.Partidas.Where(p => p.Cantidad > 0).Select(p => new PartidaEntregaComando(p.PedidoPartidaId, p.Cantidad)).ToList(),
                         d.VentaId, op.OpId, d.Folio, ruta.Id, dispositivo, op.CreadaEn, d.TotalApp, Gps(d.Gps)), ct);
                     if (!entrega.EsExito)
                     {
