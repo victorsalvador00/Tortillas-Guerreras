@@ -20,6 +20,12 @@ declare module '@tanstack/react-table' {
   }
 }
 
+/**
+ * Arreglo vacío estable para cuando aún no hay datos. Un `[]` nuevo en cada render hace que TanStack Table vea datos
+ * distintos, reinicie su estado y vuelva a renderizar sin fin (congelaba la página al cambiar un filtro).
+ */
+const SIN_DATOS: never[] = [];
+
 export interface PaginacionTabla {
   pagina: number;
   tamano: number;
@@ -68,7 +74,7 @@ export function TablaDatos<T>({
   const [orden, setOrden] = useState<SortingState>([]);
   const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
   const tabla = useReactTable({
-    data: datos ?? [],
+    data: datos ?? SIN_DATOS,
     columns: columnas,
     state: { sorting: orden },
     onSortingChange: setOrden,
