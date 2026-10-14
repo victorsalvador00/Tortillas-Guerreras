@@ -14,7 +14,7 @@
 
     <PackageReference Include="Hangfire.Core" />
     <PackageReference Include="QRCoder" />
-    <PackageReference Include="PDFsharp-MigraDoc" />
+    <PackageReference Include="AWSSDK.S3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\TG.SharedKernel\TG.SharedKernel.csproj" />

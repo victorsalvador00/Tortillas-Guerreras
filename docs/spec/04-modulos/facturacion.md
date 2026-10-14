@@ -56,3 +56,27 @@ del ticket para no exponer datos), `POST /solicitudes`, `GET /solicitudes/{id}` 
 - Con el proveedor simulado, una solicitud válida de autofactura termina en `Timbrada` y el portal
   permite descargar XML y PDF.
 - La previsualización de la global excluye las ventas autofacturadas del periodo.
+
+## Decisiones de implementación (T-6.1 a T-6.3)
+- **Proveedor:** `Facturacion:Proveedor` = `Simulado` (único disponible hasta D-06). Genera UUID, XML con la estructura
+  CFDI 4.0 (sello y certificado `SIMULADO`) y PDF. El PDF se escribe directo (Helvetica estándar y QR dibujado con la
+  matriz de QRCoder) para no depender de fuentes instaladas en el servidor; no se usa PdfSharp.
+- **Archivos:** `Archivos:Proveedor` = `Local` (por defecto, `Archivos:Ruta` o `<ContentRoot>/App_Data/archivos`) o
+  `Spaces` (`Spaces:Key`, `Secret`, `Bucket`, `Endpoint`). Llave `facturas/AAAA/MM/<serie><folio>-<uuid>.xml|pdf`.
+- **Correo (RN-FAC-09):** con `Smtp:Host` (`Port`, `Usuario`, `Contrasena`, `Remitente`, `Ssl`) se envía por SMTP; sin él
+  solo se registra en el log. Un fallo de correo no revierte el timbrado.
+- **Folios:** número consecutivo por tipo (`facturacion.folio_ingreso_seq`, `facturacion.folio_global_seq`); la serie
+  sale del emisor.
+- **Outbox:** Hangfire ejecuta `ProcesadorOutboxFacturacion` cada minuto; cada mensaje en su transacción con
+  `FOR UPDATE SKIP LOCKED`. Reintentos a 1, 5, 15 y 60 min (luego cada 60), máximo 10; agotados, la solicitud de
+  autofactura pasa a `Error`. `POST /facturas/{id}/reintentar` reinicia el contador.
+- **Factura global:** un concepto por ticket (clave `01010101`, unidad `ACT`, cantidad 1, `NoIdentificacion` = folio);
+  si un ticket mezcla tasas de IVA/IEPS se parte en un concepto por tasa con el mismo folio. Periodicidad del parámetro
+  `factura_global.periodicidad` (Mensual → `04`); `Meses` y `Año` de la fecha final del periodo.
+- **Portal:** el límite por IP (RN-FAC-08) aplica a `GET /tickets/{folio}` y `POST /solicitudes`; captcha, estado y
+  descargas no cuentan. Los rechazos se guardan como solicitud `Rechazada` con su motivo. Captcha aritmético en memoria
+  de un solo uso (10 min) [SUP-15].
+- **Cancelación [SUP-15]:** motivo SAT `01`–`04` (`01` exige `sustituye`); si estaba timbrada se cancela con el
+  proveedor; las ventas quedan libres para volver a facturarse.
+- **Factura web:** las ventas deben ser del mismo cliente; el receptor sale de los datos fiscales del cliente o del
+  cuerpo de la solicitud. Ventas a crédito → `PPD`/`99`; contado → `PUE` y `01` (o `03` si todas fueron transferencia).

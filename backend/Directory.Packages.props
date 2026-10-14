@@ -23,6 +23,7 @@
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.1" />
     <PackageVersion Include="QRCoder" Version="1.8.1" />
     <PackageVersion Include="PDFsharp-MigraDoc" Version="6.2.4" />
     <!-- Transitivo de Hangfire; se fija para evitar la versión 11 con vulnerabilidad (MIT). -->

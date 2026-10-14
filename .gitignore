@@ -30,3 +30,5 @@ Thumbs.db
 
 # Worktrees de agentes de Claude Code
 .claude/worktrees/
+# Archivos generados localmente (XML/PDF de facturas)
+App_Data/
