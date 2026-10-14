@@ -85,6 +85,13 @@
   --tg-serie-2: #eb6834;
   --tg-serie-3: #1baf7a;
 
+  /* Íconos del menú con acabado metálico: acero en reposo, dorado (como el marco del logo) en la página actual. */
+  --tg-metal-acero: linear-gradient(170deg, #b8c2cf 0%, #5d6878 38%, #e3e8ee 52%, #3d4756 70%, #7c8796 100%);
+  --tg-metal-oro: linear-gradient(170deg, #fff4c8 0%, #e2b65a 34%, #fff1b8 50%, #a97a26 68%, #f0cd77 100%);
+  --tg-metal-luz: rgb(255 255 255 / 75%);
+  --tg-metal-sombra: rgb(0 20 60 / 45%);
+  --tg-metal-brillo: linear-gradient(115deg, transparent 25%, rgb(255 255 255 / 45%) 42%, rgb(255 255 255 / 0%) 58%);
+
   --tg-topbar-height: 64px;
   --tg-sidebar-width: 256px;
   --tg-sidebar-collapsed-width: 72px;
@@ -153,6 +160,11 @@
   --tg-tag-icon-active: #001233;
   --tg-tag-text-active: #cfe2ff;
   --tg-tag-dots: #19d3ff;
+
+  --tg-metal-acero: linear-gradient(170deg, #ffffff 0%, #9aa7ba 38%, #f2f5f9 52%, #6f7d92 70%, #c9d2de 100%);
+  --tg-metal-luz: rgb(255 255 255 / 25%);
+  --tg-metal-sombra: rgb(0 0 0 / 70%);
+  --tg-metal-brillo: linear-gradient(115deg, transparent 25%, rgb(255 255 255 / 22%) 42%, rgb(255 255 255 / 0%) 58%);
 
   --tg-serie-1: #3987e5;
   --tg-serie-2: #d95926;
@@ -266,6 +278,19 @@
   color: var(--tg-tag-icon);
   width: 24px;
   font-size: 22px;
+  /* Relleno de 1 (no solo contorno) para que el degradado metálico se lea; grosor 600 como lámina estampada. */
+  font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+  background: var(--tg-metal-acero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 var(--tg-metal-luz)) drop-shadow(0 -1px 0 var(--tg-metal-sombra));
+  transition: filter 150ms ease;
+}
+
+.tg-nav-item:hover .icono {
+  filter: drop-shadow(0 1px 0 var(--tg-metal-luz)) drop-shadow(0 -1px 0 var(--tg-metal-sombra))
+    drop-shadow(0 0 3px rgb(255 255 255 / 60%));
 }
 
 .tg-nav-tag {
@@ -292,7 +317,9 @@
   left: 0;
   width: 56px;
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
-  background: linear-gradient(135deg, var(--tg-tag-block-from), var(--tg-tag-block-to));
+  background:
+    var(--tg-metal-brillo),
+    linear-gradient(135deg, var(--tg-tag-block-from), var(--tg-tag-block-to));
 }
 
 .tg-nav-tag-dots {
@@ -341,6 +368,21 @@
 
 .tg-nav-item[aria-current='page'] .icono {
   color: var(--tg-tag-icon-active);
+  background: var(--tg-metal-oro);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 35%)) drop-shadow(0 -1px 0 rgb(60 35 0 / 70%))
+    drop-shadow(0 0 4px rgb(255 214 120 / 45%));
+}
+
+/* Alto contraste: sin degradados, el color del sistema. */
+@media (forced-colors: active) {
+  .tg-nav-item .icono,
+  .tg-nav-item[aria-current='page'] .icono {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    filter: none;
+  }
 }
 
 .tg-nav-item[aria-current='page'] .tg-nav-tag {
@@ -354,7 +396,9 @@
 }
 
 .tg-nav-item[aria-current='page'] .tg-nav-tag-block {
-  background: linear-gradient(135deg, var(--tg-tag-block-active-from), var(--tg-tag-block-active-to));
+  background:
+    var(--tg-metal-brillo),
+    linear-gradient(135deg, var(--tg-tag-block-active-from), var(--tg-tag-block-active-to));
 }
 
 .tg-nav-item[aria-current='page'] .tg-nav-tag-dots {
