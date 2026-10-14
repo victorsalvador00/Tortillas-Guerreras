@@ -32,6 +32,13 @@ internal sealed class TransformadorDocumentoOpenApi : IOpenApiDocumentTransforme
         [
             new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference("Bearer", document)] = [] },
         ];
+
+        // Las referencias nulables (oneOf: [null, $ref]) se arman después de los transformadores de esquema.
+        foreach (var esquema in document.Components.Schemas?.Values.OfType<OpenApiSchema>() ?? [])
+        {
+            TransformadorOpcionalesOpenApi.QuitarObligatoriosNulables(esquema);
+        }
+
         return Task.CompletedTask;
     }
 }
@@ -44,9 +51,15 @@ internal sealed class TransformadorOpcionalesOpenApi : IOpenApiSchemaTransformer
 {
     public Task TransformAsync(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
     {
+        QuitarObligatoriosNulables(schema);
+        return Task.CompletedTask;
+    }
+
+    public static void QuitarObligatoriosNulables(OpenApiSchema schema)
+    {
         if (schema.Properties is null || schema.Required is null || schema.Required.Count == 0)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         foreach (var (nombre, propiedad) in schema.Properties)
@@ -56,8 +69,6 @@ internal sealed class TransformadorOpcionalesOpenApi : IOpenApiSchemaTransformer
                 schema.Required.Remove(nombre);
             }
         }
-
-        return Task.CompletedTask;
     }
 
     private static bool AceptaNulo(IOpenApiSchema propiedad) =>

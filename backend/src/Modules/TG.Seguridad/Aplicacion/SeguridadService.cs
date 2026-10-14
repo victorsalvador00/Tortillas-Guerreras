@@ -65,6 +65,18 @@ internal sealed class SeguridadService(SeguridadDbContext db, TimeProvider reloj
             .FirstOrDefaultAsync(ct);
     }
 
+    public async Task<IReadOnlyList<UsuarioResumen>> UsuariosConRolAsync(string rol, CancellationToken ct)
+    {
+        var normalizado = rol.ToUpperInvariant();
+        return await db.Roles.Where(r => r.NormalizedName == normalizado)
+            .Join(db.UserRoles, r => r.Id, ur => ur.RoleId, (r, ur) => ur.UserId)
+            .Join(db.Users, id => id, u => u.Id, (id, u) => u)
+            .Where(u => u.Activo)
+            .OrderBy(u => u.NombreCompleto)
+            .Select(u => new UsuarioResumen(u.Id, u.UserName!, u.NombreCompleto, u.Activo))
+            .ToListAsync(ct);
+    }
+
     private static DispositivoInfo AInfo(Dispositivo d) =>
         new(d.Id, d.Codigo, d.Nombre, d.UsuarioId, d.Activo, d.UltimoConsecutivo, d.OperacionesPendientes, d.UltimoSyncEn);
 }

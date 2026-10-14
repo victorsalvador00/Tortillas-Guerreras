@@ -46,6 +46,7 @@ import type {
   RegistrarRetornoRequest,
   RetornoDto,
   RutaDto,
+  UsuarioResumen,
   VehiculoDto
 } from '.././modelos';
 
@@ -264,7 +265,93 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const listarRutas = (
+    export const listarVendedores = (
+    
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<UsuarioResumen[]>(
+      {url: `/api/v1/logistica/vendedores`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarVendedoresQueryKey = () => {
+    return [
+    `/api/v1/logistica/vendedores`
+    ] as const;
+    }
+
+    
+export const getListarVendedoresQueryOptions = <TData = Awaited<ReturnType<typeof listarVendedores>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarVendedoresQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarVendedores>>> = ({ signal }) => listarVendedores(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarVendedoresQueryResult = NonNullable<Awaited<ReturnType<typeof listarVendedores>>>
+export type ListarVendedoresQueryError = ErrorType<unknown>
+
+
+export function useListarVendedores<TData = Awaited<ReturnType<typeof listarVendedores>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarVendedores>>,
+          TError,
+          Awaited<ReturnType<typeof listarVendedores>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarVendedores<TData = Awaited<ReturnType<typeof listarVendedores>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarVendedores>>,
+          TError,
+          Awaited<ReturnType<typeof listarVendedores>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarVendedores<TData = Awaited<ReturnType<typeof listarVendedores>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarVendedores<TData = Awaited<ReturnType<typeof listarVendedores>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarVendedores>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarVendedoresQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const listarRutas = (
     params?: ListarRutasParams,
  options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
 ) => {

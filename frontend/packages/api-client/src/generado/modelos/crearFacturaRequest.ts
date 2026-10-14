@@ -10,6 +10,6 @@ import type { CrearFacturaRequestEmail } from './crearFacturaRequestEmail';
 
 export interface CrearFacturaRequest {
   ventaIds: string[];
-  receptor: CrearFacturaRequestReceptor;
+  receptor?: CrearFacturaRequestReceptor;
   email?: CrearFacturaRequestEmail;
 }

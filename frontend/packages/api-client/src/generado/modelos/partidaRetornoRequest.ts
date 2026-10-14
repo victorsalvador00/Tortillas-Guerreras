@@ -15,6 +15,6 @@ export interface PartidaRetornoRequest {
   cantidad: number;
   unidadId?: PartidaRetornoRequestUnidadId;
   lote?: PartidaRetornoRequestLote;
-  condicion: PartidaRetornoRequestCondicion;
+  condicion?: PartidaRetornoRequestCondicion;
   motivoMermaId?: PartidaRetornoRequestMotivoMermaId;
 }

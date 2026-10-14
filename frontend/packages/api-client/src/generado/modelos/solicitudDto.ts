@@ -18,5 +18,5 @@ export interface SolicitudDto {
   rfc: string;
   razonSocial: string;
   email: string;
-  factura: SolicitudDtoFactura;
+  factura?: SolicitudDtoFactura;
 }

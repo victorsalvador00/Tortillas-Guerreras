@@ -27,6 +27,10 @@ internal static class LogisticaEndpoints
         vehiculos.MapPut("/{id:guid}", async (Guid id, GuardarVehiculoRequest r, VehiculosHandler h, CancellationToken ct) =>
             (await h.ActualizarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<GuardarVehiculoRequest>().WithName("actualizarVehiculo");
 
+        grupo.MapGet("/vendedores", (TG.Seguridad.Publico.ISeguridadService seguridad, CancellationToken ct) =>
+                seguridad.UsuariosConRolAsync("Vendedor", ct))
+            .AlgunPermiso(P.Configurar, P.Ver).WithName("listarVendedores");
+
         var rutas = grupo.MapGroup("/rutas");
         rutas.MapGet("/", (bool? activo, RutasHandler h, CancellationToken ct) => h.ListarAsync(activo, ct))
             .AlgunPermiso(P.Configurar, P.Ver, P.Cargar, P.Retornos, P.Liquidar).WithName("listarRutas");

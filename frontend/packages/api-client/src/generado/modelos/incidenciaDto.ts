@@ -19,7 +19,7 @@ export interface IncidenciaDto {
   entidadTipo: string;
   entidadId: string;
   referencia?: IncidenciaDtoReferencia;
-  detalle: IncidenciaDtoDetalle;
+  detalle?: IncidenciaDtoDetalle;
   estado: EstadoIncidencia;
   creadoEn: string;
   revisadaPor?: IncidenciaDtoRevisadaPor;

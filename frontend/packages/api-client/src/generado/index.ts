@@ -7,6 +7,8 @@ export * from './logística/logística';
 export * from './modelos';
 export * from './portal-de-autofactura/portal-de-autofactura';
 export * from './producción/producción';
+export * from './reportes/reportes';
 export * from './seguridad/seguridad';
 export * from './sincronización/sincronización';
+export * from './tablero/tablero';
 export * from './ventas/ventas';

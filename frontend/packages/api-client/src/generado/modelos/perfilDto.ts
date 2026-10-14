@@ -15,5 +15,5 @@ export interface PerfilDto {
   email?: PerfilDtoEmail;
   roles: string[];
   permisos: string[];
-  dispositivo: PerfilDtoDispositivo;
+  dispositivo?: PerfilDtoDispositivo;
 }

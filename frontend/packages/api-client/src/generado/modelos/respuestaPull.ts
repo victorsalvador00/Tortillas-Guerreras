@@ -12,6 +12,6 @@ export interface RespuestaPull {
   cursor: number;
   hayMas: boolean;
   fechaServidor: string;
-  ruta: RespuestaPullRuta;
+  ruta?: RespuestaPullRuta;
   cambios: CambiosSync;
 }

@@ -126,6 +126,7 @@ public static class HostApi
         servicios.AddLogisticaModule(configuracion);
         servicios.AddFacturacionModule(configuracion);
         servicios.AddSincronizacionModule(configuracion);
+        servicios.AddScoped<ConsultasTablero>();
 
         if (HangfireHabilitado(configuracion))
         {
