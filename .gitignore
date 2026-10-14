@@ -27,3 +27,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Archivos generados localmente (XML/PDF de facturas)
+App_Data/
