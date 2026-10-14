@@ -5,9 +5,23 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] },
-    "types": ["vitest/globals"]
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "types": [
+      "vitest/globals"
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "tipos.d.ts"],
-  "exclude": ["node_modules", "drizzle.config.ts", "vitest.config.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "tipos.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "drizzle.config.ts",
+    "vitest.config.ts"
+  ]
 }
