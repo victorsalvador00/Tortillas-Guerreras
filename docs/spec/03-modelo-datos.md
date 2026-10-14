@@ -106,8 +106,8 @@ Vendedor, Facturacion, Supervisor.
 
 ## Esquema `compras`
 
-**proveedores**: `id`, `codigo UX`, `razon_social`, `nombre_comercial`, `rfc null`, `contacto`,
-`telefono`, `email`, `dias_credito int`, `activo`.
+**proveedores**: `id`, `codigo UX`, `razon_social`, `nombre_comercial null`, `rfc null` (12 o 13 caracteres),
+`contacto null`, `telefono null`, `email null`, `dias_credito int`, `activo`.
 
 **proveedores_productos**: `proveedor_id`, `producto_id` (PK), `unidad_id`, `ultimo_precio`,
 `ultima_compra_en`.
@@ -129,7 +129,7 @@ Vendedor, Facturacion, Supervisor.
 | xmin | concurrencia | |
 
 **ordenes_compra_partidas**: `id`, `orden_compra_id`, `producto_id`, `unidad_id`,
-`factor_a_base`, `cantidad`, `cantidad_base`, `precio_unitario`, `tasa_iva`, `importe`,
+`factor_a_base`, `cantidad`, `cantidad_base`, `precio_unitario`, `tasa_iva`, `importe`, `iva numeric(18,2)`,
 `cantidad_recibida_base` (acumulada).
 
 **recepciones**
@@ -144,9 +144,12 @@ Vendedor, Facturacion, Supervisor.
 | fecha_operativa | date | |
 | factura_proveedor | text null | folio o UUID de la factura del proveedor |
 | estado | text | `Registrada`, `Cancelada` |
+| notas | text null | |
+| cancelada_en, cancelada_por | timestamptz, uuid null | |
 
 **recepciones_partidas**: `id`, `recepcion_id`, `orden_compra_partida_id null`, `producto_id`,
-`unidad_id`, `factor_a_base`, `cantidad`, `cantidad_base`, `costo_unitario_base numeric(18,6)`,
+`unidad_id`, `factor_a_base`, `cantidad`, `cantidad_base`, `precio_unitario numeric(18,4)` (sin IVA, unidad
+capturada; alimenta el historial de precios), `costo_unitario_base numeric(18,6)`,
 `lote text null`, `fecha_caducidad date null`.
 
 ---
@@ -169,6 +172,7 @@ Vendedor, Facturacion, Supervisor.
 | estado | text | `Borrador`, `Vigente`, `Obsoleta`; una sola `Vigente` por producto |
 | vigente_desde | timestamptz null | |
 | notas | text null | |
+| xmin | concurrencia | índice único parcial `ux_recetas_producto_vigente` (`producto_id` donde `estado = 'Vigente'`, RN-PRO-01) |
 
 **recetas_componentes**: `id`, `receta_id`, `producto_id`, `unidad_id`, `factor_a_base`,
 `cantidad`, `cantidad_base`, `orden smallint`.
@@ -188,18 +192,22 @@ Vendedor, Facturacion, Supervisor.
 | cantidad_producida | numeric(18,4) null | al terminar |
 | almacen_consumo_id | uuid | de donde salen los componentes |
 | almacen_destino_id | uuid | a donde entra el producto |
-| lote | text | `AAMMDD-OP000001` al liberar |
+| lote | text | `''` hasta liberar; `AAMMDD-OP000001` al liberar |
 | estado | text | `Planeada`, `Liberada`, `EnProceso`, `Terminada`, `Cancelada` |
 | iniciada_en, terminada_en | timestamptz null | |
 | responsable_id | uuid null | |
 | costo_total | numeric(18,2) null | suma de consumos al terminar |
+| costo_unitario | numeric(18,6) null | costo_total / cantidad_producida (RN-PRO-05) |
+| liberada_en | timestamptz null | |
 | notas | text null | |
+| xmin | concurrencia | índice `ix_ordenes_produccion_fecha_operativa` |
 
 **ordenes_produccion_consumos**: `id`, `orden_produccion_id`, `producto_id`,
-`cantidad_teorica_base`, `cantidad_real_base`, `lote_consumido null`, `costo_unitario`.
+`cantidad_teorica_base`, `cantidad_real_base null` (nulo = no capturado, RN-PRO-03), `lote_consumido null`,
+`costo_unitario`.
 
 **ordenes_produccion_mermas**: `id`, `orden_produccion_id`, `producto_id`, `cantidad_base`,
-`motivo_merma_id`, `notas`.
+`motivo_merma_id`, `notas`, `registrada_en`.
 
 ---
 
@@ -348,10 +356,10 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 
 ## Esquema `ventas`
 
-**canales**: `id`, `clave UX` (`INST`, `AUTO`, `TRAD`), `nombre`, `requiere_factura_default`.
+**canales**: `id`, `clave UX` (`INST`, `AUTO`, `TRAD`), `nombre`, `requiere_factura_default`, `activo`.
 
 **listas_precio**: `id`, `nombre`, `canal_id null`, `vigente_desde date`, `activo`,
-`version_sync`. **listas_precio_partidas**: `lista_precio_id`, `producto_id`, `unidad_id` (PK),
+`version_sync`. **listas_precio_partidas**: PK (`lista_precio_id`, `producto_id`, `unidad_id`),
 `precio_unitario numeric(18,4)` **sin impuestos** `[SUP-07]`, `version_sync`.
 
 **clientes**
@@ -372,16 +380,19 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | calle, colonia, municipio, estado, codigo_postal | text null | |
 | latitud, longitud | numeric(9,6) null | |
 | ubicacion_aprobada | boolean | la primera captura en ruta queda por aprobar |
+| latitud_propuesta, longitud_propuesta | numeric(9,6) null | ubicación capturada en ruta pendiente de aprobar |
+| ruta_generico | text null | UX filtrado: código de la ruta del cliente genérico (`GEN-<ruta>`) |
 | es_generico | boolean | "Público en general" por ruta |
 | activo | boolean | |
 | version_sync | bigint | |
+| xmin | concurrencia | |
 
 **pedidos** (institucional y autoservicio): `id`, `folio PED-`, `cliente_id`, `fecha`,
 `fecha_entrega`, `estado` (`Capturado`, `Confirmado`, `Asignado`, `Entregado`,
 `EntregadoParcial`, `Cancelado`), `envio_id null`, `ruta_id null`, `orden_compra_cliente text null`,
-`subtotal`, `iva`, `ieps`, `total`, `version_sync`. **pedidos_partidas**: `id`, `pedido_id`,
+`subtotal`, `iva`, `ieps`, `total`, `notas null`, `version_sync`, `xmin`. **pedidos_partidas**: `id`, `pedido_id`,
 `producto_id`, `unidad_id`, `factor_a_base`, `cantidad`, `cantidad_base`, `precio_unitario`,
-`tasa_iva`, `tasa_ieps`, `importe`, `cantidad_entregada_base`.
+`tasa_iva`, `tasa_ieps null`, `importe`, `cantidad_entregada_base`.
 
 **ventas**
 
@@ -411,18 +422,23 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | estado | text | `Registrada`, `Cancelada` |
 | motivo_cancelacion | text null | |
 | factura_id | uuid null | factura individual o global que la incluye |
+| total_app | numeric(18,2) null | total que calculó la app (RN-VEN-02) |
+| cancelada_en, cancelada_por | timestamptz, uuid null | |
+
+Índices únicos `ux_ventas_folio` y `ux_ventas_op_id` (filtrado).
 
 **ventas_partidas**: `id`, `venta_id`, `producto_id`, `unidad_id`, `factor_a_base`,
-`cantidad`, `cantidad_base`, `lote`, `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`,
-`iva`, `ieps`.
+`cantidad`, `cantidad_base`, `lote` (si FEFO repartió en varios lotes van separados por coma; el detalle exacto está
+en el kardex), `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`, `iva`, `ieps`, `pedido_partida_id null`.
 
 **cobros** `[SUP-08]`: `id`, `op_id UX null`, `folio`, `cliente_id`, `ruta_id null`,
-`dispositivo_id null`, `fecha_operativa`, `forma_pago`, `importe`, `estado`.
+`dispositivo_id null`, `fecha_operativa`, `forma_pago`, `importe`, `estado` (`Registrado`, `Cancelado`); folio `COB-`.
 **cobros_aplicaciones**: `cobro_id`, `venta_id`, `importe`.
 
 **incidencias**: `id`, `tipo` (`ExistenciaNegativaRuta`, `GpsFueraDeRango`, `GpsImpreciso`,
-`SinGps`, `PrecioDistinto`, `UbicacionPorAprobar`, `DiferenciaLiquidacion`), `entidad_tipo`,
-`entidad_id`, `detalle jsonb`, `estado` (`Abierta`, `Revisada`), `revisada_por`, `revisada_en`.
+`SinGps`, `PrecioDistinto`, `UbicacionPorAprobar`, `DiferenciaLiquidacion`, `CreditoExcedido` (RN-VEN-04),
+`TotalDistinto` (RN-VEN-02)), `entidad_tipo`, `entidad_id`, `detalle jsonb`, `estado` (`Abierta`, `Revisada`),
+`revisada_por`, `revisada_en`, `notas_revision null`.
 
 ---
 
@@ -530,6 +546,12 @@ Valores **de ejemplo**; reemplazar con los reales del cliente.
 **Motivos de merma:** Masa pasada/agria, Tortilla rota o deforme, Falla de máquina, Producto
 caducado, Contaminación, Devolución no vendible, Daño en transporte, Faltante de ruta, Reproceso (RN-LOG-07,
 `[SUP-13]`), Otro.
+
+**Folios por módulo:** `OC-`, `REC-` (compras); `OP-` (producción); `VTA-`, `PED-`, `COB-`, `CLI-` (ventas);
+`AJ-`, `TR-`, `CF-` (inventario).
+
+**Líneas de producción de ejemplo:** `MOL-1`, `TOR-1`, `TOR-2`, `FRE-1`, `EMP-1`. **Proveedores de ejemplo:**
+GRANOS, QUIMICA, EMPAQUES.
 
 **Folios:** secuencia por prefijo `<esquema>.folio_<prefijo>_seq` creada en la migración de cada módulo.
 

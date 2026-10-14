@@ -21,7 +21,8 @@ public interface IInventarioService
     Task<decimal> ObtenerCostoPromedioAsync(Guid productoId, CancellationToken ct);
 }
 // RegistrarMovimientosRequest: documento (tipo, id, folio), fecha_operativa, usuario, dispositivo?,
-// lista de líneas (tipo, almacén, producto, lote, cantidad con signo, costo_unitario?, motivo?)
+// lista de líneas (tipo, almacén, producto, lote, cantidad con signo, costo_unitario?, motivo?) y
+// PermitirNegativo opcional (producción con produccion.permitir_consumo_sin_existencia, RN-PRO-06)
 ```
 
 ## Reglas
