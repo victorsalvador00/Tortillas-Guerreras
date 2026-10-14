@@ -23,7 +23,13 @@ public static class SeguridadModule
     {
         services.AgregarDbContextModulo<SeguridadDbContext>(SeguridadDbContext.Esquema);
         services.AgregarHandlers(typeof(SeguridadModule).Assembly);
-        services.Configure<OpcionesJwt>(configuracion.GetSection("Jwt"));
+        services.AddOptions<OpcionesJwt>()
+            .Bind(configuracion.GetSection("Jwt"))
+            // La herramienta que genera openapi.json al compilar levanta el host sin configuración: no se valida ahí.
+            .Validate(o => System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"
+                    || System.Text.Encoding.UTF8.GetByteCount(o.Key) >= 32,
+                "Falta Jwt:Key (mínimo 32 bytes). En local arranca con ASPNETCORE_ENVIRONMENT=Development; en servidor defínela en .env.")
+            .ValidateOnStart();
         services.AddScoped<ServicioTokens>();
         services.AddScoped<ISeguridadService, SeguridadService>();
         services.AddScoped<IInicializadorModulo, InicializadorSeguridad>();

@@ -22,7 +22,7 @@ Requisitos: .NET SDK 10, Node 22+, pnpm 10 y Docker.
 docker compose -f deploy/docker-compose.dev.yml up -d
 
 # 2. API en http://localhost:5080 — migra y carga datos demo al iniciar (Development)
-dotnet run --project backend/src/TG.Api --urls http://localhost:5080
+dotnet run --project backend/src/TG.Api   # perfil Development (Properties/launchSettings.json)
 #    Documentación: http://localhost:5080/docs · Salud: /salud · Hangfire: /hangfire (admin/admin)
 
 # 3. Web en http://localhost:5173 y portal en http://localhost:5174
