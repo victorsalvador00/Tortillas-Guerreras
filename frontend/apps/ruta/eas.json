@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "channel": "preview",
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-pruebas.tortillasguerreras.mx",
+        "EXPO_PUBLIC_PORTAL_URL": "https://factura-pruebas.tortillasguerreras.mx"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "android": { "buildType": "app-bundle" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.tortillasguerreras.mx",
+        "EXPO_PUBLIC_PORTAL_URL": "https://factura.tortillasguerreras.mx"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

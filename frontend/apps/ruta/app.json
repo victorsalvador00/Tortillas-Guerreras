@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Guerreras Ruta",
+    "slug": "tg-ruta",
+    "scheme": "tgruta",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "mx.tortillasguerreras.ruta",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "La app registra la ubicación al confirmar ventas, entregas y retornos."
+      }
+    },
+    "android": {
+      "package": "mx.tortillasguerreras.ruta",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-location",
+        { "locationWhenInUsePermission": "La app registra la ubicación al confirmar ventas, entregas y retornos." }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://api.tortillasguerreras.mx",
+      "portalUrl": "https://factura.tortillasguerreras.mx"
+    }
+  }
+}

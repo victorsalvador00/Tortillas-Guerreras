@@ -46,9 +46,8 @@ export interface ClienteSync {
   rfc: string | null;
   razonSocial: string | null;
   telefono: string | null;
-  calle: string | null;
-  colonia: string | null;
-  municipio: string | null;
+  /** Dirección en una línea. */
+  direccion: string | null;
   latitud: number | null;
   longitud: number | null;
   ubicacionAprobada: boolean;
