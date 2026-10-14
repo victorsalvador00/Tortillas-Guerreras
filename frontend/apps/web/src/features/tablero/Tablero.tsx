@@ -34,7 +34,7 @@ export function Tablero() {
                 valor={planeado > 0 ? formatoPorcentaje(producido / planeado, 0) : '—'}
                 titulo="Producción vs plan"
                 nota={`${formatoCantidad(producido, 1)} de ${formatoCantidad(planeado, 1)} planeado`}
-                onClick={() => navegar({ to: '/produccion/plan' })}
+                onClick={() => navegar({ to: '/produccion/ordenes' })}
               />
               <TarjetaIndicador
                 icono="delete_sweep"

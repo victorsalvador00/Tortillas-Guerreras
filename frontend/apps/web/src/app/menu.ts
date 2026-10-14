@@ -24,7 +24,6 @@ export const MENU: SeccionMenu[] = [
   {
     etiqueta: 'Producción',
     opciones: [
-      { etiqueta: 'Plan del día', ruta: '/produccion/plan', icono: 'event_note', permiso: 'produccion.ver' },
       { etiqueta: 'Órdenes de producción', ruta: '/produccion/ordenes', icono: 'factory', permiso: 'produccion.ver' },
       { etiqueta: 'Recetas', ruta: '/produccion/recetas', icono: 'cooking', permiso: 'produccion.ver' },
       { etiqueta: 'Líneas', ruta: '/produccion/lineas', icono: 'conveyor_belt', permiso: 'produccion.ver' },
