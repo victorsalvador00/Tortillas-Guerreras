@@ -29,8 +29,9 @@ public sealed record EnvioSync(Guid Id, string Folio, DateOnly FechaOperativa, s
 public sealed record PedidoPartidaSync(Guid Id, Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal CantidadBase,
     decimal PrecioUnitario, decimal TasaIva, decimal? TasaIeps, decimal CantidadEntregadaBase);
 
+/// <summary>Pedido por entregar; <c>EnvioId</c>/<c>EnvioFolio</c>: la carga en la que va (RN-LOG-11), nulos si no va en ninguna.</summary>
 public sealed record PedidoSync(Guid Id, string Folio, Guid ClienteId, DateOnly? FechaEntrega, string Estado, decimal Total,
-    long VersionSync, IReadOnlyList<PedidoPartidaSync> Partidas);
+    Guid? EnvioId, string? EnvioFolio, long VersionSync, IReadOnlyList<PedidoPartidaSync> Partidas);
 
 public sealed record SaldoClienteSync(Guid ClienteId, decimal Saldo);
 

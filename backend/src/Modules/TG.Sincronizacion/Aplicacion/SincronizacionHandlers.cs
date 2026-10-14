@@ -195,7 +195,10 @@ public sealed class PullHandler(
                     e.VersionSync, e.Partidas.Select(x => new EnvioPartidaSync(x.Id, x.ProductoId, x.Lote, x.CantidadBase)).ToList()));
             }
 
-            foreach (var p in await ventas.PedidosDeRutaAsync(ruta.Id, cursor, ct))
+            var pedidosRuta = await ventas.PedidosDeRutaAsync(ruta.Id, cursor, ct);
+            var foliosCargas = await logistica.FoliosEnviosAsync(
+                pedidosRuta.Where(p => p.EnvioId is not null).Select(p => p.EnvioId!.Value).Distinct().ToList(), ct);
+            foreach (var p in pedidosRuta)
             {
                 Version(p.VersionSync);
                 if (p.Estado is EstadoPedido.Entregado or EstadoPedido.Cancelado)
@@ -204,7 +207,8 @@ public sealed class PullHandler(
                     continue;
                 }
 
-                pedidos.Add(new PedidoSync(p.Id, p.Folio, p.ClienteId, p.FechaEntrega, p.Estado.ToString(), p.Total, p.VersionSync,
+                pedidos.Add(new PedidoSync(p.Id, p.Folio, p.ClienteId, p.FechaEntrega, p.Estado.ToString(), p.Total, p.EnvioId,
+                    p.EnvioId is { } envioId ? foliosCargas.GetValueOrDefault(envioId) : null, p.VersionSync,
                     p.Partidas.Select(x => new PedidoPartidaSync(x.Id, x.ProductoId, x.UnidadId, x.Cantidad, x.CantidadBase,
                         x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.CantidadEntregadaBase)).ToList()));
             }

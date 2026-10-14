@@ -24,7 +24,7 @@ Devuelve cambios con `version_sync > desde` de las colecciones del alcance del d
 | rutas_clientes | de la ruta |
 | listas_precio_partidas | listas usadas por los clientes de la ruta |
 | envios + envios_partidas | de la ruta, estado `EnRuta`, últimos 2 días |
-| pedidos + partidas | asignados a la ruta, no entregados |
+| pedidos + partidas | asignados a la ruta, no entregados; con `envioId`/`envioFolio` de la carga en la que van (RN-LOG-11) |
 | saldos_clientes | saldo de crédito por cliente `[SUP-08]` |
 | motivos_merma | `aplica_ruta` o `aplica_retorno` |
 | parametros | claves `gps.*`, `ruta.*` |

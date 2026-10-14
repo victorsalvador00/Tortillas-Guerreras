@@ -1,10 +1,10 @@
-import { aCentavos, formatoCentavos, formatoFechaHora } from '@tg/shared';
+import { aCentavos, formatoCentavos, formatoFecha, formatoFechaHora } from '@tg/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, View } from 'react-native';
 import { cliente } from '@/db/consultas';
 import { proponerUbicacion, registrarCobro } from '@/db/operaciones';
-import { enlacesComoLlegar } from '@/dominio/ventas';
+import { enlacesComoLlegar, textoCarga } from '@/dominio/ventas';
 import { leerGps } from '@/servicios/gps';
 import { useSync } from '@/servicios/sincronizacion';
 import { Aviso, Boton, Campo, Etiqueta, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
@@ -117,8 +117,9 @@ export default function Cliente() {
               <Etiqueta estado={p.estado} texto={p.estado} />
             </View>
             <Texto suave>
-              Entrega {p.fechaEntrega} · {formatoCentavos(aCentavos(p.total))}
+              Entrega {formatoFecha(p.fechaEntrega)} · {formatoCentavos(aCentavos(p.total))}
             </Texto>
+            <Etiqueta texto={textoCarga(p.carga)} color={p.carga.enCamioneta ? 'verde' : 'amarillo'} />
           </Tarjeta>
         ))}
       </Tarjeta>

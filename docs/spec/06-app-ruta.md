@@ -9,9 +9,9 @@ Usuarios: vendedores y repartidores. Plataforma por defecto: Android `[SUP-16]`.
 | Inicio de sesión | Usuario y contraseña; registra el dispositivo la primera vez (queda por aprobar) |
 | Mi día | Ruta, fecha, carga recibida, totales vendidos, efectivo esperado, operaciones pendientes de enviar, botón Sincronizar |
 | Clientes de hoy | Lista en orden de visita según `dias_visita`; estado visitado/no visitado; búsqueda; botón "Cómo llegar" (Google Maps/Waze) |
-| Cliente | Datos, saldo `[SUP-08]`, pedidos pendientes, historial de últimas ventas |
+| Cliente | Datos, saldo `[SUP-08]`, pedidos pendientes con su carga ("En carga ENV-…", "· por despachar" o "Sin carga"), historial de últimas ventas |
 | Nueva venta | Productos con existencia de la camioneta, cantidad, precio de lista, total; forma de pago; confirmar (toma GPS) |
-| Entregar pedido | Partidas del pedido, cantidades entregadas, confirmar (toma GPS) |
+| Entregar pedido | Partidas del pedido, carga en la que va (aviso si no va en ninguna o no se ha despachado), cantidades entregadas, confirmar (toma GPS) |
 | Retorno | Producto, cantidad, condición (vendible/no vendible), motivo |
 | Ticket | Folio, partidas, total, leyenda y URL del portal de autofactura con QR; compartir por WhatsApp; imprimir si hay impresora `[SUP-17]` |
 | Inventario de camioneta | Cargado, vendido, devuelto, existencia actual por producto |

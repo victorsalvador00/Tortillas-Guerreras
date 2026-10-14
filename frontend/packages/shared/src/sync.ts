@@ -112,6 +112,9 @@ export interface PedidoSync {
   fechaEntrega: string;
   estado: string;
   total: number;
+  /** Carga (envío) en la que va el pedido; `null` si no va en ninguna (RN-LOG-11). */
+  envioId: string | null;
+  envioFolio: string | null;
   versionSync: number;
   partidas: PedidoPartidaSync[];
 }

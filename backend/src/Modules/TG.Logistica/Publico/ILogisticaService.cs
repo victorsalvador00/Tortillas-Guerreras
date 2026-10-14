@@ -111,6 +111,9 @@ public interface ILogisticaService
     /// </summary>
     Task<IReadOnlyList<EnvioInfo>> EnviosDeRutaAsync(Guid rutaId, long desdeVersion, DateOnly fechaOperativa, CancellationToken ct);
 
+    /// <summary>Folio de cada envío (carga) pedido; los que no existen no aparecen.</summary>
+    Task<IReadOnlyDictionary<Guid, string>> FoliosEnviosAsync(IReadOnlyCollection<Guid> envioIds, CancellationToken ct);
+
     Task<bool> LiquidacionCerradaAsync(Guid rutaId, DateOnly fecha, CancellationToken ct);
 
     Task<Result<RetornoRegistrado>> RegistrarRetornoAsync(RegistrarRetornoComando comando, CancellationToken ct);

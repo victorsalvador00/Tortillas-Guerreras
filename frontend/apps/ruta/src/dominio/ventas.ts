@@ -1,5 +1,19 @@
 import { calcularPartida, type ImportesPartida } from '@tg/shared';
 
+/** Carga en la que va un pedido, tal como la ve el vendedor (RN-LOG-11). */
+export interface CargaDePedido {
+  /** Folio de la carga; `null` si el pedido no va en ninguna. */
+  folio: string | null;
+  /** La carga ya se despachó y su producto está en la camioneta. */
+  enCamioneta: boolean;
+}
+
+/** "En carga ENV-000123", "… · por despachar" o "Sin carga". */
+export function textoCarga(carga: CargaDePedido): string {
+  if (!carga.folio) return 'Sin carga';
+  return carga.enCamioneta ? `En carga ${carga.folio}` : `En carga ${carga.folio} · por despachar`;
+}
+
 /** Partida capturada en la app (unidad de venta del producto). */
 export interface PartidaCaptura {
   productoId: string;

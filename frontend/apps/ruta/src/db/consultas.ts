@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm';
-import { clientesDelDia, inventarioCamioneta, type LineaInventario } from '@/dominio/ventas';
+import { clientesDelDia, inventarioCamioneta, type CargaDePedido, type LineaInventario } from '@/dominio/ventas';
 import { db } from './cliente';
 import * as t from './esquema';
 import { asegurarEstado } from './repositorio';
@@ -122,6 +122,12 @@ export function clientesRuta(fecha: string, soloHoy: boolean): ClienteRuta[] {
     : clientes.sort((a, b) => Number(a.esGenerico) - Number(b.esGenerico) || a.ordenVisita - b.ordenVisita);
 }
 
+/** La carga del pedido está en la camioneta si su envío ya bajó a la app (solo bajan los despachados). */
+function conCarga<P extends { envioId: string | null; envioFolio: string | null }>(p: P): P & { carga: CargaDePedido } {
+  const enCamioneta = !!p.envioId && !!db.select({ id: t.envios.id }).from(t.envios).where(eq(t.envios.id, p.envioId)).get();
+  return { ...p, carga: { folio: p.envioFolio, enCamioneta } };
+}
+
 export function cliente(id: string) {
   const c = db.select().from(t.clientes).where(eq(t.clientes.id, id)).get();
   if (!c) return null;
@@ -130,7 +136,8 @@ export function cliente(id: string) {
     .select()
     .from(t.pedidos)
     .where(and(eq(t.pedidos.clienteId, id), inArray(t.pedidos.estado, ['Asignado', 'Confirmado', 'EntregadoParcial'])))
-    .all();
+    .all()
+    .map(conCarga);
   const ventas = db.select().from(t.ventasLocales).where(eq(t.ventasLocales.clienteId, id)).orderBy(desc(t.ventasLocales.creadaEn)).limit(10).all();
   return { ...c, saldo, pedidos, ventas };
 }
@@ -177,7 +184,7 @@ export function pedido(id: string) {
   const productos = new Map(db.select().from(t.productos).all().map((x) => [x.id, x]));
   const unidades = new Map(db.select().from(t.productosUnidades).all().map((u) => [`${u.productoId}|${u.unidadId}`, u]));
   return {
-    ...p,
+    ...conCarga(p),
     partidas: partidas.map((x) => {
       const prod = productos.get(x.productoId);
       const unidad = unidades.get(`${x.productoId}|${x.unidadId}`);

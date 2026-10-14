@@ -1,10 +1,10 @@
-import { formatoCantidad, formatoCentavos } from '@tg/shared';
+import { formatoCantidad, formatoCentavos, formatoFecha } from '@tg/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { cliente, pedido } from '@/db/consultas';
 import { confirmarEntrega } from '@/db/operaciones';
-import { calcularVenta } from '@/dominio/ventas';
+import { calcularVenta, textoCarga } from '@/dominio/ventas';
 import { leerGps } from '@/servicios/gps';
 import { useSync } from '@/servicios/sincronizacion';
 import { Aviso, Boton, Cantidad, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
@@ -85,7 +85,15 @@ export default function Entrega() {
         <Texto negrita tamano={17}>
           {p.folio} · {c.nombre}
         </Texto>
-        <Texto suave>Entrega programada {p.fechaEntrega}</Texto>
+        <Texto suave>Entrega programada {formatoFecha(p.fechaEntrega)}</Texto>
+        <Texto suave>{textoCarga(p.carga)}</Texto>
+        {!p.carga.enCamioneta && (
+          <Aviso tipo="amarillo">
+            {p.carga.folio
+              ? 'La carga de este pedido todavía no se despacha: revisa que traigas el producto.'
+              : 'Este pedido no va en ninguna carga: revisa que traigas el producto.'}
+          </Aviso>
+        )}
         {!credito && (
           <Opciones<FormaPago>
             opciones={[

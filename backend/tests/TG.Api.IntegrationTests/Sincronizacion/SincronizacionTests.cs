@@ -29,8 +29,12 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
 
     private sealed record PrecioPull(Guid ListaPrecioId, Guid ProductoId, Guid UnidadId, decimal PrecioUnitario);
 
+    private sealed record PedidoPull(Guid Id, string Folio, Guid? EnvioId, string? EnvioFolio);
+
+    private sealed record CargaPull(Guid Id, string Folio);
+
     private sealed record Cambios(List<ProductoPull> Productos, List<ClienteRuta> Clientes, List<PrecioPull> Precios,
-        List<JsonObject> RutasClientes);
+        List<JsonObject> RutasClientes, List<PedidoPull> Pedidos);
 
     private sealed record RespuestaPull(long Cursor, bool HayMas, RutaPull? Ruta, Cambios Cambios);
 
@@ -101,6 +105,37 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
     };
 
     private static string Folio(Sesion s, int consecutivo) => $"R01-{s.Codigo}-{consecutivo:D6}";
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-11")]
+    public async Task Pull_PedidoIndicaLaCargaEnQueVa_YAlCancelarlaQuedaSinCarga()
+    {
+        var s = await SesionAppAsync();
+        var (pull, cliente, producto, precio) = await DatosRutaAsync(s);
+        var admin = await api.ClienteAsync();
+        var pedido = await admin.PostOkAsync<PedidoPull>("/api/v1/ventas/pedidos", new
+        {
+            clienteId = cliente.Id, partidas = new[] { new { productoId = producto.Id, unidadId = precio.UnidadId, cantidad = 2 } },
+        });
+        await admin.PostOkAsync<PedidoPull>($"/api/v1/ventas/pedidos/{pedido.Id}/confirmar");
+        await admin.PostOkAsync<PedidoPull>($"/api/v1/ventas/pedidos/{pedido.Id}/asignar", new { rutaId = pull.Ruta!.Id });
+        var carga = await admin.PostOkAsync<CargaPull>("/api/v1/logistica/envios", new
+        {
+            rutaId = pull.Ruta.Id, tipo = "Recarga", pedidoIds = new[] { pedido.Id },
+            partidas = new[] { new { productoId = producto.Id, cantidad = 2m } },
+        });
+
+        var conCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}");
+        var enCarga = conCarga.Cambios.Pedidos.Single(p => p.Id == pedido.Id);
+        enCarga.EnvioId.ShouldBe(carga.Id);
+        enCarga.EnvioFolio.ShouldStartWith("ENV-");
+
+        await admin.PostOkAsync<CargaPull>($"/api/v1/logistica/envios/{carga.Id}/cancelar");
+        var sinCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={conCarga.Cursor}");
+        var liberado = sinCarga.Cambios.Pedidos.Single(p => p.Id == pedido.Id);
+        liberado.EnvioId.ShouldBeNull();
+        liberado.EnvioFolio.ShouldBeNull();
+    }
 
     [Fact]
     public async Task Pull_DevuelveAlcanceDeLaRuta_YConCursorNoRepiteCambios()

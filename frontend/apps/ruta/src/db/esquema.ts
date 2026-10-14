@@ -111,6 +111,8 @@ export const pedidos = sqliteTable('pedidos', {
   fechaEntrega: text('fecha_entrega').notNull(),
   estado: text('estado').notNull(),
   total: real('total').notNull(),
+  envioId: text('envio_id'),
+  envioFolio: text('envio_folio'),
   versionSync: integer('version_sync').notNull(),
 });
 

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { consecutivoInicial, formatearFolio, uuidv7 } from './identificadores';
-import { calcularVenta, clientesDelDia, diaSemanaIso, inventarioCamioneta, validarExistencia } from './ventas';
+import { calcularVenta, clientesDelDia, diaSemanaIso, inventarioCamioneta, textoCarga, validarExistencia } from './ventas';
+
+describe('carga de cada pedido', () => {
+  it('RN-LOG-11: indica la carga del pedido, si ya va en la camioneta o si no va en ninguna', () => {
+    expect(textoCarga({ folio: 'ENV-000123', enCamioneta: true })).toBe('En carga ENV-000123');
+    expect(textoCarga({ folio: 'ENV-000123', enCamioneta: false })).toBe('En carga ENV-000123 · por despachar');
+    expect(textoCarga({ folio: null, enCamioneta: false })).toBe('Sin carga');
+  });
+});
 
 describe('folios e identificadores', () => {
   it('RN-VEN-09: folio <ruta>-<dispositivo>-<consecutivo 6 dígitos>', () => {

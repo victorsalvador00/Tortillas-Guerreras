@@ -40,6 +40,11 @@ internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos r
             e.Partidas.Select(p => new EnvioPartidaInfo(p.Id, p.ProductoId, p.Lote, p.CantidadBase, p.VersionSync)).ToList())).ToList();
     }
 
+    public async Task<IReadOnlyDictionary<Guid, string>> FoliosEnviosAsync(IReadOnlyCollection<Guid> envioIds, CancellationToken ct) =>
+        envioIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await db.Envios.AsNoTracking().Where(e => envioIds.Contains(e.Id)).ToDictionaryAsync(e => e.Id, e => e.Folio, ct);
+
     public Task<bool> LiquidacionCerradaAsync(Guid rutaId, DateOnly fecha, CancellationToken ct) =>
         db.Liquidaciones.AnyAsync(l => l.RutaId == rutaId && l.FechaOperativa == fecha && l.Estado == EstadoLiquidacion.Cerrada, ct);
 
