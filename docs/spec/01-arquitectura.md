@@ -39,10 +39,14 @@
 | Compras | `compras` | Proveedores, órdenes de compra, recepciones | Catalogos, Inventario |
 | Produccion | `produccion` | Recetas, líneas, órdenes de producción, consumos, mermas | Catalogos, Inventario |
 | Inventario | `inventario` | Almacenes, kardex, existencias, costo promedio, conteos, traspasos | Catalogos |
-| Logistica | `logistica` | Vehículos, rutas, clientes por ruta, envíos (cargas), retornos, liquidaciones | Catalogos, Inventario, Ventas |
+| Logistica | `logistica` | Vehículos, rutas, clientes por ruta, envíos (cargas), retornos, liquidaciones | Catalogos, Inventario, Ventas, Seguridad |
 | Ventas | `ventas` | Canales, listas de precio, clientes, pedidos, ventas, cobros, incidencias | Catalogos, Inventario |
-| Facturacion | `facturacion` | Emisor, solicitudes de autofactura, facturas, factura global, outbox | Ventas |
+| Facturacion | `facturacion` | Emisor, solicitudes de autofactura, facturas, factura global, outbox | Ventas, Catalogos |
 | Sincronizacion | `sync` | Endpoints push/pull, idempotencia, enrutamiento de operaciones a módulos | Todos (solo `Publico/`) |
+
+Inversiones de dependencia para evitar ciclos: Catálogos define `IConsultaInventarioProducto` (la implementa
+Inventario, RN-CAT-01/02/05); Logística define `IEstadoSincronizacionRuta` (RN-LOG-09). El tablero y los reportes
+viven en el host (`TG.Api`) con consultas Dapper de solo lectura entre esquemas.
 
 Regla de dependencias: no hay ciclos. `Inventario` y `Catalogos` no dependen de nadie más.
 `Logistica` usa `Ventas` para leer clientes y ventas de la ruta en la liquidación.

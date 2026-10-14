@@ -291,8 +291,9 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | vehiculo_id | uuid null | |
 | activo | boolean | |
 | version_sync | bigint | |
+| xmin | concurrencia | el código no se cambia después de crear la ruta |
 
-**rutas_clientes**: `ruta_id`, `cliente_id` (PK), `orden_visita smallint`,
+**rutas_clientes**: PK (`ruta_id`, `cliente_id`), `orden_visita smallint`,
 `dias_visita smallint[]` (1 = lunes … 7 = domingo), `activo`, `version_sync`.
 
 **envios** (carga de camioneta)
@@ -310,8 +311,11 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | despachado_en | timestamptz null | al pasar a `EnRuta` |
 | liquidacion_id | uuid null | |
 | version_sync | bigint | baja a la app |
+| notas | text null | |
+| xmin | concurrencia | índice `ix_envios_ruta_fecha` |
 
-**envios_partidas**: `id`, `envio_id`, `producto_id`, `lote`, `cantidad_base`, `version_sync`.
+**envios_partidas**: `id`, `envio_id`, `producto_id`, `lote`, `cantidad_base`, `version_sync`. En `Preparado`,
+`lote = ''` significa "FEFO al despachar".
 
 **retornos**
 
@@ -330,6 +334,7 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | latitud, longitud | numeric(9,6) null | |
 | precision_m | numeric(9,2) null | |
 | estado | text | `Registrado`, `Cancelado` |
+| notas | text null | índice único filtrado `ux_retornos_op_id` |
 
 **retornos_partidas**: `id`, `retorno_id`, `producto_id`, `lote`, `cantidad_base`,
 `condicion` (`Vendible`, `NoVendible`), `motivo_merma_id null`.
@@ -347,10 +352,16 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | efectivo_entregado | numeric(18,2) null | |
 | diferencia_efectivo | numeric(18,2) null | |
 | cerrada_por, cerrada_en | | |
+| cerrada_forzada | boolean | cerrada con pendientes de sincronizar (RN-LOG-09) |
+| notas | text null | |
+| xmin | concurrencia | |
 
-**liquidaciones_partidas**: `liquidacion_id`, `producto_id`, `lote`, `cargado`, `vendido`,
-`devuelto_clientes_vendible`, `devuelto_clientes_no_vendible`, `sobrante_esperado`,
-`sobrante_contado`, `diferencia`, `destino_sobrante` (`Reintegrar`, `Merma`, `Reproceso`).
+**liquidaciones_partidas**: `id`, `liquidacion_id`, `producto_id`, `lote` (UX con los dos anteriores), `cargado`,
+`vendido`, `devuelto_clientes_vendible`, `devuelto_clientes_no_vendible`, `sobrante_esperado`,
+`sobrante_contado null`, `diferencia null`, `destino_sobrante` (`Reintegrar`, `Merma`, `Reproceso`),
+`motivo_merma_id null`.
+
+Folios `ENV-`, `RET-`, `LIQ-`.
 
 ---
 
@@ -444,10 +455,10 @@ en el kardex), `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`, `iva`, `ie
 
 ## Esquema `facturacion`
 
-**emisor** (una fila): `rfc`, `razon_social`, `regimen_fiscal`, `codigo_postal_expedicion`,
-`serie_facturas`, `serie_global`, `serie_notas_credito`.
+**emisor** (una fila): `id`, `rfc`, `razon_social`, `regimen_fiscal`, `codigo_postal_expedicion`,
+`serie_facturas`, `serie_global`, `serie_notas_credito`, `es_ejemplo boolean` (semilla con el RFC de pruebas del SAT).
 
-**solicitudes_autofactura**: `id`, `folio_ticket`, `venta_id`, `rfc`, `razon_social`,
+**solicitudes_autofactura**: `id`, `folio_ticket`, `venta_id null` (rechazo sin ticket), `rfc`, `razon_social`,
 `regimen_fiscal`, `codigo_postal`, `uso_cfdi`, `email`, `ip_origen`, `estado` (`Recibida`,
 `Rechazada`, `EnProceso`, `Timbrada`, `Error`), `motivo_rechazo null`, `factura_id null`.
 
@@ -470,14 +481,24 @@ en el kardex), `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`, `iva`, `ie
 | xml_url, pdf_url | text null | Spaces |
 | error_detalle | text null | |
 | intentos | integer | |
+| email_receptor | text null | |
+| fecha_operativa | date | |
+| timbrada_en, cancelada_en | timestamptz null | |
+| motivo_cancelacion | text null | motivo SAT 01–04 |
+| xmin | concurrencia | |
 
-**facturas_ventas**: `factura_id`, `venta_id` (PK). Una venta pertenece a máximo una factura vigente.
-**facturas_conceptos**: snapshot de partidas (`clave_prod_serv`, `clave_unidad`, `cantidad`,
-`descripcion`, `valor_unitario`, `importe`, `objeto_imp`, `iva`, `ieps`).
+`folio` es consecutivo por tipo (`facturacion.folio_ingreso_seq`, `facturacion.folio_global_seq`) con la serie del
+emisor. Índices `ux_facturas_serie_folio`, `ux_facturas_uuid_fiscal` (parcial), `ix_facturas_fecha_operativa`.
+
+**facturas_ventas**: `factura_id`, `venta_id` (PK), `venta_folio`. Se conservan al cancelar; la vigencia la marca
+`ventas.factura_id` (RN-FAC-01).
+**facturas_conceptos**: `id`, `factura_id`, `venta_id null`, `producto_id null`, `orden`, snapshot de partidas
+(`clave_prod_serv`, `clave_unidad`, `no_identificacion`, `cantidad`, `descripcion`, `valor_unitario numeric(18,4)`,
+`importe`, `objeto_imp`, `tasa_iva`, `tasa_ieps null`, `iva`, `ieps`).
 
 **outbox**: `id`, `tipo` (`TimbrarFactura`, `CancelarFactura`), `payload jsonb`, `estado`
 (`Pendiente`, `EnProceso`, `Procesado`, `Error`), `intentos`, `siguiente_intento_en`,
-`procesado_en`, `error`.
+`procesado_en`, `error`, `factura_id`, `creado_en`; índice `ix_outbox_estado_siguiente`.
 
 ---
 
@@ -485,10 +506,10 @@ en el kardex), `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`, `iva`, `ie
 
 **version_seq**: secuencia global para `version_sync`.
 
-**operaciones**: `op_id uuid PK`, `dispositivo_id`, `tipo`, `secuencia_dispositivo bigint`,
-`recibida_en`, `estado` (`Aplicada`, `Rechazada`), `resultado jsonb`, `error text null`.
+**operaciones**: `op_id uuid PK`, `dispositivo_id`, `lote_id`, `tipo`, `secuencia_dispositivo bigint`,
+`creada_en`, `recibida_en`, `estado` (`Aplicada`, `Rechazada`), `resultado jsonb`, `codigo null`, `error text null`.
 
-**lotes**: `id`, `dispositivo_id`, `recibido_en`, `total_operaciones`, `aplicadas`, `rechazadas`,
+**lotes**: `id`, `dispositivo_id`, `usuario_id`, `recibido_en`, `total_operaciones`, `aplicadas`, `rechazadas`,
 `duplicadas`, `version_app`.
 
 ---
@@ -549,6 +570,9 @@ caducado, Contaminación, Devolución no vendible, Daño en transporte, Faltante
 
 **Folios por módulo:** `OC-`, `REC-` (compras); `OP-` (producción); `VTA-`, `PED-`, `COB-`, `CLI-` (ventas);
 `AJ-`, `TR-`, `CF-` (inventario).
+
+**Vehículos y rutas de ejemplo:** `XA-1234-A`, `XB-5678-B`, `XC-9012-C`; R01 Centro (`vendedor1`), R02 Norte
+(`vendedor2`), R03 Sur (`vendedor3`), cada una con su almacén, su cliente genérico y 5 clientes.
 
 **Líneas de producción de ejemplo:** `MOL-1`, `TOR-1`, `TOR-2`, `FRE-1`, `EMP-1`. **Proveedores de ejemplo:**
 GRANOS, QUIMICA, EMPAQUES.

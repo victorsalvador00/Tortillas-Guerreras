@@ -40,12 +40,13 @@ Redondeo de importes: 2 decimales, `MidpointRounding.AwayFromZero`, por partida 
 ## Frontend (web y portal)
 
 - Carpetas por funcionalidad: `src/features/<modulo>/<pantalla>/`.
-- Datos: TanStack Query con el cliente generado (`@tg/api-client`, Orval). Llaves de query
-  `[modulo, recurso, params]`.
+- Datos: TanStack Query con el cliente generado (`@tg/api-client`, Orval). Las llaves de query las genera Orval
+  (`[url, params]`); tras cualquier mutación se invalidan las consultas visibles.
 - Formularios: React Hook Form + Zod; esquemas compartidos en `@tg/shared` cuando la app los usa.
 - Formatos: `Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })`;
   fechas con `date-fns` + `date-fns-tz` en `America/Mexico_City`.
-- Componentes: shadcn/ui en `@tg/ui`; tablas con TanStack Table.
+- Componentes: `@tg/ui` (primitivas Radix al estilo shadcn/ui con el diseño del SGO: barra superior azul, menú con
+  etiquetas inclinadas, tarjetas, campos y botones en píldora, tema oscuro neón); tablas con TanStack Table.
 
 ## App de ruta
 
@@ -74,13 +75,18 @@ Redondeo de importes: 2 decimales, `MidpointRounding.AwayFromZero`, por partida 
 | Validación | FluentValidation | Apache 2.0 |
 | Jobs | Hangfire.Core, Hangfire.AspNetCore, Hangfire.PostgreSql | LGPL 3.0 |
 | OpenAPI | Microsoft.AspNetCore.OpenApi, Scalar.AspNetCore | MIT |
-| Logs | Serilog.AspNetCore | Apache 2.0 |
+| Logs | Serilog.AspNetCore, Serilog.Sinks.File | Apache 2.0 |
+| JSON (transitivo de Hangfire, fijado a 13.0.4) | Newtonsoft.Json | MIT |
 | Archivos | AWSSDK.S3 | Apache 2.0 |
 | QR | QRCoder | MIT |
-| PDF | PdfSharp / MigraDoc | MIT |
-| Pruebas | xUnit, Shouldly, Testcontainers.PostgreSql, NetArchTest.Rules | Apache 2.0 / BSD / MIT |
-| Web | react, vite, @tanstack/*, react-hook-form, zod, tailwindcss, shadcn/ui, recharts, leaflet, react-leaflet, date-fns, date-fns-tz, orval, vitest, @testing-library/react | MIT / BSD |
+| PDF | Generador propio en Facturación (Helvetica estándar); PdfSharp / MigraDoc aprobado, sin usar | MIT |
+| Pruebas | xUnit v3, Shouldly, Testcontainers.PostgreSql, NetArchTest.Rules, Microsoft.AspNetCore.Mvc.Testing, Microsoft.Extensions.TimeProvider.Testing | Apache 2.0 / BSD / MIT |
+| Íconos web | material-symbols (Material Symbols Outlined) | Apache 2.0 |
+| UI web | @radix-ui/*, class-variance-authority, clsx, tailwind-merge, sonner, @hookform/resolvers | MIT / Apache 2.0 |
+| Web | react, vite, @tanstack/*, react-hook-form, zod, tailwindcss, shadcn/ui, recharts, leaflet, date-fns, date-fns-tz, orval, vitest, @testing-library/react | MIT / BSD |
 | App | expo (SDK 54) y módulos expo-* (router, sqlite, secure-store, location, updates, crypto, device, constants, linking, sharing, splash-screen, status-bar, system-ui, application), @expo/vector-icons, @react-native-community/netinfo, react-native-svg, react-native-qrcode-svg, react-native-safe-area-context, react-native-screens, drizzle-kit, babel-plugin-inline-import | MIT |
 | App (ORM local) | drizzle-orm | Apache 2.0 |
 
 Prohibidas: ver `CLAUDE.md`, regla 1.
+
+**No usar `react-leaflet`**: desde la v4 su licencia es Hippocratic-2.1. El mapa usa Leaflet directo.
