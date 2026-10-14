@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { cn } from '../utils';
 import { Girador, Icono } from './basicos';
+import { EntradaFecha } from './campo-fecha';
 
 interface PropsBaseCampo {
   etiqueta: string;
@@ -54,6 +55,28 @@ export const Campo = forwardRef<HTMLInputElement, CampoProps>(function Campo(
 ) {
   const generado = useId();
   const campoId = id ?? generado;
+  if (props.type === 'date') {
+    // Fechas siempre en DD/MM/AAAA (EntradaFecha), sin importar el idioma del navegador.
+    const { type: _tipo, ...resto } = props;
+    return (
+      <div className={cn('min-w-0', className)}>
+        <div className={cn('tg-campo', compacto && 'tg-campo-compacto')} data-lleno="true">
+          <EntradaFecha
+            ref={ref}
+            idVisible={campoId}
+            claseVisible="tg-control pr-14 tabular-nums"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${campoId}-error` : ayuda ? `${campoId}-ayuda` : undefined}
+            aria-label={compacto ? etiqueta : undefined}
+            {...resto}
+          />
+          <label htmlFor={campoId}>{etiqueta}</label>
+        </div>
+        {!compacto && <PieCampo id={campoId} error={error} ayuda={ayuda} />}
+        {compacto && error && <p className="m-0 mt-1 text-xs text-error">{error}</p>}
+      </div>
+    );
+  }
   return (
     <div className={cn('min-w-0', className)}>
       <div className={cn('tg-campo', compacto && 'tg-campo-compacto')} data-lleno={prefijo ? 'true' : undefined}>

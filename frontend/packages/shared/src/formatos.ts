@@ -46,13 +46,9 @@ export function formatoFecha(valor: string | null | undefined): string {
   return `${dia}/${mes}/${anio}`;
 }
 
-/** 3 nov 2026 */
+/** Igual que `formatoFecha` (DD/MM/AAAA en todo el sistema); se conserva el nombre para quien ya lo usa. */
 export function formatoFechaLarga(valor: string | null | undefined): string {
-  if (!valor) return '—';
-  const [anio, mes, dia] = valor.slice(0, 10).split('-').map(Number);
-  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(
-    new Date(Date.UTC(anio, mes - 1, dia)),
-  );
+  return formatoFecha(valor);
 }
 
 /** Fecha operativa (`yyyy-MM-dd`) de un instante en America/Mexico_City (regla 7). */

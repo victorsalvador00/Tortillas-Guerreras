@@ -45,6 +45,9 @@ Redondeo de importes: 2 decimales, `MidpointRounding.AwayFromZero`, por partida 
 - Formularios: React Hook Form + Zod; esquemas compartidos en `@tg/shared` cuando la app los usa.
 - Formatos: `Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })`;
   fechas con `date-fns` + `date-fns-tz` en `America/Mexico_City`.
+- **Fechas siempre en DD/MM/AAAA** en todas las pantallas (`formatoFecha`, `formatoFechaHora` → DD/MM/AAAA HH:mm).
+  Los campos de fecha (`<Campo type="date">`) se capturan en DD/MM/AAAA sin depender del idioma del navegador;
+  el valor que viaja al API sigue siendo ISO (`yyyy-MM-dd`).
 - Componentes: `@tg/ui` (primitivas Radix al estilo shadcn/ui con el diseño del SGO: barra superior azul, menú con
   etiquetas inclinadas, tarjetas, campos y botones en píldora, tema oscuro neón); tablas con TanStack Table.
 

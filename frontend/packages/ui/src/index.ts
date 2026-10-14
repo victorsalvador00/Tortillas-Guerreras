@@ -1,6 +1,7 @@
 export * from './utils';
 export * from './componentes/basicos';
 export * from './componentes/campos';
+export * from './componentes/campo-fecha';
 export * from './componentes/tabla';
 export * from './componentes/superposiciones';
 export * from './componentes/plexus';

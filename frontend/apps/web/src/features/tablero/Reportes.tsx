@@ -92,7 +92,7 @@ function ReporteVentas() {
             <Tarjeta titulo="Ventas por día" subtitulo={`Total del periodo: ${formatoMoneda(data.total)}`} className="lg:col-span-2">
               <GraficaBarras
                 descripcion="Ventas por día"
-                datos={data.porDia.map((d) => ({ dia: formatoFecha(d.fecha).slice(0, 5), Total: d.total }))}
+                datos={data.porDia.map((d) => ({ dia: formatoFecha(d.fecha), Total: d.total }))}
                 categoria="dia"
                 series={[{ clave: 'Total', nombre: 'Ventas' }]}
                 formato={formatoPesos}
