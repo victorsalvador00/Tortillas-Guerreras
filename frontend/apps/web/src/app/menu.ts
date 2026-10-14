@@ -37,8 +37,6 @@ export const MENU: SeccionMenu[] = [
       { etiqueta: 'Kardex', ruta: '/inventario/kardex', icono: 'swap_vert', permiso: 'inventario.ver' },
       { etiqueta: 'Ajustes', ruta: '/inventario/ajustes', icono: 'edit_note', permiso: 'inventario.ajustar' },
       { etiqueta: 'Traspasos', ruta: '/inventario/traspasos', icono: 'forklift', permiso: 'inventario.traspasar' },
-      { etiqueta: 'Conteos físicos', ruta: '/inventario/conteos', icono: 'checklist', permiso: 'inventario.contar' },
-      { etiqueta: 'Valuación', ruta: '/inventario/valuacion', icono: 'price_check', permiso: 'inventario.costos' },
       { etiqueta: 'Almacenes', ruta: '/inventario/almacenes', icono: 'warehouse', permiso: 'inventario.ver' },
     ],
   },
