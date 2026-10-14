@@ -66,11 +66,11 @@ export function Login() {
 
       <header className="relative text-center min-[800px]:text-left">
         <div className="mb-6 inline-grid place-items-center rounded-3xl border-2 border-[#b38b45] bg-white/95 px-[clamp(18px,2.6vw,32px)] py-[clamp(14px,2vw,24px)] shadow-[0_16px_40px_rgb(0_0_0/35%)]">
-          <Logo className="h-auto w-[clamp(110px,14vw,170px)]" />
+          <Logo className="h-auto w-[clamp(200px,26vw,340px)]" />
         </div>
         <h1 className="m-0 text-[clamp(3rem,8vw,6rem)] leading-[1.05] font-bold tracking-[0.04em]">Bienvenido</h1>
         <p className="m-0 mt-2 text-[clamp(1.05rem,2.2vw,1.6rem)] tracking-[0.16em] text-white/85 dark:text-[#6f9dff]">
-          Tortillas Guerreras · Sistema de Gestión
+          Sistema de Gestión
         </p>
       </header>
 

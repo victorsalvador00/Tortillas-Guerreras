@@ -73,12 +73,11 @@ export function Shell() {
           className="text-topbar-ink"
           onClick={alternarMenu}
         />
-        <Link to="/" className="flex min-h-12 items-center gap-2 text-inherit no-underline" aria-label="Tortillas Guerreras, ir al tablero">
-          <span className="grid place-items-center rounded-lg bg-white px-1.5 py-0.5">
-            <Logo className="h-8" />
+        <Link to="/" className="flex min-h-12 items-center gap-3 text-inherit no-underline" aria-label="Guerreras, ir al tablero">
+          <span className="grid place-items-center rounded-lg bg-white px-1.5 py-1">
+            <Logo chico className="h-8" titulo="" />
           </span>
-          <span className="hidden text-[22px] font-semibold sm:inline">Tortillas Guerreras</span>
-          <span className="hidden text-sm opacity-85 lg:inline">Sistema de Gestión</span>
+          <span className="hidden text-[20px] font-semibold sm:inline">Sistema de Gestión</span>
         </Link>
         <span className="flex-1" />
         <span
