@@ -1,0 +1,15 @@
+name: deploy-prod
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency: deploy-prod
+
+jobs:
+  desplegar:
+    uses: ./.github/workflows/_desplegar.yml
+    with:
+      ambiente: production
+      tag: ${{ github.ref_name }}
+    secrets: inherit

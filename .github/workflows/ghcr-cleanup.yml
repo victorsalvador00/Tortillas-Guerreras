@@ -1,0 +1,19 @@
+name: ghcr-cleanup
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  limpiar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: tg-api
+          package-type: container
+          min-versions-to-keep: 5

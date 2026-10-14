@@ -1,0 +1,83 @@
+# Flujo reutilizable: imagen → GHCR (con bundles de migración), SPA web y portal, SSH: respaldo + migrar + compose up.
+name: _desplegar
+
+on:
+  workflow_call:
+    inputs:
+      ambiente: { required: true, type: string }
+      tag: { required: true, type: string }
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  imagen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/tg-api:${{ inputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  spa:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web --filter portal build
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spa
+          path: |
+            frontend/apps/web/dist
+            frontend/apps/portal/dist
+
+  desplegar:
+    needs: [imagen, spa]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ambiente }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: spa, path: spa }
+      - name: Copiar archivos al servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "deploy/docker-compose.prod.yml,deploy/Caddyfile,deploy/scripts,spa"
+          target: /opt/tortillas
+          strip_components: 0
+      - name: Respaldo, migraciones y reinicio
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/tortillas
+            cp -r deploy/* . && rm -rf web portal
+            mv spa/frontend/apps/web/dist web && mv spa/frontend/apps/portal/dist portal && rm -rf spa
+            sed -i "s/^GHCR_ORG=.*/GHCR_ORG=${{ github.repository_owner }}/" .env
+            ./scripts/desplegar.sh "${{ inputs.tag }}"

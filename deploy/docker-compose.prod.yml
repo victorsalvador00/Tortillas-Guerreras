@@ -1,0 +1,39 @@
+# Producción (Droplet): API + Caddy. PostgreSQL es el administrado de DigitalOcean (ConnectionStrings__Default en .env).
+name: tortillas
+
+services:
+  api:
+    image: ghcr.io/${GHCR_ORG:-tortillas-guerreras}/tg-api:${TG_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      BaseDatos__MigrarAlIniciar: "false"
+      Logs__Archivo: /app/logs/api-.json
+      Archivos__Proveedor: ${ARCHIVOS_PROVEEDOR:-Spaces}
+    volumes:
+      - ./logs:/app/logs
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO}
+      CORREO_ACME: ${CORREO_ACME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv/web:ro
+      - ./portal:/srv/portal:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

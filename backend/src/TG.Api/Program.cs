@@ -11,6 +11,12 @@ app.UsarPipelineApi();
 if (!HostApi.EsGeneracionDeDocumento)
 {
     await app.InicializarBaseDatosAsync();
+
+    // Despliegue: solo carga datos base y termina (las migraciones van con los bundles de EF).
+    if (app.Configuration.GetValue("BaseDatos:SoloInicializar", false))
+    {
+        return;
+    }
 }
 
 await app.RunAsync();

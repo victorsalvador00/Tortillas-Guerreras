@@ -1,0 +1,25 @@
+name: app-update
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/apps/ruta/**", "frontend/packages/**"]
+    tags: ["v*"]
+
+jobs:
+  eas-update:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: frontend/apps/ruta } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: pnpm -C ../.. install --frozen-lockfile
+      # main → canal preview; tag v* → production (RN-APP-08: se aplica al abrir la app).
+      - run: eas update --channel ${{ startsWith(github.ref, 'refs/tags/') && 'production' || 'preview' }} --message "${{ github.event.head_commit.message || github.ref_name }}" --non-interactive

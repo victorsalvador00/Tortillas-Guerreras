@@ -1,0 +1,16 @@
+name: deploy-staging
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", "frontend/**", "deploy/**"]
+
+concurrency: deploy-staging
+
+jobs:
+  desplegar:
+    uses: ./.github/workflows/_desplegar.yml
+    with:
+      ambiente: staging
+      tag: sha-${{ github.sha }}
+    secrets: inherit
