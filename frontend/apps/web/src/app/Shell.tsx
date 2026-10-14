@@ -74,9 +74,7 @@ export function Shell() {
           onClick={alternarMenu}
         />
         <Link to="/" className="flex min-h-12 items-center gap-3 text-inherit no-underline" aria-label="Guerreras, ir al tablero">
-          <span className="grid place-items-center rounded-lg bg-white px-1.5 py-1">
-            <Logo chico className="h-8" titulo="" />
-          </span>
+          <Logo chico className="h-10 drop-shadow-[0_1px_2px_rgb(0_0_0/35%)]" titulo="" />
           <span className="hidden text-[20px] font-semibold sm:inline">Sistema de Gestión</span>
         </Link>
         <span className="flex-1" />

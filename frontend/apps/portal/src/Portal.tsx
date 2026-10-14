@@ -302,9 +302,7 @@ export function Portal() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex h-16 shrink-0 items-center gap-3 bg-topbar px-4 text-topbar-ink">
-        <span className="grid place-items-center rounded-lg bg-white px-1.5 py-1">
-          <Logo chico titulo="Guerreras" />
-        </span>
+        <Logo chico titulo="Guerreras" className="h-10 drop-shadow-[0_1px_2px_rgb(0_0_0/35%)]" />
         <span className="text-lg font-semibold">Facturación electrónica</span>
         <span className="flex-1" />
         <MenuAcciones
