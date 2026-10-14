@@ -160,8 +160,8 @@ function ReporteContinuidad() {
               {data.rutas.map((r) => (
                 <Tarjeta key={r.ruta}>
                   <p className="m-0 text-sm text-muted">Ruta {r.ruta}</p>
-                  <p className="m-0 text-[28px] tabular-nums">{formatoPorcentaje(r.porcentaje, 0)}</p>
-                  <p className="m-0 text-[13px] text-muted">
+                  <p className="m-0 text-28 tabular-nums">{formatoPorcentaje(r.porcentaje, 0)}</p>
+                  <p className="m-0 text-13 text-muted">
                     {r.visitados} de {r.programados} clientes programados
                   </p>
                 </Tarjeta>

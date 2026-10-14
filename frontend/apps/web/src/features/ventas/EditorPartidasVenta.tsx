@@ -32,7 +32,7 @@ export function EditorPartidasVenta({
         return (
           <div
             key={l.clave}
-            className="grid items-start gap-2 rounded-xl border border-row-divider p-3 sm:grid-cols-[minmax(0,1fr)_150px_120px_130px_auto]"
+            className="grid items-start gap-2 rounded-xl border border-row-divider p-3 sm:grid-cols-[minmax(0,1fr)_202px_162px_176px_auto]"
           >
             <SelectorProducto
               compacto

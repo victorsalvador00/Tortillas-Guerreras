@@ -185,7 +185,7 @@ export function CargaNueva() {
         >
           <div className="flex flex-col gap-3">
             {partidas.map((p) => (
-              <div key={p.clave} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_140px_140px_auto]">
+              <div key={p.clave} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_189px_189px_auto]">
                 <SelectorProducto
                   valor={p.producto?.id}
                   producto={p.producto}

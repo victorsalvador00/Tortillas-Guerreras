@@ -81,7 +81,7 @@ export function Ventas() {
         cell: ({ row }) => (
           <span className="flex items-center gap-1.5 font-medium">
             {row.original.folio}
-            {row.original.requiereRevision && <span className="icono text-[18px] text-[var(--tg-status-orange-fg)]" title="Requiere revisión">flag</span>}
+            {row.original.requiereRevision && <span className="icono text-18 text-[var(--tg-status-orange-fg)]" title="Requiere revisión">flag</span>}
           </span>
         ),
       },

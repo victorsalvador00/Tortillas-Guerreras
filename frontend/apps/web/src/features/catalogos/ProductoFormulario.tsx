@@ -253,7 +253,7 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
             {conversiones.fields.length === 0 && <p className="m-0 text-sm text-muted">Solo se usa la unidad base.</p>}
             <div className="flex flex-col gap-3">
               {conversiones.fields.map((f, i) => (
-                <div key={f.id} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_180px_auto]">
+                <div key={f.id} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_243px_auto]">
                   <Selector
                     etiqueta="Unidad"
                     vacio="Elige"

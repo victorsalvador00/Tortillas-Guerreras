@@ -38,7 +38,7 @@ export function Productos() {
 
   const columnas = useMemo<ColumnDef<ProductoDto, unknown>[]>(
     () => [
-      { header: 'SKU', accessorKey: 'sku', cell: ({ row }) => <span className="font-medium">{row.original.sku}</span> },
+      { header: 'SKU', accessorKey: 'sku', cell: ({ row }) => <span className="font-medium whitespace-nowrap">{row.original.sku}</span> },
       { header: 'Nombre', accessorKey: 'nombre' },
       { header: 'Tipo', accessorKey: 'tipo', cell: ({ row }) => etiquetaEnum(row.original.tipo), meta: { ocultarEnMovil: true } },
       { header: 'Unidad', accessorKey: 'unidadBaseClave', meta: { ocultarEnMovil: true } },
@@ -121,7 +121,7 @@ export function Productos() {
             setBuscar(e.target.value);
             setPagina(1);
           }}
-          sufijo={<span className="icono text-[22px]">search</span>}
+          sufijo={<span className="icono text-22">search</span>}
         />
         <Selector
           etiqueta="Tipo"

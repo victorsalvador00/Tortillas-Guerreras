@@ -31,7 +31,7 @@ export function EditorPartidas({
             key={p.clave}
             className={cn(
               'grid items-start gap-3 rounded-xl border border-row-divider p-3',
-              conSentido ? 'md:grid-cols-[32px_140px_minmax(0,1fr)_150px_140px_auto]' : 'md:grid-cols-[32px_minmax(0,1fr)_150px_140px_auto]',
+              conSentido ? 'md:grid-cols-[32px_189px_minmax(0,1fr)_202px_189px_auto]' : 'md:grid-cols-[32px_minmax(0,1fr)_202px_189px_auto]',
             )}
           >
             <span className="pt-3 text-sm text-muted">{i + 1}</span>

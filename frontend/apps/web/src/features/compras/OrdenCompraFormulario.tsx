@@ -186,7 +186,7 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
                 ? totalesOrden([{ cantidad: p.cantidad, precioUnitario: p.precioUnitario, tasaIva: p.producto.tasaIva }])
                 : null;
               return (
-                <div key={p.clave} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 lg:grid-cols-[2fr_1fr_120px_140px_auto]">
+                <div key={p.clave} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 lg:grid-cols-[2fr_1fr_162px_189px_auto]">
                   <SelectorProducto
                     etiqueta={`Producto ${i + 1}`}
                     valor={p.producto?.id}

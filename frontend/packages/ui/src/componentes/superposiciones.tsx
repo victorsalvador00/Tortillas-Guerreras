@@ -38,7 +38,7 @@ export function Dialogo({
         >
           <div className="flex items-start justify-between gap-4 px-6 pt-6">
             <div>
-              <Dialog.Title className="m-0 text-[22px] font-normal">{titulo}</Dialog.Title>
+              <Dialog.Title className="m-0 text-22 font-normal">{titulo}</Dialog.Title>
               {descripcion ? (
                 <Dialog.Description className="m-0 mt-1 text-sm text-muted">{descripcion}</Dialog.Description>
               ) : (
@@ -120,7 +120,7 @@ export function DialogoConfirmacion({
       }
     >
       <div className="flex flex-col gap-3">
-        <div className="text-[15px]">{mensaje}</div>
+        <div className="text-15">{mensaje}</div>
         {children}
         {error && <Aviso tipo="error">{error}</Aviso>}
       </div>

@@ -238,7 +238,7 @@ export function MotivosMerma() {
   const desactivar = useDesactivarMotivoMerma();
   const activar = useActivarMotivoMerma();
   const [dialogo, setDialogo] = useState<{ abierto: boolean; motivo: MotivoMermaDto | null }>({ abierto: false, motivo: null });
-  const si = (v: boolean) => (v ? <span className="icono text-[20px] text-[var(--tg-status-green-fg)]">check</span> : <span className="text-muted">—</span>);
+  const si = (v: boolean) => (v ? <span className="icono text-20 text-[var(--tg-status-green-fg)]">check</span> : <span className="text-muted">—</span>);
   const columnas = useMemo<ColumnDef<MotivoMermaDto, unknown>[]>(
     () => [
       { header: 'Clave', accessorKey: 'clave', cell: ({ row }) => <span className="font-medium">{row.original.clave}</span> },
@@ -350,7 +350,7 @@ export function Parametros() {
   const [editando, setEditando] = useState<ParametroDto | null>(null);
   const columnas = useMemo<ColumnDef<ParametroDto, unknown>[]>(
     () => [
-      { header: 'Clave', accessorKey: 'clave', cell: ({ row }) => <code className="text-[13px]">{row.original.clave}</code> },
+      { header: 'Clave', accessorKey: 'clave', cell: ({ row }) => <code className="text-13">{row.original.clave}</code> },
       { header: 'Descripción', accessorKey: 'descripcion', meta: { ocultarEnMovil: true } },
       {
         header: 'Valor',

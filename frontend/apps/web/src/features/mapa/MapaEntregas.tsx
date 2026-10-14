@@ -14,7 +14,7 @@ const COLOR_REVISION = '#c62828';
 
 function Leyenda({ color, texto }: { color: string; texto: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[13px]">
+    <span className="inline-flex items-center gap-1.5 text-13">
       <span className="inline-block size-3 rounded-full border-2 border-white shadow" style={{ background: color }} />
       {texto}
     </span>
@@ -109,7 +109,7 @@ export function MapaEntregas() {
             <TarjetaIndicador icono="location_off" valor={sinGps} titulo="Ventas sin GPS" />
           </div>
           {sinGps > 0 && <Aviso tipo="advertencia">{sinGps} venta(s) se registraron sin GPS y no aparecen en el mapa.</Aviso>}
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_459px]">
             <div>
               <MapaLeaflet marcadores={marcadores} lineas={lineas} alSeleccionar={setSeleccionado} />
               <div className="mt-2 flex flex-wrap gap-4 px-1 text-muted">

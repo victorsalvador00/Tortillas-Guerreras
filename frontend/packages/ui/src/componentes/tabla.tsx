@@ -104,7 +104,7 @@ export function TablaDatos<T>({
                         scope="col"
                         aria-sort={sentido === 'asc' ? 'ascending' : sentido === 'desc' ? 'descending' : undefined}
                         className={cn(
-                          'px-4 text-left text-[13px] font-medium whitespace-nowrap text-muted',
+                          'px-4 text-left text-13 font-medium whitespace-nowrap text-muted',
                           meta?.alinear === 'fin' && 'text-right',
                           meta?.alinear === 'centro' && 'text-center',
                           meta?.ocultarEnMovil && 'hidden md:table-cell',
@@ -214,7 +214,7 @@ export function Paginador({ pagina, tamano, total, onCambiar }: PaginacionTabla)
   const desde = (pagina - 1) * tamano + 1;
   const hasta = Math.min(total, pagina * tamano);
   return (
-    <nav aria-label="Paginación" className="mt-2 flex items-center justify-end gap-2 px-2 text-[13px] text-muted">
+    <nav aria-label="Paginación" className="mt-2 flex items-center justify-end gap-2 px-2 text-13 text-muted">
       <span>
         {desde}–{hasta} de {total}
       </span>

@@ -20,7 +20,7 @@ export function Icono({
       aria-hidden={etiqueta ? undefined : true}
       aria-label={etiqueta}
       role={etiqueta ? 'img' : undefined}
-      style={tamano ? { fontSize: tamano } : undefined}
+      style={tamano ? { fontSize: `calc(${tamano}px * var(--tg-escala-texto))` } : undefined}
     >
       {nombre}
     </span>
@@ -42,7 +42,7 @@ const estilosBoton = cva(
       },
       tamano: {
         normal: 'h-11 rounded-full px-6 text-sm',
-        chico: 'h-9 rounded-full px-4 text-[13px]',
+        chico: 'h-9 rounded-full px-4 text-13',
         grande: 'h-14 rounded-full px-8 text-base',
       },
       bloque: { true: 'w-full' },
@@ -129,7 +129,7 @@ export function Tarjeta({
         <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             {titulo && <h2 className="m-0 text-base font-medium">{titulo}</h2>}
-            {subtitulo && <p className="m-0 mt-0.5 text-[13px] text-muted">{subtitulo}</p>}
+            {subtitulo && <p className="m-0 mt-0.5 text-13 text-muted">{subtitulo}</p>}
           </div>
           {acciones && <div className="flex flex-wrap gap-2">{acciones}</div>}
         </header>
@@ -211,7 +211,7 @@ export function EtiquetaEstado({ estado, etiqueta, color }: { estado?: string; e
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1 text-[13px] font-medium',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1 text-13 font-medium',
         CLASES_COLOR[c],
       )}
     >
@@ -323,10 +323,10 @@ export function TarjetaIndicador({
           nombre={icono}
           className={cn(tono === 'alerta' ? 'text-[var(--tg-status-red-fg)]' : tono === 'bien' ? 'text-[var(--tg-status-green-fg)]' : 'text-on-surface')}
         />
-        <span className="text-[28px] leading-none font-normal tabular-nums">{valor}</span>
+        <span className="text-28 leading-none font-normal tabular-nums">{valor}</span>
       </div>
-      <span className="mt-4 text-[15px] font-medium">{titulo}</span>
-      {nota && <span className="mt-1 text-[13px] text-muted">{nota}</span>}
+      <span className="mt-4 text-15 font-medium">{titulo}</span>
+      {nota && <span className="mt-1 text-13 text-muted">{nota}</span>}
     </Componente>
   );
 }

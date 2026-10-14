@@ -12,7 +12,7 @@ export interface Miga {
 /** Contenedor de página: ancho máximo, márgenes y aire al final. */
 export function Pagina({ children, className, ancho = 'completo' }: { children: ReactNode; className?: string; ancho?: 'completo' | 'medio' }) {
   return (
-    <div className={cn('mx-auto w-full px-4 pt-4 pb-16 sm:px-6 sm:pt-6', ancho === 'completo' ? 'max-w-[1440px]' : 'max-w-4xl', className)}>
+    <div className={cn('mx-auto w-full px-4 pt-4 pb-16 sm:px-6 sm:pt-6', ancho === 'completo' ? 'max-w-[1600px]' : 'max-w-6xl', className)}>
       {children}
     </div>
   );

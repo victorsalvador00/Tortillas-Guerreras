@@ -86,8 +86,14 @@
   --tg-serie-3: #1baf7a;
 
 
+  /*
+   * Escala de la letra (1 = tamaño original del diseño). Multiplica todos los tamaños de texto e íconos sin cambiar
+   * márgenes ni puntos de quiebre. Para ajustarla solo se cambia este valor.
+   */
+  --tg-escala-texto: 1.5;
+
   --tg-topbar-height: 64px;
-  --tg-sidebar-width: 256px;
+  --tg-sidebar-width: calc(256px * (0.6 + 0.4 * var(--tg-escala-texto)));
   --tg-sidebar-collapsed-width: 72px;
 }
 
@@ -161,6 +167,25 @@
   --tg-serie-3: #199e70;
 }
 
+/* Tamaños de texto escalados (text-xs … text-4xl y los propios del diseño: text-13, text-15, …). */
+@theme {
+  --text-xs: calc(0.75rem * var(--tg-escala-texto));
+  --text-sm: calc(0.875rem * var(--tg-escala-texto));
+  --text-base: calc(1rem * var(--tg-escala-texto));
+  --text-lg: calc(1.125rem * var(--tg-escala-texto));
+  --text-xl: calc(1.25rem * var(--tg-escala-texto));
+  --text-2xl: calc(1.5rem * var(--tg-escala-texto));
+  --text-3xl: calc(1.875rem * var(--tg-escala-texto));
+  --text-4xl: calc(2.25rem * var(--tg-escala-texto));
+  --text-13: calc(13px * var(--tg-escala-texto));
+  --text-15: calc(15px * var(--tg-escala-texto));
+  --text-18: calc(18px * var(--tg-escala-texto));
+  --text-20: calc(20px * var(--tg-escala-texto));
+  --text-22: calc(22px * var(--tg-escala-texto));
+  --text-28: calc(28px * var(--tg-escala-texto));
+  --text-login: calc(1.05rem * var(--tg-escala-texto));
+}
+
 @theme inline {
   --font-sans: Roboto, 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --color-primary: var(--tg-primary);
@@ -207,7 +232,7 @@
     background: var(--tg-page-bg);
     color: var(--tg-on-surface);
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: calc(14px * var(--tg-escala-texto));
     line-height: 1.43;
     -webkit-font-smoothing: antialiased;
   }
@@ -234,7 +259,7 @@
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
   font-style: normal;
-  font-size: 24px;
+  font-size: calc(24px * var(--tg-escala-texto));
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
@@ -255,7 +280,7 @@
   display: flex;
   align-items: center;
   gap: 28px;
-  min-height: 48px;
+  min-height: calc(24px + 24px * var(--tg-escala-texto));
   margin-block: 3px;
   padding: 0 16px 0 20px;
   color: var(--tg-sidebar-ink);
@@ -266,8 +291,8 @@
 
 .tg-nav-item .icono {
   color: var(--tg-tag-icon);
-  width: 24px;
-  font-size: 22px;
+  width: calc(24px * var(--tg-escala-texto));
+  font-size: calc(22px * var(--tg-escala-texto));
 }
 
 .tg-nav-tag {
@@ -292,7 +317,7 @@
   top: -2px;
   bottom: -2px;
   left: 0;
-  width: 56px;
+  width: calc(40px + 16px * var(--tg-escala-texto));
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   background:
     linear-gradient(135deg, var(--tg-tag-block-from), var(--tg-tag-block-to));
@@ -437,14 +462,14 @@
 
 .tg-campo > .tg-control {
   width: 100%;
-  min-height: 56px;
-  padding: 16px 20px 0;
+  min-height: calc(40px + 16px * var(--tg-escala-texto));
+  padding: calc(16px * var(--tg-escala-texto)) 20px 0;
   border: 1px solid var(--tg-pill-border);
   border-radius: 24px;
   background: var(--tg-pill-bg);
   color: var(--tg-on-surface);
   font: inherit;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--tg-escala-texto));
   outline: none;
   transition: border-color 120ms ease;
 }
@@ -471,11 +496,11 @@
 .tg-campo > label {
   position: absolute;
   left: 20px;
-  top: 18px;
+  top: calc(2px + 16px * var(--tg-escala-texto));
   max-width: calc(100% - 40px);
   overflow: hidden;
   color: var(--tg-on-surface-variant);
-  font-size: 1rem;
+  font-size: calc(1rem * var(--tg-escala-texto));
   white-space: nowrap;
   text-overflow: ellipsis;
   pointer-events: none;
@@ -487,8 +512,8 @@
 .tg-campo > .tg-control:focus + label,
 .tg-campo > .tg-control:not(:placeholder-shown) + label,
 .tg-campo[data-lleno='true'] > label {
-  top: 7px;
-  font-size: 0.75rem;
+  top: calc(7px * var(--tg-escala-texto));
+  font-size: calc(0.75rem * var(--tg-escala-texto));
 }
 
 .tg-campo > .tg-control:focus + label {
@@ -497,12 +522,12 @@
 
 .tg-campo > textarea.tg-control {
   min-height: 96px;
-  padding-top: 26px;
+  padding-top: calc(26px * var(--tg-escala-texto));
   resize: vertical;
 }
 
 .tg-campo-compacto > .tg-control {
-  min-height: 44px;
+  min-height: calc(30px + 14px * var(--tg-escala-texto));
   padding: 10px 14px;
   border-radius: 12px;
 }

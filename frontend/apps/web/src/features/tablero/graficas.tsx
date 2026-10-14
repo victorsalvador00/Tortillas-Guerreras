@@ -7,7 +7,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
  * tintas de texto, nunca el color de la serie.
  */
 
-const ejes = { stroke: 'var(--tg-outline-variant)', tick: { fill: 'var(--tg-on-surface-variant)', fontSize: 12 } };
+const ejes = { stroke: 'var(--tg-outline-variant)', tick: { fill: 'var(--tg-on-surface-variant)', fontSize: 16 } };
 
 function TooltipTarjeta({
   active,
@@ -22,7 +22,7 @@ function TooltipTarjeta({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-outline-variant bg-card px-3 py-2 text-[13px] shadow-[0_8px_24px_rgb(0_0_0/18%)]">
+    <div className="rounded-xl border border-outline-variant bg-card px-3 py-2 text-13 shadow-[0_8px_24px_rgb(0_0_0/18%)]">
       <p className="m-0 mb-1 font-medium">{label}</p>
       {payload.map((p) => (
         <p key={p.name} className="m-0 flex items-center gap-2">
@@ -62,12 +62,12 @@ export function GraficaBarras<T extends Record<string, unknown>>({
         <BarChart data={datos} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barGap={2} barCategoryGap="30%">
           <CartesianGrid vertical={false} stroke="var(--tg-row-divider)" />
           <XAxis dataKey={categoria} {...ejes} tickLine={false} />
-          <YAxis {...ejes} tickLine={false} axisLine={false} width={64} tickFormatter={(v: number) => formato(v)} />
+          <YAxis {...ejes} tickLine={false} axisLine={false} width={88} tickFormatter={(v: number) => formato(v)} />
           <Tooltip
             cursor={{ fill: 'var(--tg-row-hover)' }}
             content={(p) => <TooltipTarjeta {...(p as object)} formato={formato} />}
           />
-          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 13, color: 'var(--tg-on-surface-variant)' }} iconType="square" />}
+          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 17, color: 'var(--tg-on-surface-variant)' }} iconType="square" />}
           {series.map((s, i) => (
             <Bar key={s.clave} dataKey={s.clave} name={s.nombre} fill={`var(--tg-serie-${i + 1})`} radius={[4, 4, 0, 0]} maxBarSize={36} />
           ))}

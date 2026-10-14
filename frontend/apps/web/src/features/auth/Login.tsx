@@ -109,7 +109,7 @@ export function Login() {
               autoCapitalize="none"
               aria-invalid={errors.usuario ? true : undefined}
               aria-describedby={errors.usuario ? 'login-usuario-error' : undefined}
-              className="h-[54px] w-full rounded-[27px] border border-white/30 bg-white/16 px-4 text-[1.05rem] text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white aria-[invalid=true]:border-[#ffd1dc] dark:border-[#2a63ff] dark:bg-[rgb(42_99_255/12%)] dark:text-[#cfe2ff]"
+              className="h-[54px] w-full rounded-[27px] border border-white/30 bg-white/16 px-4 text-login text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white aria-[invalid=true]:border-[#ffd1dc] dark:border-[#2a63ff] dark:bg-[rgb(42_99_255/12%)] dark:text-[#cfe2ff]"
               {...register('usuario')}
             />
             {errors.usuario && (
@@ -129,7 +129,7 @@ export function Login() {
                 type={ocultar ? 'password' : 'text'}
                 autoComplete="current-password"
                 aria-invalid={errors.contrasena ? true : undefined}
-                className="h-[54px] w-full rounded-[27px] border border-white/30 bg-white/16 pr-[52px] pl-4 text-[1.05rem] text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white aria-[invalid=true]:border-[#ffd1dc] dark:border-[#2a63ff] dark:bg-[rgb(42_99_255/12%)] dark:text-[#cfe2ff]"
+                className="h-[54px] w-full rounded-[27px] border border-white/30 bg-white/16 pr-[52px] pl-4 text-login text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white aria-[invalid=true]:border-[#ffd1dc] dark:border-[#2a63ff] dark:bg-[rgb(42_99_255/12%)] dark:text-[#cfe2ff]"
                 {...register('contrasena')}
               />
               <BotonIcono

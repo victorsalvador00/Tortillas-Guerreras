@@ -231,7 +231,7 @@ function DetalleLista({ lista }: { lista: ListaPrecioDto }) {
           <div className="flex flex-col gap-2">
             {visibles.length === 0 && <p className="m-0 text-sm text-muted">Sin precios.</p>}
             {visibles.map((f) => (
-              <div key={f.clave} className="grid items-start gap-2 rounded-xl border border-row-divider p-3 sm:grid-cols-[minmax(0,1fr)_170px_160px_auto]">
+              <div key={f.clave} className="grid items-start gap-2 rounded-xl border border-row-divider p-3 sm:grid-cols-[minmax(0,1fr)_230px_216px_auto]">
                 <SelectorProducto
                   compacto
                   valor={f.productoId || null}

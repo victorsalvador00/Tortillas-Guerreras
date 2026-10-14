@@ -81,7 +81,7 @@ export function Roles() {
         }
       />
       <EstadoConsulta cargando={roles.isLoading || permisos.isLoading} error={roles.error ?? permisos.error}>
-        <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="grid gap-4 lg:grid-cols-[378px_minmax(0,1fr)]">
           <Tarjeta className="p-2 sm:p-2">
             <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label="Roles">
               {(roles.data ?? []).map((r) => (

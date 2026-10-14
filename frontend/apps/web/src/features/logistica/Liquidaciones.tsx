@@ -238,7 +238,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="h-12 border-b border-row-divider text-left text-[13px] text-muted">
+                <tr className="h-12 border-b border-row-divider text-left text-13 text-muted">
                   <th className="px-3 font-medium">Producto</th>
                   <th className="px-3 text-right font-medium">Cargado</th>
                   <th className="px-3 text-right font-medium">Vendido</th>

@@ -75,7 +75,7 @@ export function Shell() {
         />
         <Link to="/" className="flex min-h-12 items-center gap-3 text-inherit no-underline" aria-label="Guerreras, ir al tablero">
           <Logo chico className="h-10 drop-shadow-[0_1px_2px_rgb(0_0_0/35%)]" titulo="" />
-          <span className="hidden text-[20px] font-semibold sm:inline">Sistema de Gestión</span>
+          <span className="hidden text-20 font-semibold sm:inline">Sistema de Gestión</span>
         </Link>
         <span className="flex-1" />
         <span
@@ -90,7 +90,7 @@ export function Shell() {
           encabezado={
             <div className="flex flex-col">
               <strong>{perfil?.nombreCompleto}</strong>
-              <span className="text-[13px] text-muted">
+              <span className="text-13 text-muted">
                 {perfil?.usuario} · {perfil?.roles.join(', ')}
               </span>
             </div>

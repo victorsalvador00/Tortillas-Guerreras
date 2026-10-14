@@ -175,7 +175,7 @@ function Captura({ orden }: { orden: OrdenDto }) {
               <div
                 key={c.id}
                 className={cn(
-                  'grid items-center gap-3 rounded-xl border border-row-divider border-l-4 p-3 sm:grid-cols-[1fr_200px]',
+                  'grid items-center gap-3 rounded-xl border border-row-divider border-l-4 p-3 sm:grid-cols-[1fr_270px]',
                   real > teorico ? 'border-l-[var(--tg-status-red-fg)]' : 'border-l-[var(--tg-status-green-fg)]',
                 )}
               >
