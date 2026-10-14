@@ -115,3 +115,15 @@ Estados: `Aplicada`, `Duplicada` (ya existía; se devuelve el resultado original
 - Access token de 15 min y refresh de 30 días ligado al dispositivo.
 - Si el refresh expiró, la app sigue registrando localmente y pide iniciar sesión al sincronizar;
   las operaciones pendientes se conservan.
+
+## Contrato de datos
+
+Las formas exactas de cada colección de bajada, de `GET /sync/dispositivo` y de los `datos` de cada tipo de operación
+están en `frontend/packages/shared/src/sync.ts` (tipos TypeScript y esquemas Zod). El backend las serializa igual
+(camelCase). Notas:
+
+- `rutasClientes` usa `clienteId` como id en `eliminados`.
+- `saldosClientes` siempre viaja completo (no es incremental).
+- Los `datos` de `RegistrarVenta`, `EntregarPedido` y `RegistrarRetorno` llevan `consecutivo`; el servidor lo guarda
+  como `ultimo_consecutivo` del dispositivo (RN-SYN-08).
+- `ReportarEstado` informa `pendientes`, que Logística usa para RN-LOG-09.
