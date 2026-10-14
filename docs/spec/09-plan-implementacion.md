@@ -94,5 +94,5 @@ Instrucciones para Claude Code:
   ventas por ruta/canal/producto, continuidad de visitas.
 - [x] **T-7.2 Infra de producción.** Compose de producción, Caddy, workflows de despliegue,
   respaldo a Spaces. *Lee:* 08.
-- [ ] **T-7.3 Carga inicial.** Importadores CSV de productos, clientes, proveedores, recetas y
+- [x] **T-7.3 Carga inicial.** Importadores CSV de productos, clientes, proveedores, recetas y
   existencias iniciales (con plantilla descargable).
