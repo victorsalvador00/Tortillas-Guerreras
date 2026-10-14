@@ -6,6 +6,16 @@ import { MENU } from './menu';
 import { useSesion } from './sesion';
 
 const CLAVE_CONTRAIDO = 'tg-menu-contraido';
+const CLAVE_SECCIONES = 'tg-menu-secciones';
+
+function leerSecciones(): Record<string, boolean> | null {
+  try {
+    const v = localStorage.getItem(CLAVE_SECCIONES);
+    return v ? (JSON.parse(v) as Record<string, boolean>) : null;
+  } catch {
+    return null;
+  }
+}
 
 function useEsMovil(): boolean {
   const consulta = '(max-width: 959.98px)';
@@ -51,6 +61,24 @@ export function Shell() {
   );
 
   const activa = (destino: string) => (destino === '/' ? ruta === '/' : ruta === destino || ruta.startsWith(`${destino}/`));
+  const seccionActiva = secciones.find((s) => s.opciones.some((o) => activa(o.ruta)))?.etiqueta;
+
+  // Acordeón: cada módulo se abre o cierra; la primera vez solo está abierto el de la página actual. Se recuerda en
+  // el navegador y, al navegar a otro módulo, ese se abre solo.
+  const [abiertas, setAbiertas] = useState<Record<string, boolean>>(
+    () => leerSecciones() ?? (seccionActiva ? { [seccionActiva]: true } : {}),
+  );
+  useEffect(() => {
+    if (seccionActiva) setAbiertas((a) => (a[seccionActiva] ? a : { ...a, [seccionActiva]: true }));
+  }, [seccionActiva]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(CLAVE_SECCIONES, JSON.stringify(abiertas));
+    } catch {
+      // Navegación privada: el estado dura la sesión.
+    }
+  }, [abiertas]);
+  const alternarSeccion = (etiqueta: string) => setAbiertas((a) => ({ ...a, [etiqueta]: !a[etiqueta] }));
 
   return (
     <div className="flex h-full flex-col">
@@ -135,16 +163,46 @@ export function Shell() {
           aria-hidden={movil && !abiertoMovil ? true : undefined}
         >
           <nav aria-label="Menú principal" className={cn(mostrarContraido && 'tg-nav-collapsed')}>
-            {secciones.map((seccion, i) => (
+            {secciones.map((seccion, i) => {
+              // Con el menú contraído (solo íconos) no hay acordeón: se ven todas las opciones.
+              const abierta = mostrarContraido || !!abiertas[seccion.etiqueta];
+              const idLista = `menu-${i}`;
+              return (
               <div key={seccion.etiqueta}>
                 {mostrarContraido ? (
                   i > 0 && <hr className="mx-3 my-2 border-0 border-t border-outline-variant" />
                 ) : (
-                  <h2 className="mx-4 mt-4 mb-1 text-xs font-medium tracking-[0.04em] text-[var(--tg-sidebar-muted)] uppercase">
-                    {seccion.etiqueta}
+                  <h2 className="m-0 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => alternarSeccion(seccion.etiqueta)}
+                      aria-expanded={abierta}
+                      aria-controls={idLista}
+                      className="flex w-full cursor-pointer items-center justify-between rounded-lg px-4 py-2 text-left text-xs font-medium tracking-[0.04em] text-[var(--tg-sidebar-muted)] uppercase hover:bg-row-hover"
+                    >
+                      <span className="flex items-center gap-2">
+                        {seccion.etiqueta}
+                        {!abierta && seccion.etiqueta === seccionActiva && (
+                          <span className="size-2 rounded-full bg-primary" aria-label="(página actual)" />
+                        )}
+                      </span>
+                      <Icono
+                        nombre="expand_more"
+                        tamano={20}
+                        className={cn('transition-transform duration-200 motion-reduce:transition-none', abierta && 'rotate-180')}
+                      />
+                    </button>
                   </h2>
                 )}
-                <ul className="m-0 list-none px-2">
+                <div
+                  id={idLista}
+                  inert={!abierta}
+                  className={cn(
+                    'grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none',
+                    abierta ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                  )}
+                >
+                <ul className="m-0 min-h-0 list-none overflow-hidden px-2">
                   {seccion.opciones.map((o) => (
                     <li key={o.ruta}>
                       <Link
@@ -164,8 +222,10 @@ export function Shell() {
                     </li>
                   ))}
                 </ul>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </nav>
         </aside>
 
