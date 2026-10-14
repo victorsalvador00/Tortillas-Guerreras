@@ -80,6 +80,7 @@ Redondeo de importes: 2 decimales, `MidpointRounding.AwayFromZero`, por partida 
 | PDF | PdfSharp / MigraDoc | MIT |
 | Pruebas | xUnit, Shouldly, Testcontainers.PostgreSql, NetArchTest.Rules | Apache 2.0 / BSD / MIT |
 | Web | react, vite, @tanstack/*, react-hook-form, zod, tailwindcss, shadcn/ui, recharts, leaflet, react-leaflet, date-fns, date-fns-tz, orval, vitest, @testing-library/react | MIT / BSD |
-| App | expo, expo-router, expo-sqlite, drizzle-orm, expo-location, @react-native-community/netinfo, expo-secure-store | MIT |
+| App | expo (SDK 54) y módulos expo-* (router, sqlite, secure-store, location, updates, crypto, device, constants, linking, sharing, splash-screen, status-bar, system-ui, application), @expo/vector-icons, @react-native-community/netinfo, react-native-svg, react-native-qrcode-svg, react-native-safe-area-context, react-native-screens, drizzle-kit, babel-plugin-inline-import | MIT |
+| App (ORM local) | drizzle-orm | Apache 2.0 |
 
 Prohibidas: ver `CLAUDE.md`, regla 1.

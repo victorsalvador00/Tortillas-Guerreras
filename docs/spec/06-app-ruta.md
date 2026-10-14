@@ -53,3 +53,11 @@ Inventario de camioneta local = carga recibida − ventas locales + retornos ven
 - En modo avión se registran 20 ventas; al recuperar red se envían todas, el servidor las aplica una
   vez y la pantalla Pendientes queda en cero.
 - Cerrar la app a la fuerza a mitad de un envío no duplica ventas al reabrir.
+
+## Implementación (T-5.2 a T-5.5)
+
+- Proyecto en `frontend/apps/ruta` (Expo SDK 54, expo-router). Nombre visible: **Guerreras Ruta**; logotipo del cliente en login, encabezado y ticket.
+- Base local con Drizzle (`src/db/esquema.ts`, migraciones en `drizzle/`). Además de las tablas de arriba hay `cobros_locales` (para el efectivo esperado de Mi día) y `retornos_locales` guarda una fila por partida.
+- Motor de sync puro en `src/sync/motor.ts` (probado con Vitest): push en lotes ≤ 200 por secuencia, reintentos 1-2-4 s ante red/5xx, rechazos visibles sin reintento, pull con `cursor`/`hayMas`, `ReportarEstado` al final de cada sincronización y `GET /sync/dispositivo` la primera vez (RN-SYN-08).
+- `ReportarEstado` se envía en un lote propio (no se guarda en `operaciones_pendientes`) y consume un número de `secuencia`.
+- Las actualizaciones OTA se revisan solo al abrir la app, antes de mostrar pantallas (RN-APP-08).
