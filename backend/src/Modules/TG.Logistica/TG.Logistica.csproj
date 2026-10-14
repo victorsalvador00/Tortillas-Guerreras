@@ -19,6 +19,7 @@
     <ProjectReference Include="..\TG.Catalogos\TG.Catalogos.csproj" />
     <ProjectReference Include="..\TG.Inventario\TG.Inventario.csproj" />
     <ProjectReference Include="..\TG.Ventas\TG.Ventas.csproj" />
+    <ProjectReference Include="..\TG.Seguridad\TG.Seguridad.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="TG.Modules.Tests" />

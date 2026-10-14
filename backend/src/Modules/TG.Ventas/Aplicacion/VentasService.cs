@@ -621,6 +621,19 @@ public sealed class VentasService(
         return clientes.ToDictionary(x => x.Id, x => AInfo(x, canales));
     }
 
+    public async Task<IReadOnlyList<ClienteInfo>> ListarClientesAsync(bool incluirGenericos, CancellationToken ct)
+    {
+        var consulta = db.Clientes.AsNoTracking().Where(x => x.Activo);
+        if (!incluirGenericos)
+        {
+            consulta = consulta.Where(x => !x.EsGenerico);
+        }
+
+        var clientes = await consulta.OrderBy(x => x.Codigo).ToListAsync(ct);
+        var canales = await db.Canales.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Clave, ct);
+        return clientes.Select(x => AInfo(x, canales)).ToList();
+    }
+
     private async Task<ClienteInfo> InfoAsync(Cliente cliente, CancellationToken ct)
     {
         var canales = await db.Canales.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Clave, ct);

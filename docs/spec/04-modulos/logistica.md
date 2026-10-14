@@ -62,3 +62,20 @@ producto y efectivo.
 - Ruta R01 carga 300 KG, vende 260 KG, recibe devolución no vendible de 5 KG, cuenta sobrante de
   44 KG → esperado 40 KG, diferencia +4 KG genera `AjusteEntrada` e incidencia; el almacén R01
   queda en 0 al cerrar.
+
+## Aclaraciones de implementación
+- Una ruta crea al darse de alta su almacén tipo `Ruta` (mismo código) y su cliente genérico `GEN-<ruta>`, que siempre
+  queda en `rutas_clientes`. El código de la ruta no se cambia (va en folios). El vendedor debe tener el rol Vendedor.
+- `PUT /rutas/{id}/clientes` reemplaza la lista; los que salen quedan `activo = false` para que la app los borre.
+- Un envío en `Preparado` puede llevar partidas sin lote (FEFO al despachar); al despachar las partidas se reemplazan
+  por los lotes reales. No se despacha una carga para un día cuya liquidación ya está cerrada (`LOG-007`).
+- Retornos: si no se indica lote se usa el de la venta original, el más reciente en la camioneta o el último cargado;
+  sin condición, el producto terminado con vida útil ≤ 2 días es `NoVendible` `[SUP-13]` con motivo
+  `DEV_NO_VENDIBLE`. Un retorno con fecha de una liquidación ya cerrada se aplica y genera incidencia (RN-SYN-06).
+- Liquidación: el detalle abierto se calcula al momento (envíos del día, kardex de ventas, retornos y lo que haya en la
+  camioneta). Al cerrar, el ajuste por diferencia se calcula contra la existencia real del lote para garantizar que el
+  almacén quede en cero; en el caso normal coincide con `sobrante_contado − sobrante_esperado`. Sobrante a merma usa el
+  motivo indicado (o `OTRO`); a reproceso, `REPROCESO`. Se exige efectivo entregado y conteo de toda partida con
+  esperado ≠ 0. Una incidencia `DiferenciaLiquidacion` por diferencias de producto y otra por diferencia de efectivo.
+- RN-LOG-09: `IEstadoSincronizacionRuta` (por defecto, suma de `operaciones_pendientes` de los dispositivos activos del
+  vendedor). Forzar requiere `logistica.forzar_cierre` y `{ "forzar": true }`; queda `cerrada_forzada = true`.

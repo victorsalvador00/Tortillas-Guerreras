@@ -273,6 +273,9 @@ public interface IVentasService
 
     Task<IReadOnlyDictionary<Guid, ClienteInfo>> ObtenerClientesAsync(IEnumerable<Guid> ids, CancellationToken ct);
 
+    /// <summary>Clientes activos ordenados por código (semilla y selectores de Logística).</summary>
+    Task<IReadOnlyList<ClienteInfo>> ListarClientesAsync(bool incluirGenericos, CancellationToken ct);
+
     Task<VentaInfo?> ObtenerVentaAsync(Guid id, CancellationToken ct);
 
     Task<VentaInfo?> ObtenerVentaPorFolioAsync(string folio, CancellationToken ct);
