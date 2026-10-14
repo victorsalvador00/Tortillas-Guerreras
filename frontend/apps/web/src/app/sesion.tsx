@@ -1,4 +1,4 @@
-import { cerrarSesion, configurarCliente, login, refrescarSesion, type PerfilDto, type SesionDto } from '@tg/api-client';
+import { cerrarSesion, configurarCliente, esErrorApi, login, refrescarSesion, type PerfilDto, type SesionDto } from '@tg/api-client';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 /**
@@ -29,16 +29,34 @@ function guardarSesion(sesion: SesionDto | null): void {
   alCambiarPerfil?.(sesion?.usuario ?? null);
 }
 
+/**
+ * Un solo refresco a la vez entre todas las pestañas (Web Locks): con el refresh rotativo, dos pestañas refrescando
+ * al mismo tiempo con el mismo token harían que el servidor lo tome como reuso (RN-SEG-01) y cerrara la sesión.
+ * Dentro del candado se lee el token más reciente, que pudo dejar otra pestaña.
+ */
+function conCandado<T>(accion: () => Promise<T>): Promise<T> {
+  const candados = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  return candados ? (candados.request('tg-refresh', accion) as Promise<T>) : accion();
+}
+
+/** Solo un rechazo del servidor (401/403) cierra la sesión; un error de red la conserva para reintentar. */
+async function refrescarConToken(): Promise<SesionDto | null> {
+  return conCandado(async () => {
+    const refreshToken = leerRefresh();
+    if (!refreshToken) return null;
+    try {
+      const sesion = await refrescarSesion({ refreshToken });
+      guardarSesion(sesion);
+      return sesion;
+    } catch (e) {
+      if (esErrorApi(e) && (e.estado === 401 || e.estado === 403)) guardarSesion(null);
+      return null;
+    }
+  });
+}
+
 async function refrescar(): Promise<boolean> {
-  const refreshToken = leerRefresh();
-  if (!refreshToken) return false;
-  try {
-    guardarSesion(await refrescarSesion({ refreshToken }));
-    return true;
-  } catch {
-    guardarSesion(null);
-    return false;
-  }
+  return (await refrescarConToken()) !== null;
 }
 
 configurarCliente({
@@ -55,15 +73,7 @@ export function sesionActiva(): boolean {
 
 /** Restaura la sesión al abrir la app (antes de montar el enrutador). */
 export async function restaurarSesion(): Promise<PerfilDto | null> {
-  if (!leerRefresh()) return null;
-  try {
-    const sesion = await refrescarSesion({ refreshToken: leerRefresh()! });
-    guardarSesion(sesion);
-    return sesion.usuario;
-  } catch {
-    guardarSesion(null);
-    return null;
-  }
+  return (await refrescarConToken())?.usuario ?? null;
 }
 
 export interface ContextoSesion {

@@ -2,7 +2,29 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../utils';
 
-/** Ícono de Material Symbols (`<Icono nombre="inventory_2" />`). Decorativo salvo que tenga `etiqueta`. */
+/**
+ * Íconos propios del negocio que no existen en Material Symbols. Mismo lienzo de 24 × 24, trazo de 2 px y
+ * `currentColor`, para que se comporten como los de la fuente (tamaño, color y estado seleccionado).
+ */
+const ICONOS_PROPIOS: Record<string, ReactNode> = {
+  // Mazorca de maíz inclinada: granos en cuadrícula y hojas que la abrazan desde la base.
+  maiz: (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={1.6}
+      strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+      <g transform="rotate(35 12 12)">
+        <ellipse cx="12" cy="9" rx="3.9" ry="7.4" fill="currentColor" fillOpacity={0.18} />
+        <path d="M10.2 2.6v12.6M13.8 2.6v12.6M8.3 5.5h7.4M8.1 8.6h7.8M8.2 11.7h7.6" strokeWidth={1.1} />
+        <path d="M12 21.6C7.3 20.2 5.9 15.3 7.3 8.8c1.1 3.9 2.6 6.9 4.7 8.6" fill="currentColor" fillOpacity={0.45} />
+        <path d="M12 21.6c4.7-1.4 6.1-6.3 4.7-12.8-1.1 3.9-2.6 6.9-4.7 8.6" fill="currentColor" fillOpacity={0.45} />
+      </g>
+    </svg>
+  ),
+};
+
+/**
+ * Ícono de Material Symbols (`<Icono nombre="inventory_2" />`) o propio (`<Icono nombre="maiz" />`, ver
+ * `ICONOS_PROPIOS`). Decorativo salvo que tenga `etiqueta`.
+ */
 export function Icono({
   nombre,
   className,
@@ -14,6 +36,7 @@ export function Icono({
   etiqueta?: string;
   tamano?: number;
 }) {
+  const propio = ICONOS_PROPIOS[nombre];
   return (
     <span
       className={cn('icono', className)}
@@ -22,7 +45,7 @@ export function Icono({
       role={etiqueta ? 'img' : undefined}
       style={tamano ? { fontSize: `calc(${tamano}px * var(--tg-escala-texto))` } : undefined}
     >
-      {nombre}
+      {propio ?? nombre}
     </span>
   );
 }

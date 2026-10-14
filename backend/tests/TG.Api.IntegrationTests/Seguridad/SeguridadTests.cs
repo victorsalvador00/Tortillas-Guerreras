@@ -31,6 +31,11 @@ public sealed class SeguridadTests(ApiFixture api) : IClassFixture<ApiFixture>
             new { refreshToken = sesion.RefreshToken });
         rotada.RefreshToken.ShouldNotBe(sesion.RefreshToken);
 
+        // Dentro del periodo de gracia (otra pestaña refrescando al mismo tiempo) el reuso se acepta.
+        var carrera = await anonimo.PostJsonAsync("/api/v1/seguridad/auth/refresh", new { refreshToken = sesion.RefreshToken });
+        carrera.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        api.Factory.Reloj.Advance(TimeSpan.FromSeconds(31));
         var reuso = await anonimo.PostJsonAsync("/api/v1/seguridad/auth/refresh", new { refreshToken = sesion.RefreshToken });
         await reuso.DebeFallarAsync(HttpStatusCode.Unauthorized, "SEG-004");
 

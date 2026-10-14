@@ -84,7 +84,7 @@ export const MENU: SeccionMenu[] = [
   {
     etiqueta: 'Catálogos',
     opciones: [
-      { etiqueta: 'Productos', ruta: '/catalogos/productos', icono: 'bakery_dining' },
+      { etiqueta: 'Productos', ruta: '/catalogos/productos', icono: 'maiz' },
       { etiqueta: 'Unidades', ruta: '/catalogos/unidades', icono: 'scale' },
       { etiqueta: 'Motivos de merma', ruta: '/catalogos/motivos-merma', icono: 'compost' },
       { etiqueta: 'Parámetros', ruta: '/catalogos/parametros', icono: 'settings_applications', permiso: 'catalogos.editar' },

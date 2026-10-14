@@ -9,7 +9,8 @@
 
 ### Reglas
 - **RN-SEG-01** Access token de 15 min; refresh token de 30 días, rotativo (cada uso emite uno
-  nuevo y revoca el anterior). Reusar un refresh revocado revoca toda la cadena.
+  nuevo y revoca el anterior). Reusar un refresh revocado revoca toda la cadena, salvo dentro de una gracia de
+  30 s tras su rotación (`Jwt:SegundosGraciaRefresh`): dos pestañas o una respuesta perdida no cierran la sesión.
 - **RN-SEG-02** En la app, el refresh token está ligado al `dispositivo_id`. Un dispositivo
   inactivo no puede refrescar ni sincronizar.
 - **RN-SEG-03** El registro de dispositivo lo aprueba un Administrador o Supervisor; al aprobarse

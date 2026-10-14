@@ -72,7 +72,7 @@ public sealed record RefreshRequest(string RefreshToken);
 /// cadena. Un dispositivo inactivo no puede refrescar (RN-SEG-02).
 /// </summary>
 public sealed class RefreshHandler(SeguridadDbContext db, UserManager<Usuario> usuarios, ServicioTokens tokens,
-    TimeProvider reloj)
+    TimeProvider reloj, Microsoft.Extensions.Options.IOptions<OpcionesJwt> opciones)
 {
     public async Task<Result<SesionDto>> EjecutarAsync(RefreshRequest request, CancellationToken ct)
     {
@@ -84,7 +84,10 @@ public sealed class RefreshHandler(SeguridadDbContext db, UserManager<Usuario> u
             return ErroresSeguridad.RefreshInvalido;
         }
 
-        if (actual.RevocadoEn is not null)
+        // Rotado hace unos segundos (otra pestaña o respuesta perdida): se emite una sesión nueva sin tocar la cadena.
+        var enGracia = actual.RevocadoEn is { } revocado && actual.ReemplazadoPor is not null
+            && revocado > ahora.AddSeconds(-opciones.Value.SegundosGraciaRefresh);
+        if (actual.RevocadoEn is not null && !enGracia)
         {
             await RevocarCadenaAsync(actual, ahora, ct);
             return ErroresSeguridad.RefreshReutilizado;
@@ -114,6 +117,11 @@ public sealed class RefreshHandler(SeguridadDbContext db, UserManager<Usuario> u
         }
 
         var sesion = await tokens.EmitirAsync(usuario, dispositivo, ct);
+        if (enGracia)
+        {
+            return sesion;
+        }
+
         var nuevo = await db.RefreshTokens.SingleAsync(r => r.TokenHash == ServicioTokens.Hash(sesion.RefreshToken), ct);
         actual.RevocadoEn = ahora;
         actual.ReemplazadoPor = nuevo.Id;

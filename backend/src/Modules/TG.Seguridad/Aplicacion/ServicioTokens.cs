@@ -18,6 +18,12 @@ public sealed class OpcionesJwt
     public string Key { get; set; } = string.Empty;
     public int MinutosAcceso { get; set; } = 15;
     public int DiasRefresh { get; set; } = 30;
+
+    /// <summary>
+    /// Segundos en que un refresh recién rotado todavía se acepta (dos pestañas o una respuesta perdida). Pasado este
+    /// tiempo, reusarlo revoca la cadena (RN-SEG-01).
+    /// </summary>
+    public int SegundosGraciaRefresh { get; set; } = 30;
 }
 
 public sealed record DispositivoSesionDto(Guid Id, string? Codigo, string Nombre, bool Activo);
