@@ -4908,6 +4908,1598 @@
           }
         }
       }
+    },
+    "/api/v1/logistica/vehiculos": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarVehiculos",
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehiculoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "crearVehiculo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarVehiculoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/vehiculos/{id}": {
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "actualizarVehiculo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarVehiculoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/rutas": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarRutas",
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RutaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "crearRuta",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarRutaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RutaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/rutas/{id}": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerRuta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RutaDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "actualizarRuta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarRutaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RutaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/rutas/{id}/clientes": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarClientesRuta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClienteRutaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "actualizarClientesRuta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientesRutaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClienteRutaDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/envios": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarEnvios",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoEnvio"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfEnvioDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "crearEnvio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarEnvioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvioDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/envios/{id}": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerEnvio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvioDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "actualizarEnvio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarEnvioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvioDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/envios/{id}/despachar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "despacharEnvio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvioDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/envios/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "cancelarEnvio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvioDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/retornos": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarRetornos",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoRetorno"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfRetornoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "registrarRetorno",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarRetornoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetornoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/retornos/{id}": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerRetorno",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetornoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarLiquidaciones",
+        "parameters": [
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoLiquidacion"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfLiquidacionResumenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/conteo": {
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "capturarConteoLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapturarConteoLiquidacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/cerrar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "cerrarLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CerrarLiquidacionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/emisor": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "obtenerEmisor",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "guardarEmisor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarEmisorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/solicitudes": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "listarSolicitudesAutofactura",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoSolicitud"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfSolicitudDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/factura-global/previsualizar": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "previsualizarFacturaGlobal",
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrevisualizacionGlobalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/factura-global": {
+      "post": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "crearFacturaGlobal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearFacturaGlobalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacturaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "listarFacturas",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoFactura"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoFactura"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfFacturaResumenDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "crearFactura",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearFacturaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacturaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas/{id}": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "obtenerFactura",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacturaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas/{id}/reintentar": {
+      "post": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "reintentarFactura",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacturaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "cancelarFactura",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelarFacturaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacturaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas/{id}/xml": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "descargarXmlFactura",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/facturacion/facturas/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Facturación"
+        ],
+        "operationId": "descargarPdfFactura",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/portal/captcha": {
+      "get": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "captchaPortal",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptchaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/tickets/{folio}": {
+      "get": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "consultarTicketPortal",
+        "parameters": [
+          {
+            "name": "folio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "total",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketPortalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/solicitudes": {
+      "post": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "solicitarAutofactura",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudAutofacturaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/solicitudes/{id}": {
+      "get": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "obtenerSolicitudPortal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/solicitudes/{id}/xml": {
+      "get": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "descargarXmlPortal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/portal/solicitudes/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Portal de autofactura"
+        ],
+        "operationId": "descargarPdfPortal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5126,6 +6718,24 @@
           }
         }
       },
+      "CancelarFacturaRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
+          },
+          "sustituye": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "CancelarVentaRequest": {
         "required": [
           "motivo"
@@ -5133,6 +6743,22 @@
         "type": "object",
         "properties": {
           "motivo": {
+            "type": "string"
+          }
+        }
+      },
+      "CaptchaDto": {
+        "required": [
+          "id",
+          "pregunta"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pregunta": {
             "type": "string"
           }
         }
@@ -5147,6 +6773,33 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConsumoRealRequest"
+            }
+          }
+        }
+      },
+      "CapturarConteoLiquidacionRequest": {
+        "required": [
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "efectivoEntregado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConteoPartidaRequest"
             }
           }
         }
@@ -5171,6 +6824,17 @@
           "cantidadContada": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "CerrarLiquidacionRequest": {
+        "required": [
+          "forzar"
+        ],
+        "type": "object",
+        "properties": {
+          "forzar": {
+            "type": "boolean"
           }
         }
       },
@@ -5341,6 +7005,98 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "ClienteRutaDto": {
+        "required": [
+          "clienteId",
+          "codigo",
+          "nombre",
+          "ordenVisita",
+          "diasVisita",
+          "esGenerico"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "ordenVisita": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "diasVisita": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int16"
+            }
+          },
+          "esGenerico": {
+            "type": "boolean"
+          },
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ClienteRutaRequest": {
+        "required": [
+          "clienteId",
+          "ordenVisita"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ordenVisita": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "diasVisita": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int16"
+            }
+          }
+        }
+      },
+      "ClientesRutaRequest": {
+        "required": [
+          "clientes"
+        ],
+        "type": "object",
+        "properties": {
+          "clientes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClienteRutaRequest"
+            }
           }
         }
       },
@@ -5534,10 +7290,90 @@
           }
         }
       },
+      "ConceptoDto": {
+        "required": [
+          "id",
+          "claveProdServ",
+          "claveUnidad",
+          "cantidad",
+          "descripcion",
+          "valorUnitario",
+          "importe",
+          "tasaIva",
+          "iva",
+          "ieps"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ventaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "noIdentificacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "claveProdServ": {
+            "type": "string"
+          },
+          "claveUnidad": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "valorUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          },
+          "tasaIeps": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "CondicionPago": {
         "enum": [
           "Contado",
           "Credito"
+        ]
+      },
+      "CondicionRetorno": {
+        "enum": [
+          "Vendible",
+          "NoVendible"
         ]
       },
       "ConsumoDto": {
@@ -5727,6 +7563,40 @@
           }
         }
       },
+      "ConteoPartidaRequest": {
+        "required": [
+          "productoId",
+          "sobranteContado",
+          "destino"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sobranteContado": {
+            "type": "number",
+            "format": "double"
+          },
+          "destino": {
+            "$ref": "#/components/schemas/DestinoSobrante"
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "ConversionDto": {
         "required": [
           "unidadId",
@@ -5801,6 +7671,55 @@
           }
         }
       },
+      "CrearFacturaGlobalRequest": {
+        "required": [
+          "desde",
+          "hasta"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "CrearFacturaRequest": {
+        "required": [
+          "ventaIds",
+          "receptor"
+        ],
+        "type": "object",
+        "properties": {
+          "ventaIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "receptor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReceptorRequest"
+              }
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CrearRolRequest": {
         "required": [
           "nombre",
@@ -5824,6 +7743,13 @@
             }
           }
         }
+      },
+      "DestinoSobrante": {
+        "enum": [
+          "Reintegrar",
+          "Merma",
+          "Reproceso"
+        ]
       },
       "DispositivoDto": {
         "required": [
@@ -5934,6 +7860,201 @@
           "ConteoFisico"
         ]
       },
+      "EmisorDto": {
+        "required": [
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+          "codigoPostalExpedicion",
+          "serieFacturas",
+          "serieGlobal",
+          "serieNotasCredito",
+          "esEjemplo"
+        ],
+        "type": "object",
+        "properties": {
+          "rfc": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "regimenFiscal": {
+            "type": "string"
+          },
+          "codigoPostalExpedicion": {
+            "type": "string"
+          },
+          "serieFacturas": {
+            "type": "string"
+          },
+          "serieGlobal": {
+            "type": "string"
+          },
+          "serieNotasCredito": {
+            "type": "string"
+          },
+          "esEjemplo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EnvioDto": {
+        "required": [
+          "id",
+          "folio",
+          "fechaOperativa",
+          "rutaId",
+          "rutaCodigo",
+          "tipo",
+          "almacenOrigenId",
+          "almacenOrigen",
+          "almacenDestinoId",
+          "almacenDestino",
+          "estado",
+          "creadoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEnvio"
+          },
+          "almacenOrigenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenOrigen": {
+            "type": "string"
+          },
+          "almacenDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenDestino": {
+            "type": "string"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoEnvio"
+          },
+          "despachadoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "liquidacionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnvioPartidaDto"
+            }
+          }
+        }
+      },
+      "EnvioPartidaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cantidadBase"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "EnvioPartidaRequest": {
+        "required": [
+          "productoId",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidadId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EstadoCobro": {
         "enum": [
           "Registrado",
@@ -5947,10 +8068,33 @@
           "Cancelado"
         ]
       },
+      "EstadoEnvio": {
+        "enum": [
+          "Preparado",
+          "EnRuta",
+          "Liquidado",
+          "Cancelado"
+        ]
+      },
+      "EstadoFactura": {
+        "enum": [
+          "Pendiente",
+          "EnviadaProveedor",
+          "Timbrada",
+          "Error",
+          "Cancelada"
+        ]
+      },
       "EstadoIncidencia": {
         "enum": [
           "Abierta",
           "Revisada"
+        ]
+      },
+      "EstadoLiquidacion": {
+        "enum": [
+          "Abierta",
+          "Cerrada"
         ]
       },
       "EstadoOrden": {
@@ -5993,6 +8137,21 @@
           "Borrador",
           "Vigente",
           "Obsoleta"
+        ]
+      },
+      "EstadoRetorno": {
+        "enum": [
+          "Registrado",
+          "Cancelado"
+        ]
+      },
+      "EstadoSolicitud": {
+        "enum": [
+          "Recibida",
+          "Rechazada",
+          "EnProceso",
+          "Timbrada",
+          "Error"
         ]
       },
       "EstadoTraspaso": {
@@ -6060,6 +8219,309 @@
               "number"
             ],
             "format": "double"
+          }
+        }
+      },
+      "FacturaDto": {
+        "required": [
+          "id",
+          "tipo",
+          "serie",
+          "folio",
+          "receptorRfc",
+          "receptorNombre",
+          "receptorRegimen",
+          "receptorCp",
+          "usoCfdi",
+          "metodoPagoSat",
+          "formaPagoSat",
+          "fechaOperativa",
+          "creadoEn",
+          "subtotal",
+          "iva",
+          "ieps",
+          "total",
+          "estado",
+          "proveedor",
+          "tieneXml",
+          "tienePdf",
+          "intentos",
+          "conceptos",
+          "ventas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoFactura"
+          },
+          "serie": {
+            "type": "string"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "uuidFiscal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "receptorRfc": {
+            "type": "string"
+          },
+          "receptorNombre": {
+            "type": "string"
+          },
+          "receptorRegimen": {
+            "type": "string"
+          },
+          "receptorCp": {
+            "type": "string"
+          },
+          "usoCfdi": {
+            "type": "string"
+          },
+          "emailReceptor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metodoPagoSat": {
+            "type": "string"
+          },
+          "formaPagoSat": {
+            "type": "string"
+          },
+          "periodicidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "meses": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "anio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoFactura"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "tieneXml": {
+            "type": "boolean"
+          },
+          "tienePdf": {
+            "type": "boolean"
+          },
+          "errorDetalle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "intentos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timbradaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "motivoCancelacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "canceladaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "conceptos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConceptoDto"
+            }
+          },
+          "ventas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacturaVentaDto"
+            }
+          }
+        }
+      },
+      "FacturaResumenDto": {
+        "required": [
+          "id",
+          "tipo",
+          "serie",
+          "folio",
+          "receptorRfc",
+          "receptorNombre",
+          "fechaOperativa",
+          "creadoEn",
+          "subtotal",
+          "iva",
+          "ieps",
+          "total",
+          "estado",
+          "metodoPagoSat",
+          "formaPagoSat",
+          "intentos"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoFactura"
+          },
+          "serie": {
+            "type": "string"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "uuidFiscal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "receptorRfc": {
+            "type": "string"
+          },
+          "receptorNombre": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoFactura"
+          },
+          "metodoPagoSat": {
+            "type": "string"
+          },
+          "formaPagoSat": {
+            "type": "string"
+          },
+          "intentos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorDetalle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timbradaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "FacturaVentaDto": {
+        "required": [
+          "ventaId",
+          "folio"
+        ],
+        "type": "object",
+        "properties": {
+          "ventaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
           }
         }
       },
@@ -6250,6 +8712,94 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "GuardarEmisorRequest": {
+        "required": [
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+          "codigoPostalExpedicion",
+          "serieFacturas",
+          "serieGlobal",
+          "serieNotasCredito"
+        ],
+        "type": "object",
+        "properties": {
+          "rfc": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "regimenFiscal": {
+            "type": "string"
+          },
+          "codigoPostalExpedicion": {
+            "type": "string"
+          },
+          "serieFacturas": {
+            "type": "string"
+          },
+          "serieGlobal": {
+            "type": "string"
+          },
+          "serieNotasCredito": {
+            "type": "string"
+          }
+        }
+      },
+      "GuardarEnvioRequest": {
+        "required": [
+          "rutaId",
+          "tipo",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEnvio"
+          },
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "almacenOrigenId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnvioPartidaRequest"
+            }
+          },
+          "pedidoIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -6612,6 +9162,39 @@
           }
         }
       },
+      "GuardarRutaRequest": {
+        "required": [
+          "codigo",
+          "nombre",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "vendedorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "GuardarUnidadRequest": {
         "required": [
           "clave",
@@ -6675,6 +9258,32 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "GuardarVehiculoRequest": {
+        "required": [
+          "placas",
+          "descripcion",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "placas": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "capacidadKg": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "activo": {
+            "type": "boolean"
           }
         }
       },
@@ -6855,6 +9464,257 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "LiquidacionDto": {
+        "required": [
+          "id",
+          "folio",
+          "rutaId",
+          "rutaCodigo",
+          "rutaNombre",
+          "fechaOperativa",
+          "estado",
+          "ventas",
+          "totalVendido",
+          "ventasContadoEfectivo",
+          "cobrosEfectivo",
+          "efectivoEsperado",
+          "operacionesPendientes",
+          "cerradaForzada",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "rutaNombre": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoLiquidacion"
+          },
+          "ventas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalVendido": {
+            "type": "number",
+            "format": "double"
+          },
+          "ventasContadoEfectivo": {
+            "type": "number",
+            "format": "double"
+          },
+          "cobrosEfectivo": {
+            "type": "number",
+            "format": "double"
+          },
+          "efectivoEsperado": {
+            "type": "number",
+            "format": "double"
+          },
+          "efectivoEntregado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diferenciaEfectivo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "operacionesPendientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cerradaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cerradaPor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cerradaForzada": {
+            "type": "boolean"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiquidacionPartidaDto"
+            }
+          }
+        }
+      },
+      "LiquidacionPartidaDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cargado",
+          "vendido",
+          "devueltoClientesVendible",
+          "devueltoClientesNoVendible",
+          "sobranteEsperado",
+          "destinoSobrante"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cargado": {
+            "type": "number",
+            "format": "double"
+          },
+          "vendido": {
+            "type": "number",
+            "format": "double"
+          },
+          "devueltoClientesVendible": {
+            "type": "number",
+            "format": "double"
+          },
+          "devueltoClientesNoVendible": {
+            "type": "number",
+            "format": "double"
+          },
+          "sobranteEsperado": {
+            "type": "number",
+            "format": "double"
+          },
+          "sobranteContado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diferencia": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "destinoSobrante": {
+            "$ref": "#/components/schemas/DestinoSobrante"
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "LiquidacionResumenDto": {
+        "required": [
+          "id",
+          "folio",
+          "rutaId",
+          "rutaCodigo",
+          "fechaOperativa",
+          "estado",
+          "efectivoEsperado"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoLiquidacion"
+          },
+          "efectivoEsperado": {
+            "type": "number",
+            "format": "double"
+          },
+          "efectivoEntregado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diferenciaEfectivo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "cerradaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -7589,6 +10449,35 @@
           }
         }
       },
+      "PaginadoOfEnvioDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnvioDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfExistenciaDto": {
         "required": [
           "items",
@@ -7618,6 +10507,35 @@
           }
         }
       },
+      "PaginadoOfFacturaResumenDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacturaResumenDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfIncidenciaDto": {
         "required": [
           "items",
@@ -7631,6 +10549,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/IncidenciaDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfLiquidacionResumenDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiquidacionResumenDto"
             }
           },
           "total": {
@@ -7805,6 +10752,64 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecepcionResumenDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfRetornoDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetornoDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginadoOfSolicitudDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolicitudDto"
             }
           },
           "total": {
@@ -8228,6 +11233,54 @@
           }
         }
       },
+      "PartidaRetornoRequest": {
+        "required": [
+          "productoId",
+          "cantidad",
+          "condicion"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidadId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "condicion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CondicionRetorno"
+              }
+            ]
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "PartidasListaRequest": {
         "required": [
           "partidas"
@@ -8626,6 +11679,67 @@
           }
         }
       },
+      "PrevisualizacionGlobalDto": {
+        "required": [
+          "desde",
+          "hasta",
+          "periodicidad",
+          "meses",
+          "anio",
+          "ventas",
+          "subtotal",
+          "iva",
+          "ieps",
+          "total",
+          "detalle"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodicidad": {
+            "type": "string"
+          },
+          "meses": {
+            "type": "string"
+          },
+          "anio": {
+            "type": "string"
+          },
+          "ventas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "detalle": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VentaGlobalDto"
+            }
+          }
+        }
+      },
       "ProductoDto": {
         "required": [
           "id",
@@ -8936,6 +12050,33 @@
           }
         }
       },
+      "ReceptorRequest": {
+        "required": [
+          "rfc",
+          "nombre",
+          "regimenFiscal",
+          "codigoPostal",
+          "usoCfdi"
+        ],
+        "type": "object",
+        "properties": {
+          "rfc": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "regimenFiscal": {
+            "type": "string"
+          },
+          "codigoPostal": {
+            "type": "string"
+          },
+          "usoCfdi": {
+            "type": "string"
+          }
+        }
+      },
       "RecetaDto": {
         "required": [
           "id",
@@ -9169,6 +12310,56 @@
           }
         }
       },
+      "RegistrarRetornoRequest": {
+        "required": [
+          "tipo",
+          "rutaId",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRetorno"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "ventaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaRetornoRequest"
+            }
+          }
+        }
+      },
       "RegistrarTraspasoRequest": {
         "required": [
           "almacenOrigenId",
@@ -9297,6 +12488,165 @@
           }
         }
       },
+      "RetornoDto": {
+        "required": [
+          "id",
+          "folio",
+          "tipo",
+          "rutaId",
+          "rutaCodigo",
+          "fechaOperativa",
+          "estado",
+          "creadoEn",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRetorno"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ventaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaHoraDispositivo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "dispositivoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "latitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitud": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoRetorno"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetornoPartidaDto"
+            }
+          }
+        }
+      },
+      "RetornoPartidaDto": {
+        "required": [
+          "id",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "lote",
+          "cantidadBase",
+          "condicion"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "condicion": {
+            "$ref": "#/components/schemas/CondicionRetorno"
+          },
+          "motivoMermaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RevisarIncidenciaRequest": {
         "type": "object",
         "properties": {
@@ -9339,6 +12689,77 @@
           "usuarios": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "RutaDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "almacenId",
+          "almacenCodigo",
+          "clientes",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacenCodigo": {
+            "type": "string"
+          },
+          "vendedorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vendedorNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoPlacas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clienteGenericoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "clientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activo": {
+            "type": "boolean"
           }
         }
       },
@@ -9423,6 +12844,141 @@
           }
         }
       },
+      "SolicitudAutofacturaRequest": {
+        "required": [
+          "folio",
+          "total",
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+          "codigoPostal",
+          "usoCfdi",
+          "email",
+          "captchaId",
+          "captchaRespuesta"
+        ],
+        "type": "object",
+        "properties": {
+          "folio": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "rfc": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "regimenFiscal": {
+            "type": "string"
+          },
+          "codigoPostal": {
+            "type": "string"
+          },
+          "usoCfdi": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "captchaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "captchaRespuesta": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SolicitudDto": {
+        "required": [
+          "id",
+          "folioTicket",
+          "estado",
+          "creadoEn",
+          "rfc",
+          "razonSocial",
+          "email",
+          "factura"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folioTicket": {
+            "type": "string"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoSolicitud"
+          },
+          "motivoRechazo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rfc": {
+            "type": "string"
+          },
+          "razonSocial": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "factura": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SolicitudFacturaDto"
+              }
+            ]
+          }
+        }
+      },
+      "SolicitudFacturaDto": {
+        "required": [
+          "serie",
+          "folio",
+          "total",
+          "estado"
+        ],
+        "type": "object",
+        "properties": {
+          "serie": {
+            "type": "string"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "uuidFiscal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoFactura"
+          }
+        }
+      },
       "TerminarOrdenRequest": {
         "required": [
           "cantidadProducida"
@@ -9441,12 +12997,63 @@
           }
         }
       },
+      "TicketPortalDto": {
+        "required": [
+          "folio",
+          "fecha",
+          "total",
+          "facturable"
+        ],
+        "type": "object",
+        "properties": {
+          "folio": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "facturable": {
+            "type": "boolean"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "solicitudId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "TipoAlmacen": {
         "enum": [
           "MateriaPrima",
           "ProductoTerminado",
           "General",
           "Ruta"
+        ]
+      },
+      "TipoEnvio": {
+        "enum": [
+          "CargaInicial",
+          "Recarga"
+        ]
+      },
+      "TipoFactura": {
+        "enum": [
+          "Ingreso",
+          "Global",
+          "NotaCredito"
         ]
       },
       "TipoIncidencia": {
@@ -9501,6 +13108,12 @@
           "Semiterminado",
           "Terminado",
           "Reventa"
+        ]
+      },
+      "TipoRetorno": {
+        "enum": [
+          "DevolucionCliente",
+          "RechazoEntrega"
         ]
       },
       "TipoUnidad": {
@@ -9891,6 +13504,37 @@
           }
         }
       },
+      "VehiculoDto": {
+        "required": [
+          "id",
+          "placas",
+          "descripcion",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "placas": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "capacidadKg": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "VentaDto": {
         "required": [
           "id",
@@ -10063,6 +13707,51 @@
           }
         }
       },
+      "VentaGlobalDto": {
+        "required": [
+          "ventaId",
+          "folio",
+          "fechaOperativa",
+          "formaPago",
+          "subtotal",
+          "iva",
+          "ieps",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "ventaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "formaPago": {
+            "$ref": "#/components/schemas/FormaPago"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "iva": {
+            "type": "number",
+            "format": "double"
+          },
+          "ieps": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "VentaPartidaDto": {
         "required": [
           "id",
@@ -10175,6 +13864,15 @@
     },
     {
       "name": "Ventas"
+    },
+    {
+      "name": "Logística"
+    },
+    {
+      "name": "Facturación"
+    },
+    {
+      "name": "Portal de autofactura"
     }
   ]
 }

@@ -6,6 +6,7 @@ import { rutasCompras } from '@/features/compras/rutas';
 import { rutasFacturacion } from '@/features/facturacion/rutas';
 import { rutasInventario } from '@/features/inventario/rutas';
 import { rutasLogistica } from '@/features/logistica/rutas';
+import { rutasMapa } from '@/features/mapa/rutas';
 import { rutasProduccion } from '@/features/produccion/rutas';
 import { rutasSeguridad } from '@/features/seguridad/rutas';
 import { rutasTablero } from '@/features/tablero/rutas';
@@ -30,6 +31,7 @@ const arbol = rutaRaiz.addChildren([
     ...rutasProduccion(),
     ...rutasVentas(),
     ...rutasLogistica(),
+    ...rutasMapa(),
     ...rutasFacturacion(),
     ...rutasSeguridad(),
   ]),
