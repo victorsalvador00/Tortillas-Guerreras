@@ -112,7 +112,7 @@ regenerado (definición de terminado).
   `InicializadorVentas`; ambos cambian.
   *Lee:* 03 (catalogos, ventas.canales), `04-modulos/seguridad-catalogos.md`. *Acepta:* RN-CAT-08, 09, 10; migración
   de `TRAD` a `DET` sin perder clientes.
-- [ ] **T-8.2 Bitácora** *(nueva)*. Tabla `seguridad.bitacora`, atributo `[Bitacora]` e interceptor en SharedKernel
+- [x] **T-8.2 Bitácora** *(nueva)*. Tabla `seguridad.bitacora`, atributo `[Bitacora]` e interceptor en SharedKernel
   (mismo `IUnitOfWork`), origen y dispositivo desde `IUsuarioActual`; endpoint y pantalla Seguridad → Bitácora;
   componente "Historial" reutilizable en `@tg/ui`. Renombrar la clase `Bitacora` de `TG.Api/Infraestructura/Importacion.cs`
   (bitácora de importación) para que no choque con el atributo. Se hace temprano para que las tareas siguientes ya queden

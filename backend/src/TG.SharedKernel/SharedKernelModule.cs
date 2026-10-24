@@ -24,6 +24,7 @@ public static class SharedKernelModule
         services.AddScoped<TransaccionComandoInterceptor>();
         services.AddScoped<AuditoriaInterceptor>();
         services.AddScoped<VersionSyncInterceptor>();
+        services.AddScoped<BitacoraInterceptor>();
         services.AddScoped<IGeneradorFolios, GeneradorFolios>();
 
         services.AddHttpContextAccessor();

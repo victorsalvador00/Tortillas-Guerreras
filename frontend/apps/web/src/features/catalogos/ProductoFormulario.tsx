@@ -14,12 +14,13 @@ import {
   type TipoProducto,
 } from '@tg/api-client';
 import { tasa } from '@tg/shared';
-import { Aviso, BarraAccion, Boton, BotonIcono, Campo, Casilla, DialogoConfirmacion, Selector, Tarjeta, toast } from '@tg/ui';
+import { Aviso, BarraAccion, Boton, BotonIcono, Campo, Casilla, DialogoConfirmacion, Pestanas, Selector, Tarjeta, toast } from '@tg/ui';
 import { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm, type Path } from 'react-hook-form';
 import { z } from 'zod';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
+import { HistorialDocumento } from '@/componentes/historial';
 import { TIPOS_PRODUCTO } from './Productos';
 
 /** RN-CAT-04: banderas propuestas por tipo (editables). */
@@ -162,6 +163,7 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
   const activar = useActivarProducto();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState(false);
+  const [pestana, setPestana] = useState('ficha');
 
   const {
     register,
@@ -207,6 +209,198 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
     }
   });
 
+  const formulario = (
+    <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
+      {errorGeneral && <Aviso tipo="error">{errorGeneral}</Aviso>}
+      <fieldset disabled={!editable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <Tarjeta titulo="Datos generales">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo etiqueta="SKU" error={errors.sku?.message} ayuda="No se puede cambiar si el producto ya tiene movimientos." {...register('sku')} />
+            <Campo etiqueta="Nombre" error={errors.nombre?.message} {...register('nombre')} />
+            <Campo
+              etiqueta="Nombre corto (opcional)"
+              maxLength={15}
+              ayuda="Máximo 15 caracteres (T-800, HNA). Encabezados de cuadrículas, app y liquidación; vacío = SKU."
+              error={errors.nombreCorto?.message}
+              {...register('nombreCorto')}
+            />
+            <Selector etiqueta="Tipo" opciones={TIPOS_PRODUCTO} error={errors.tipo?.message} {...register('tipo')} />
+            <Selector
+              etiqueta="Unidad base (inventario)"
+              vacio="Elige la unidad"
+              opciones={opcionesUnidad}
+              error={errors.unidadBaseId?.message}
+              ayuda="Unidad en la que se lleva la existencia."
+              {...register('unidadBaseId')}
+            />
+            <Campo etiqueta="Descripción (opcional)" className="sm:col-span-2" {...register('descripcion')} />
+            <Campo etiqueta="Código de barras (opcional)" {...register('codigoBarras')} />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1">
+            <Casilla etiqueta="Se compra" {...register('esComprable')} />
+            <Casilla etiqueta="Se produce" {...register('esProducible')} />
+            <Casilla etiqueta="Se vende" {...register('esVendible')} />
+            <Casilla etiqueta="Maneja lote" descripcion="Entradas con lote; salidas por FEFO." {...register('manejaLote')} />
+          </div>
+        </Tarjeta>
+  
+        <Tarjeta
+          titulo="Unidades y conversiones"
+          subtitulo={`Factor a ${claveBase}: 1 TON = 1000 KG, 1 BUL = 20 KG. La unidad base tiene factor 1.`}
+          acciones={
+            editable && (
+              <Boton
+                variante="secundario"
+                tamano="chico"
+                icono="add"
+                onClick={() =>
+                  conversiones.append({
+                    unidadId: '',
+                    factorABase: 1,
+                    usoCompra: true,
+                    usoVenta: false,
+                    usoProduccion: false,
+                    predeterminadaVenta: false,
+                    usoTraslado: false,
+                    predeterminadaTraslado: false,
+                  })
+                }
+              >
+                Agregar unidad
+              </Boton>
+            )
+          }
+        >
+          {conversiones.fields.length === 0 && <p className="m-0 text-sm text-muted">Solo se usa la unidad base.</p>}
+          <div className="flex flex-col gap-3">
+            {conversiones.fields.map((f, i) => (
+              <div key={f.id} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_243px_auto]">
+                <Selector
+                  etiqueta="Unidad"
+                  vacio="Elige"
+                  opciones={opcionesUnidad.filter((o) => o.valor !== unidadBaseId)}
+                  error={errors.conversiones?.[i]?.unidadId?.message}
+                  {...register(`conversiones.${i}.unidadId`)}
+                />
+                <Campo
+                  etiqueta={`Factor a ${claveBase}`}
+                  type="number"
+                  step="any"
+                  inputMode="decimal"
+                  error={errors.conversiones?.[i]?.factorABase?.message}
+                  {...register(`conversiones.${i}.factorABase`)}
+                />
+                {editable ? <BotonIcono icono="delete" etiqueta="Quitar unidad" className="mt-2" onClick={() => conversiones.remove(i)} /> : <span />}
+                <div className="flex flex-wrap gap-x-4 sm:col-span-3">
+                  <Casilla etiqueta="Compra" {...register(`conversiones.${i}.usoCompra`)} />
+                  <Casilla etiqueta="Venta" {...register(`conversiones.${i}.usoVenta`)} />
+                  <Casilla etiqueta="Producción" {...register(`conversiones.${i}.usoProduccion`)} />
+                  <Casilla etiqueta="Traslado" {...register(`conversiones.${i}.usoTraslado`)} />
+                  <Controller
+                    control={control}
+                    name={`conversiones.${i}.predeterminadaVenta`}
+                    render={({ field }) => (
+                      <Casilla
+                        etiqueta="Predeterminada de venta"
+                        checked={!!field.value}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaVenta`, false));
+                          }
+                          field.onChange(e.target.checked);
+                        }}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name={`conversiones.${i}.predeterminadaTraslado`}
+                    render={({ field }) => (
+                      <Casilla
+                        etiqueta="Predeterminada de traslado"
+                        descripcion="Surtido y cargas en cajas + paquetes."
+                        checked={!!field.value}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaTraslado`, false));
+                            setValue(`conversiones.${i}.usoTraslado`, true);
+                          }
+                          field.onChange(e.target.checked);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          {errors.conversiones?.root?.message && <p className="mt-2 text-sm text-error">{errors.conversiones.root.message}</p>}
+          {errors.conversiones?.message && <p className="mt-2 text-sm text-error">{errors.conversiones.message}</p>}
+        </Tarjeta>
+  
+        <Tarjeta titulo="Impuestos y SAT" subtitulo="Tortilla y masa: IVA 0 %; botanas: IVA 16 % + IEPS 8 % [SUP-03, por confirmar con el contador].">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo etiqueta="IVA" type="number" step="any" sufijo="%" error={errors.ivaPct?.message} {...register('ivaPct')} />
+            <Campo etiqueta="IEPS" type="number" step="any" sufijo="%" error={errors.iepsPct?.message} {...register('iepsPct')} />
+            <Campo etiqueta="Clave de producto o servicio SAT" ayuda="Sin clave no se puede facturar (FAC-006)." {...register('claveProdServSat')} />
+            <Campo etiqueta="Objeto de impuesto SAT" {...register('objetoImpuestoSat')} />
+          </div>
+        </Tarjeta>
+  
+        <Tarjeta titulo="Inventario">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo
+              etiqueta="Vida útil (días)"
+              type="number"
+              inputMode="numeric"
+              ayuda="Con lote, la caducidad se calcula con este dato."
+              error={errors.vidaUtilDias?.message}
+              {...register('vidaUtilDias')}
+            />
+            <Campo
+              etiqueta={`Existencia mínima (${claveBase})`}
+              type="number"
+              step="any"
+              ayuda="Alerta en el tablero."
+              error={errors.stockMinimo?.message}
+              {...register('stockMinimo')}
+            />
+          </div>
+        </Tarjeta>
+  
+        <Tarjeta titulo="Devoluciones de ruta">
+          <Casilla
+            etiqueta="Producto a cobro"
+            descripcion="La devolución con lote más antiguo que la tolerancia se carga al chofer."
+            {...register('aplicaProductoACobro')}
+          />
+          {aplicaProductoACobro && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Campo
+                etiqueta="Tolerancia de devolución (días)"
+                type="number"
+                inputMode="numeric"
+                ayuda="Antigüedad máxima del lote devuelto sin cargo. Vacío = la del parámetro general."
+                error={errors.diasToleranciaDevolucion?.message}
+                {...register('diasToleranciaDevolucion')}
+              />
+            </div>
+          )}
+        </Tarjeta>
+      </fieldset>
+      {editable && (
+        <BarraAccion resumen={producto ? 'Los cambios bajan a la app de ruta en la siguiente sincronización.' : undefined}>
+          <Boton variante="texto" onClick={() => navegar({ to: '/catalogos/productos' })}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" cargando={isSubmitting}>
+            {producto ? 'Guardar cambios' : 'Crear producto'}
+          </Boton>
+        </BarraAccion>
+      )}
+    </form>
+  );
+
   return (
     <>
       <EncabezadoPagina
@@ -222,195 +416,18 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
           )
         }
       />
-      <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
-        {errorGeneral && <Aviso tipo="error">{errorGeneral}</Aviso>}
-        <fieldset disabled={!editable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
-          <Tarjeta titulo="Datos generales">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo etiqueta="SKU" error={errors.sku?.message} ayuda="No se puede cambiar si el producto ya tiene movimientos." {...register('sku')} />
-              <Campo etiqueta="Nombre" error={errors.nombre?.message} {...register('nombre')} />
-              <Campo
-                etiqueta="Nombre corto (opcional)"
-                maxLength={15}
-                ayuda="Máximo 15 caracteres (T-800, HNA). Encabezados de cuadrículas, app y liquidación; vacío = SKU."
-                error={errors.nombreCorto?.message}
-                {...register('nombreCorto')}
-              />
-              <Selector etiqueta="Tipo" opciones={TIPOS_PRODUCTO} error={errors.tipo?.message} {...register('tipo')} />
-              <Selector
-                etiqueta="Unidad base (inventario)"
-                vacio="Elige la unidad"
-                opciones={opcionesUnidad}
-                error={errors.unidadBaseId?.message}
-                ayuda="Unidad en la que se lleva la existencia."
-                {...register('unidadBaseId')}
-              />
-              <Campo etiqueta="Descripción (opcional)" className="sm:col-span-2" {...register('descripcion')} />
-              <Campo etiqueta="Código de barras (opcional)" {...register('codigoBarras')} />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1">
-              <Casilla etiqueta="Se compra" {...register('esComprable')} />
-              <Casilla etiqueta="Se produce" {...register('esProducible')} />
-              <Casilla etiqueta="Se vende" {...register('esVendible')} />
-              <Casilla etiqueta="Maneja lote" descripcion="Entradas con lote; salidas por FEFO." {...register('manejaLote')} />
-            </div>
-          </Tarjeta>
-
-          <Tarjeta
-            titulo="Unidades y conversiones"
-            subtitulo={`Factor a ${claveBase}: 1 TON = 1000 KG, 1 BUL = 20 KG. La unidad base tiene factor 1.`}
-            acciones={
-              editable && (
-                <Boton
-                  variante="secundario"
-                  tamano="chico"
-                  icono="add"
-                  onClick={() =>
-                    conversiones.append({
-                      unidadId: '',
-                      factorABase: 1,
-                      usoCompra: true,
-                      usoVenta: false,
-                      usoProduccion: false,
-                      predeterminadaVenta: false,
-                      usoTraslado: false,
-                      predeterminadaTraslado: false,
-                    })
-                  }
-                >
-                  Agregar unidad
-                </Boton>
-              )
-            }
-          >
-            {conversiones.fields.length === 0 && <p className="m-0 text-sm text-muted">Solo se usa la unidad base.</p>}
-            <div className="flex flex-col gap-3">
-              {conversiones.fields.map((f, i) => (
-                <div key={f.id} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 sm:grid-cols-[1fr_243px_auto]">
-                  <Selector
-                    etiqueta="Unidad"
-                    vacio="Elige"
-                    opciones={opcionesUnidad.filter((o) => o.valor !== unidadBaseId)}
-                    error={errors.conversiones?.[i]?.unidadId?.message}
-                    {...register(`conversiones.${i}.unidadId`)}
-                  />
-                  <Campo
-                    etiqueta={`Factor a ${claveBase}`}
-                    type="number"
-                    step="any"
-                    inputMode="decimal"
-                    error={errors.conversiones?.[i]?.factorABase?.message}
-                    {...register(`conversiones.${i}.factorABase`)}
-                  />
-                  {editable ? <BotonIcono icono="delete" etiqueta="Quitar unidad" className="mt-2" onClick={() => conversiones.remove(i)} /> : <span />}
-                  <div className="flex flex-wrap gap-x-4 sm:col-span-3">
-                    <Casilla etiqueta="Compra" {...register(`conversiones.${i}.usoCompra`)} />
-                    <Casilla etiqueta="Venta" {...register(`conversiones.${i}.usoVenta`)} />
-                    <Casilla etiqueta="Producción" {...register(`conversiones.${i}.usoProduccion`)} />
-                    <Casilla etiqueta="Traslado" {...register(`conversiones.${i}.usoTraslado`)} />
-                    <Controller
-                      control={control}
-                      name={`conversiones.${i}.predeterminadaVenta`}
-                      render={({ field }) => (
-                        <Casilla
-                          etiqueta="Predeterminada de venta"
-                          checked={!!field.value}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaVenta`, false));
-                            }
-                            field.onChange(e.target.checked);
-                          }}
-                        />
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name={`conversiones.${i}.predeterminadaTraslado`}
-                      render={({ field }) => (
-                        <Casilla
-                          etiqueta="Predeterminada de traslado"
-                          descripcion="Surtido y cargas en cajas + paquetes."
-                          checked={!!field.value}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaTraslado`, false));
-                              setValue(`conversiones.${i}.usoTraslado`, true);
-                            }
-                            field.onChange(e.target.checked);
-                          }}
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            {errors.conversiones?.root?.message && <p className="mt-2 text-sm text-error">{errors.conversiones.root.message}</p>}
-            {errors.conversiones?.message && <p className="mt-2 text-sm text-error">{errors.conversiones.message}</p>}
-          </Tarjeta>
-
-          <Tarjeta titulo="Impuestos y SAT" subtitulo="Tortilla y masa: IVA 0 %; botanas: IVA 16 % + IEPS 8 % [SUP-03, por confirmar con el contador].">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo etiqueta="IVA" type="number" step="any" sufijo="%" error={errors.ivaPct?.message} {...register('ivaPct')} />
-              <Campo etiqueta="IEPS" type="number" step="any" sufijo="%" error={errors.iepsPct?.message} {...register('iepsPct')} />
-              <Campo etiqueta="Clave de producto o servicio SAT" ayuda="Sin clave no se puede facturar (FAC-006)." {...register('claveProdServSat')} />
-              <Campo etiqueta="Objeto de impuesto SAT" {...register('objetoImpuestoSat')} />
-            </div>
-          </Tarjeta>
-
-          <Tarjeta titulo="Inventario">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo
-                etiqueta="Vida útil (días)"
-                type="number"
-                inputMode="numeric"
-                ayuda="Con lote, la caducidad se calcula con este dato."
-                error={errors.vidaUtilDias?.message}
-                {...register('vidaUtilDias')}
-              />
-              <Campo
-                etiqueta={`Existencia mínima (${claveBase})`}
-                type="number"
-                step="any"
-                ayuda="Alerta en el tablero."
-                error={errors.stockMinimo?.message}
-                {...register('stockMinimo')}
-              />
-            </div>
-          </Tarjeta>
-
-          <Tarjeta titulo="Devoluciones de ruta">
-            <Casilla
-              etiqueta="Producto a cobro"
-              descripcion="La devolución con lote más antiguo que la tolerancia se carga al chofer."
-              {...register('aplicaProductoACobro')}
-            />
-            {aplicaProductoACobro && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <Campo
-                  etiqueta="Tolerancia de devolución (días)"
-                  type="number"
-                  inputMode="numeric"
-                  ayuda="Antigüedad máxima del lote devuelto sin cargo. Vacío = la del parámetro general."
-                  error={errors.diasToleranciaDevolucion?.message}
-                  {...register('diasToleranciaDevolucion')}
-                />
-              </div>
-            )}
-          </Tarjeta>
-        </fieldset>
-        {editable && (
-          <BarraAccion resumen={producto ? 'Los cambios bajan a la app de ruta en la siguiente sincronización.' : undefined}>
-            <Boton variante="texto" onClick={() => navegar({ to: '/catalogos/productos' })}>
-              Cancelar
-            </Boton>
-            <Boton type="submit" cargando={isSubmitting}>
-              {producto ? 'Guardar cambios' : 'Crear producto'}
-            </Boton>
-          </BarraAccion>
-        )}
-      </form>
+      {producto ? (
+        <Pestanas
+          valor={pestana}
+          onCambiar={setPestana}
+          pestanas={[
+            { valor: 'ficha', etiqueta: 'Ficha', contenido: formulario },
+            { valor: 'historial', etiqueta: 'Historial', contenido: <HistorialDocumento tabla="productos" documentoId={producto.id} /> },
+          ]}
+        />
+      ) : (
+        formulario
+      )}
 
       {producto && (
         <DialogoConfirmacion

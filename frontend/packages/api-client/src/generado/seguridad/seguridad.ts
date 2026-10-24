@@ -31,8 +31,10 @@ import type {
   DispositivoDto,
   GuardarUsuarioRequest,
   HttpValidationProblemDetails,
+  ListarBitacoraParams,
   ListarUsuariosParams,
   LoginRequest,
+  PaginadoOfRegistroBitacoraDto,
   PaginadoOfUsuarioDto,
   PerfilDto,
   PermisoDto,
@@ -996,6 +998,93 @@ export function useListarPermisos<TData = Awaited<ReturnType<typeof listarPermis
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListarPermisosQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const listarBitacora = (
+    params?: ListarBitacoraParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<PaginadoOfRegistroBitacoraDto>(
+      {url: `/api/v1/seguridad/bitacora`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarBitacoraQueryKey = (params?: ListarBitacoraParams,) => {
+    return [
+    `/api/v1/seguridad/bitacora`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListarBitacoraQueryOptions = <TData = Awaited<ReturnType<typeof listarBitacora>>, TError = ErrorType<unknown>>(params?: ListarBitacoraParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarBitacoraQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarBitacora>>> = ({ signal }) => listarBitacora(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarBitacoraQueryResult = NonNullable<Awaited<ReturnType<typeof listarBitacora>>>
+export type ListarBitacoraQueryError = ErrorType<unknown>
+
+
+export function useListarBitacora<TData = Awaited<ReturnType<typeof listarBitacora>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListarBitacoraParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarBitacora>>,
+          TError,
+          Awaited<ReturnType<typeof listarBitacora>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarBitacora<TData = Awaited<ReturnType<typeof listarBitacora>>, TError = ErrorType<unknown>>(
+ params?: ListarBitacoraParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarBitacora>>,
+          TError,
+          Awaited<ReturnType<typeof listarBitacora>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarBitacora<TData = Awaited<ReturnType<typeof listarBitacora>>, TError = ErrorType<unknown>>(
+ params?: ListarBitacoraParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarBitacora<TData = Awaited<ReturnType<typeof listarBitacora>>, TError = ErrorType<unknown>>(
+ params?: ListarBitacoraParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarBitacora>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarBitacoraQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

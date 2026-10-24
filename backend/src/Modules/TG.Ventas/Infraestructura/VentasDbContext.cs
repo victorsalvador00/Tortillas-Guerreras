@@ -159,6 +159,7 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
             e.HasIndex(i => new { i.EntidadTipo, i.EntidadId }).HasDatabaseName("ix_incidencias_entidad");
         });
 
+        builder.MapearBitacora();
         builder.UsarIdsDeAplicacion();
     }
 }

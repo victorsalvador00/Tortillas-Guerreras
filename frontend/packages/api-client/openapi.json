@@ -464,6 +464,91 @@
         }
       }
     },
+    "/api/v1/seguridad/bitacora": {
+      "get": {
+        "tags": [
+          "Seguridad"
+        ],
+        "operationId": "listarBitacora",
+        "parameters": [
+          {
+            "name": "tabla",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entidadId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "usuarioId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginadoOfRegistroBitacoraDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/seguridad/dispositivos": {
       "get": {
         "tags": [
@@ -12137,6 +12222,35 @@
           }
         }
       },
+      "PaginadoOfRegistroBitacoraDto": {
+        "required": [
+          "items",
+          "total",
+          "pagina",
+          "tamano"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistroBitacoraDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginadoOfRetornoDto": {
         "required": [
           "items",
@@ -14100,6 +14214,75 @@
               "string"
             ],
             "format": "date"
+          }
+        }
+      },
+      "RegistroBitacoraDto": {
+        "required": [
+          "id",
+          "fechaHora",
+          "esquema",
+          "tabla",
+          "entidadId",
+          "accion",
+          "cambios",
+          "origen"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "esquema": {
+            "type": "string"
+          },
+          "tabla": {
+            "type": "string"
+          },
+          "entidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "accion": {
+            "type": "string"
+          },
+          "cambios": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "usuarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "usuario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dispositivoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "origen": {
+            "type": "string"
           }
         }
       },

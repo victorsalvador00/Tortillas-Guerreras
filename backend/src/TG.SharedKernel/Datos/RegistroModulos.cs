@@ -22,7 +22,8 @@ public static class RegistroModulos
                     sp.GetRequiredService<UnitOfWorkInterceptor>(),
                     sp.GetRequiredService<TransaccionComandoInterceptor>(),
                     sp.GetRequiredService<AuditoriaInterceptor>(),
-                    sp.GetRequiredService<VersionSyncInterceptor>());
+                    sp.GetRequiredService<VersionSyncInterceptor>(),
+                    sp.GetRequiredService<BitacoraInterceptor>());
         });
         return services;
     }

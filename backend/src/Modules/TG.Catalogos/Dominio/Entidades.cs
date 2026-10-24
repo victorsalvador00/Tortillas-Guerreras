@@ -40,6 +40,7 @@ public sealed class UnidadMedida : EntidadAuditable
     public bool RespetaDecimales(decimal cantidad) => decimal.Round(cantidad, Decimales) == cantidad;
 }
 
+[Bitacora]
 public sealed class Producto : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Sku { get; set; } = string.Empty;
@@ -90,6 +91,7 @@ public sealed class Producto : EntidadAuditable, IVersionSync, IConcurrencia
         unidadId == UnidadBaseId ? 1m : Conversiones.FirstOrDefault(c => c.UnidadId == unidadId)?.FactorABase;
 }
 
+[Bitacora(Documento = nameof(ProductoId))]
 public sealed class ProductoUnidad
 {
     public Guid ProductoId { get; set; }

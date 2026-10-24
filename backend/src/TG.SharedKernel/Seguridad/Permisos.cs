@@ -13,6 +13,7 @@ public static class Permisos
         public const string Usuarios = "seguridad.usuarios";
         public const string Roles = "seguridad.roles";
         public const string Dispositivos = "seguridad.dispositivos";
+        public const string Bitacora = "seguridad.bitacora";
     }
 
     public static class Catalogos
@@ -93,6 +94,7 @@ public static class Permisos
         (Seguridad.Usuarios, "Administrar usuarios"),
         (Seguridad.Roles, "Administrar roles y permisos"),
         (Seguridad.Dispositivos, "Aprobar y desactivar dispositivos de ruta"),
+        (Seguridad.Bitacora, "Consultar la bitácora de cambios"),
         (Catalogos.Editar, "Editar catálogos"),
         (Compras.Ver, "Consultar compras"),
         (Compras.Editar, "Capturar proveedores y órdenes de compra"),

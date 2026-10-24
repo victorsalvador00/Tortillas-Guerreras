@@ -13,6 +13,7 @@ public sealed class Vehiculo : EntidadAuditable
 }
 
 /// <summary>Ruta de reparto con su almacén tipo <c>Ruta</c> (RN-LOG-01).</summary>
+[Bitacora]
 public sealed class Ruta : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Codigo { get; set; } = string.Empty;
@@ -25,6 +26,7 @@ public sealed class Ruta : EntidadAuditable, IVersionSync, IConcurrencia
     public uint Version { get; set; }
 }
 
+[Bitacora(Documento = nameof(RutaId))]
 public sealed class RutaCliente : IVersionSync
 {
     public Guid RutaId { get; set; }
@@ -38,6 +40,7 @@ public sealed class RutaCliente : IVersionSync
     public long VersionSync { get; set; }
 }
 
+[Bitacora]
 public sealed class Envio : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Folio { get; set; } = string.Empty;
@@ -56,6 +59,7 @@ public sealed class Envio : EntidadAuditable, IVersionSync, IConcurrencia
 }
 
 /// <summary>En <c>Preparado</c> el lote vacío significa "el que toque por FEFO"; al despachar queda el lote real.</summary>
+[Bitacora(Documento = nameof(EnvioId))]
 public sealed class EnvioPartida : IVersionSync
 {
     public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();
@@ -66,6 +70,7 @@ public sealed class EnvioPartida : IVersionSync
     public long VersionSync { get; set; }
 }
 
+[Bitacora]
 public sealed class Retorno : EntidadAuditable
 {
     public string Folio { get; set; } = string.Empty;
@@ -85,6 +90,7 @@ public sealed class Retorno : EntidadAuditable
     public List<RetornoPartida> Partidas { get; set; } = [];
 }
 
+[Bitacora(Documento = nameof(RetornoId))]
 public sealed class RetornoPartida
 {
     public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();
@@ -96,6 +102,7 @@ public sealed class RetornoPartida
     public Guid? MotivoMermaId { get; set; }
 }
 
+[Bitacora]
 public sealed class Liquidacion : EntidadAuditable, IConcurrencia
 {
     public string Folio { get; set; } = string.Empty;
@@ -113,6 +120,7 @@ public sealed class Liquidacion : EntidadAuditable, IConcurrencia
     public List<LiquidacionPartida> Partidas { get; set; } = [];
 }
 
+[Bitacora(Documento = nameof(LiquidacionId))]
 public sealed class LiquidacionPartida
 {
     public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();

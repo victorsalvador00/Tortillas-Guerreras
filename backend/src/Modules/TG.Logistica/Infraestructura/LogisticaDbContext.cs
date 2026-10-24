@@ -107,6 +107,7 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.Property(p => p.DestinoSobrante).ComoTexto("liquidaciones_partidas");
         });
 
+        builder.MapearBitacora();
         builder.UsarIdsDeAplicacion();
     }
 }

@@ -15,6 +15,7 @@ public sealed class SeguridadDbContext(DbContextOptions<SeguridadDbContext> opti
     public DbSet<RolPermiso> RolesPermisos => Set<RolPermiso>();
     public DbSet<Dispositivo> Dispositivos => Set<Dispositivo>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<RegistroBitacora> Bitacora => Set<RegistroBitacora>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -62,6 +63,7 @@ public sealed class SeguridadDbContext(DbContextOptions<SeguridadDbContext> opti
             e.HasIndex(r => r.UsuarioId).HasDatabaseName("ix_refresh_tokens_usuario_id");
         });
 
+        builder.MapearBitacora(propietario: true);
         builder.UsarIdsDeAplicacion();
     }
 }

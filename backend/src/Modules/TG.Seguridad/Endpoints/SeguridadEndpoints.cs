@@ -49,6 +49,12 @@ public static class SeguridadEndpoints
         grupo.MapGet("/permisos", (RolesHandler h, CancellationToken ct) => h.PermisosAsync(ct))
             .RequireAuthorization(Permisos.Seguridad.Roles).WithName("listarPermisos");
 
+        // RN-SEG-07: solo lectura. Sin seguridad.bitacora, el handler exige documentoId + tabla con permiso de ver.
+        grupo.MapGet("/bitacora", async (string? tabla, Guid? entidadId, Guid? documentoId, Guid? usuarioId, DateOnly? desde,
+                DateOnly? hasta, int? pagina, int? tamano, ConsultaBitacoraHandler h, CancellationToken ct) =>
+                (await h.ListarAsync(tabla, entidadId, documentoId, usuarioId, desde, hasta, pagina, tamano, ct)).AHttp())
+            .RequireAuthorization().WithName("listarBitacora");
+
         var dispositivos = grupo.MapGroup("/dispositivos");
         dispositivos.MapGet("/", (DispositivosHandler h, CancellationToken ct) => h.ListarAsync(ct))
             .RequireAuthorization(Permisos.Seguridad.Dispositivos).WithName("listarDispositivos");

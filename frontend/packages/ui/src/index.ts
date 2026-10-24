@@ -5,6 +5,7 @@ export * from './componentes/campo-fecha';
 export * from './componentes/calendario';
 export * from './componentes/tabla';
 export * from './componentes/superposiciones';
+export * from './componentes/historial';
 export * from './componentes/plexus';
 export * from './componentes/logo';
 export * from './tema';

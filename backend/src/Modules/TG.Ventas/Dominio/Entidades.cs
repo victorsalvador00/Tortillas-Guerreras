@@ -20,6 +20,7 @@ public sealed class Canal : EntidadAuditable
     public bool Activo { get; set; } = true;
 }
 
+[Bitacora]
 public sealed class ListaPrecio : EntidadAuditable, IVersionSync
 {
     public string Nombre { get; set; } = string.Empty;
@@ -31,6 +32,7 @@ public sealed class ListaPrecio : EntidadAuditable, IVersionSync
 }
 
 /// <summary>Precio <b>sin impuestos</b> [SUP-07].</summary>
+[Bitacora(Documento = nameof(ListaPrecioId))]
 public sealed class ListaPrecioPartida : IVersionSync
 {
     public Guid ListaPrecioId { get; set; }
@@ -40,6 +42,7 @@ public sealed class ListaPrecioPartida : IVersionSync
     public long VersionSync { get; set; }
 }
 
+[Bitacora]
 public sealed class Cliente : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Codigo { get; set; } = string.Empty;
@@ -83,6 +86,7 @@ public sealed class Cliente : EntidadAuditable, IVersionSync, IConcurrencia
         .Where(x => !string.IsNullOrWhiteSpace(x))) is { Length: > 0 } d ? d : null;
 }
 
+[Bitacora]
 public sealed class Pedido : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Folio { get; set; } = string.Empty;
@@ -103,6 +107,7 @@ public sealed class Pedido : EntidadAuditable, IVersionSync, IConcurrencia
     public List<PedidoPartida> Partidas { get; set; } = [];
 }
 
+[Bitacora(Documento = nameof(PedidoId))]
 public sealed class PedidoPartida
 {
     public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();

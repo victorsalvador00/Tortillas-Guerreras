@@ -64,6 +64,7 @@ public sealed class CatalogosDbContext(DbContextOptions<CatalogosDbContext> opti
             e.Property(p => p.Tipo).ComoTexto("parametros");
         });
 
+        builder.MapearBitacora();
         builder.UsarIdsDeAplicacion();
     }
 }

@@ -94,6 +94,7 @@ export const MENU: SeccionMenu[] = [
       { etiqueta: 'Usuarios', ruta: '/seguridad/usuarios', icono: 'manage_accounts', permiso: 'seguridad.usuarios' },
       { etiqueta: 'Roles y permisos', ruta: '/seguridad/roles', icono: 'shield_person', permiso: 'seguridad.roles' },
       { etiqueta: 'Dispositivos', ruta: '/seguridad/dispositivos', icono: 'smartphone', permiso: 'seguridad.dispositivos' },
+      { etiqueta: 'Bitácora', ruta: '/seguridad/bitacora', icono: 'history', permiso: 'seguridad.bitacora' },
     ],
   },
 ];

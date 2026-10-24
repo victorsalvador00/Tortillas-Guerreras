@@ -43,4 +43,7 @@ public static class ErroresSeguridad
 
     public static readonly Error ContrasenaActualIncorrecta =
         Error.Campo("SEG-014", "contrasenaActual", "La contraseña actual no es correcta.");
+
+    public static readonly Error BitacoraSinPermiso = Error.Prohibido("SEG-015",
+        "Sin el permiso seguridad.bitacora solo puedes ver el historial de un documento que puedes consultar.");
 }

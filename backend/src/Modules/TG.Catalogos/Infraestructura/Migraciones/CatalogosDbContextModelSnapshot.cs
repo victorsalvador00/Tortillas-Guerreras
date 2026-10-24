@@ -378,6 +378,75 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("TG.SharedKernel.Datos.RegistroBitacora", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("accion");
+
+                    b.Property<string>("Cambios")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("cambios");
+
+                    b.Property<Guid?>("DispositivoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dispositivo_id");
+
+                    b.Property<Guid?>("DocumentoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("documento_id");
+
+                    b.Property<Guid>("EntidadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entidad_id");
+
+                    b.Property<string>("Esquema")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("esquema");
+
+                    b.Property<DateTimeOffset>("FechaHora")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_hora");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("origen");
+
+                    b.Property<string>("Tabla")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tabla");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_bitacora");
+
+                    b.HasIndex("DocumentoId")
+                        .HasDatabaseName("ix_bitacora_documento");
+
+                    b.HasIndex("UsuarioId", "FechaHora")
+                        .HasDatabaseName("ix_bitacora_usuario_fecha");
+
+                    b.HasIndex("Tabla", "EntidadId", "FechaHora")
+                        .HasDatabaseName("ix_bitacora_tabla_entidad");
+
+                    b.ToTable("bitacora", "seguridad", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("TG.Catalogos.Dominio.Producto", b =>
                 {
                     b.HasOne("TG.Catalogos.Dominio.UnidadMedida", "UnidadBase")

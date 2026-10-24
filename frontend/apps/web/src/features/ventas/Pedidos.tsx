@@ -27,6 +27,7 @@ import {
   Datos,
   DialogoConfirmacion,
   EtiquetaEstado,
+  Pestanas,
   Selector,
   TablaDatos,
   Tarjeta,
@@ -35,6 +36,7 @@ import {
 } from '@tg/ui';
 import { useMemo, useState } from 'react';
 import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
+import { HistorialDocumento } from '@/componentes/historial';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { EditorPartidasVenta, ResumenTotales } from './EditorPartidasVenta';
@@ -276,6 +278,7 @@ export function PedidoDetalle() {
   const rutas = useRutas();
   const [accion, setAccion] = useState<Accion>(null);
   const [rutaId, setRutaId] = useState('');
+  const [pestana, setPestana] = useState('detalle');
   const p = consulta.data;
 
   const columnas = useMemo<ColumnDef<PedidoPartidaDto, unknown>[]>(
@@ -321,30 +324,43 @@ export function PedidoDetalle() {
                 )
               }
             />
-            <div className="flex flex-col gap-4">
-              <Tarjeta>
-                <Datos>
-                  <Dato etiqueta="Estado"><EtiquetaEstado estado={p.estado} /></Dato>
-                  <Dato etiqueta="Entrega">{formatoFecha(p.fechaEntrega)}</Dato>
-                  <Dato etiqueta="Ruta">{rutas.find((r) => r.rutaId === p.rutaId)?.codigo ?? 'Sin asignar'}</Dato>
-                  <Dato etiqueta="Carga">
-                    {p.envioId ? (
-                      <Link to="/logistica/cargas/$id" params={{ id: p.envioId }} className="text-primary">
-                        Ver carga
-                      </Link>
-                    ) : (
-                      'Sin carga'
-                    )}
-                  </Dato>
-                  <Dato etiqueta="OC del cliente">{p.ordenCompraCliente || '—'}</Dato>
-                  {p.notas && <Dato etiqueta="Notas" className="col-span-2">{p.notas}</Dato>}
-                </Datos>
-              </Tarjeta>
-              <TablaDatos columnas={columnas} datos={p.partidas} idFila={(x) => x.id} ordenable={false} />
-              <Tarjeta>
-                <ResumenTotales totales={{ subtotal: Math.round(p.subtotal * 100), ieps: Math.round(p.ieps * 100), iva: Math.round(p.iva * 100), total: Math.round(p.total * 100) }} />
-              </Tarjeta>
-            </div>
+            <Pestanas
+              valor={pestana}
+              onCambiar={setPestana}
+              pestanas={[
+                {
+                  valor: 'detalle',
+                  etiqueta: 'Detalle',
+                  contenido: (
+                    <div className="flex flex-col gap-4">
+                      <Tarjeta>
+                        <Datos>
+                          <Dato etiqueta="Estado"><EtiquetaEstado estado={p.estado} /></Dato>
+                          <Dato etiqueta="Entrega">{formatoFecha(p.fechaEntrega)}</Dato>
+                          <Dato etiqueta="Ruta">{rutas.find((r) => r.rutaId === p.rutaId)?.codigo ?? 'Sin asignar'}</Dato>
+                          <Dato etiqueta="Carga">
+                            {p.envioId ? (
+                              <Link to="/logistica/cargas/$id" params={{ id: p.envioId }} className="text-primary">
+                                Ver carga
+                              </Link>
+                            ) : (
+                              'Sin carga'
+                            )}
+                          </Dato>
+                          <Dato etiqueta="OC del cliente">{p.ordenCompraCliente || '—'}</Dato>
+                          {p.notas && <Dato etiqueta="Notas" className="col-span-2">{p.notas}</Dato>}
+                        </Datos>
+                      </Tarjeta>
+                      <TablaDatos columnas={columnas} datos={p.partidas} idFila={(x) => x.id} ordenable={false} />
+                      <Tarjeta>
+                        <ResumenTotales totales={{ subtotal: Math.round(p.subtotal * 100), ieps: Math.round(p.ieps * 100), iva: Math.round(p.iva * 100), total: Math.round(p.total * 100) }} />
+                      </Tarjeta>
+                    </div>
+                  ),
+                },
+                { valor: 'historial', etiqueta: 'Historial', contenido: <HistorialDocumento tabla="pedidos" documentoId={p.id} /> },
+              ]}
+            />
 
             <DialogoConfirmacion
               abierto={accion === 'confirmar'}

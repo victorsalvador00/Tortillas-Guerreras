@@ -143,7 +143,7 @@ public sealed class FilaCsv(int numero, IReadOnlyDictionary<string, string> valo
 }
 
 /// <summary>Errores por fila y conversión de valores en español (sí/no, decimales con punto o coma).</summary>
-internal sealed class Bitacora
+internal sealed class BitacoraImportacion
 {
     public List<ErrorImportacionDto> Errores { get; } = [];
 
@@ -292,7 +292,7 @@ internal sealed class ImportadorCsv(
         }
 
         var csv = ArchivoCsv.Leer(texto);
-        var bitacora = new Bitacora();
+        var bitacora = new BitacoraImportacion();
         var faltantes = PlantillasImportacion.Columnas(entidad).Where(c => c.Obligatoria && !csv.Encabezados.Contains(c.Nombre))
             .Select(c => c.Nombre).ToList();
         if (faltantes.Count > 0)
@@ -336,7 +336,7 @@ internal sealed class ImportadorCsv(
             bitacora.Errores.OrderBy(e => e.Fila).ToList());
     }
 
-    private async Task<bool> ValidarAsync<T>(T request, int fila, Bitacora bitacora, CancellationToken ct)
+    private async Task<bool> ValidarAsync<T>(T request, int fila, BitacoraImportacion bitacora, CancellationToken ct)
     {
         if (servicios.GetService<IValidator<T>>() is not { } validador)
         {
@@ -370,7 +370,7 @@ internal sealed class ImportadorCsv(
         ["reventa"] = TipoProducto.Reventa,
     };
 
-    private async Task<Conteo> ProductosAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
+    private async Task<Conteo> ProductosAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
     {
         var unidades = (await servicios.GetRequiredService<UnidadesHandler>().ListarAsync(ct))
             .ToDictionary(u => u.Clave, u => u.Id, StringComparer.OrdinalIgnoreCase);
@@ -431,7 +431,7 @@ internal sealed class ImportadorCsv(
     /// Formato: <c>TON=1000:compra|PAQ=1:venta*|CAJ=24:traslado</c> (usos compra, venta, produccion, traslado;
     /// * = predeterminada de venta; la primera de traslado es la predeterminada de traslado, RN-CAT-09).
     /// </summary>
-    private static List<ConversionRequest> Conversiones(FilaCsv f, Bitacora b, Dictionary<string, Guid> unidades)
+    private static List<ConversionRequest> Conversiones(FilaCsv f, BitacoraImportacion b, Dictionary<string, Guid> unidades)
     {
         var lista = new List<ConversionRequest>();
         foreach (var parte in f.Texto("conversiones").Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -465,7 +465,7 @@ internal sealed class ImportadorCsv(
         ["credito"] = CondicionPago.Credito,
     };
 
-    private async Task<Conteo> ClientesAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
+    private async Task<Conteo> ClientesAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
     {
         var canalesExistentes = await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct);
         var canales = canalesExistentes.ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
@@ -533,7 +533,7 @@ internal sealed class ImportadorCsv(
 
     // ───────────────────────────── Proveedores ─────────────────────────────
 
-    private async Task<Conteo> ProveedoresAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
+    private async Task<Conteo> ProveedoresAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
     {
         var proveedores = servicios.GetRequiredService<ProveedoresHandler>();
         int creados = 0, actualizados = 0;
@@ -572,7 +572,7 @@ internal sealed class ImportadorCsv(
     // ───────────────────────────── Recetas ─────────────────────────────
 
     /// <summary>Una fila por componente; las filas con el mismo producto y nombre forman una receta (nueva versión).</summary>
-    private async Task<Conteo> RecetasAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
+    private async Task<Conteo> RecetasAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
     {
         var unidades = (await servicios.GetRequiredService<UnidadesHandler>().ListarAsync(ct))
             .ToDictionary(u => u.Clave, u => u.Id, StringComparer.OrdinalIgnoreCase);
@@ -653,7 +653,7 @@ internal sealed class ImportadorCsv(
     // ───────────────────────────── Existencias iniciales ─────────────────────────────
 
     /// <summary>Entradas por kardex: <c>AjusteEntrada</c> con costo, documento Ajuste "Carga inicial" (regla 3).</summary>
-    private async Task<Conteo> ExistenciasAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
+    private async Task<Conteo> ExistenciasAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
     {
         var inventario = servicios.GetRequiredService<IInventarioService>();
         var almacenes = (await inventario.ListarAlmacenesAsync(ct)).ToDictionary(a => a.Codigo, StringComparer.OrdinalIgnoreCase);

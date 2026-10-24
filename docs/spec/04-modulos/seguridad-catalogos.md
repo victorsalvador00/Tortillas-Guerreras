@@ -33,6 +33,13 @@
 - **RN-SEG-07** La bitácora no se edita ni se borra desde el sistema. Se consulta por documento, por usuario y por
   rango de fechas (`seguridad.bitacora`); cada pantalla de detalle de las entidades anteriores tiene la pestaña
   "Historial" que la filtra por `documento_id`.
+- Implementación (T-8.2): las filas se guardan en el mismo `SaveChanges` que el cambio (entidad `RegistroBitacora` mapeada
+  en cada contexto con `MapearBitacora()`; solo Seguridad crea la tabla), así un rollback no deja bitácora. Los campos
+  de auditoría, `version_sync` y `xmin` no se registran; las contraseñas quedan como `***` y los contadores técnicos
+  del dispositivo (último sync, consecutivo, pendientes, versión de la app) no se registran.
+
+**Errores nuevos (v0.2):** `SEG-015` consulta de bitácora sin `seguridad.bitacora` que no es el historial de un
+documento con permiso de ver (403).
 
 ### Endpoints (`/api/v1/seguridad`)
 | Método | Ruta | Permiso |
