@@ -45,6 +45,9 @@ public static class ExtensionesHttp
     public static Task<HttpResponseMessage> PostJsonAsync(this HttpClient cliente, string url, object? cuerpo = null) =>
         cliente.PostAsJsonAsync(url, cuerpo ?? new { }, Json);
 
+    public static Task<HttpResponseMessage> PutJsonAsync(this HttpClient cliente, string url, object cuerpo) =>
+        cliente.PutAsJsonAsync(url, cuerpo, Json);
+
     /// <summary>Verifica estado HTTP y código de negocio del <c>ProblemDetails</c>.</summary>
     public static async Task<JsonObject> DebeFallarAsync(this HttpResponseMessage respuesta, HttpStatusCode estado,
         string? codigo = null)

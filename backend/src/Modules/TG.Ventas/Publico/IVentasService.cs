@@ -56,6 +56,13 @@ public enum OrigenVenta
     Web,
 }
 
+/// <summary>RN-VEN-17.</summary>
+public enum TipoPartidaPedido
+{
+    Venta,
+    CambioFisico,
+}
+
 public enum TipoVenta
 {
     VentaRuta,
@@ -143,6 +150,18 @@ public sealed record RegistrarVentaComando(
 public sealed record PartidaEntregaComando(Guid PedidoPartidaId, decimal Cantidad);
 
 /// <summary>Entrega de pedido (RN-VEN-08): crea una venta <c>EntregaPedido</c> con los precios del pedido.</summary>
+public sealed record PartidaPedidoComando(Guid ProductoId, Guid UnidadId, decimal Cantidad, TipoPartidaPedido Tipo, string? Notas);
+
+/// <summary>
+/// RN-SYN-10 / RN-VEN-18: pedido capturado en la app. El id lo genera la app; los precios los pone el servidor.
+/// <paramref name="FechaCaptura"/> es la fecha operativa de <c>creadaEn</c> (RN-VEN-15).
+/// </summary>
+public sealed record CapturarPedidoComando(Guid PedidoId, Guid OpId, Guid ClienteId, DateOnly FechaEntrega, DateOnly FechaCaptura,
+    string? OrdenCompraCliente, string? Notas, IReadOnlyList<PartidaPedidoComando> Partidas, Guid CapturadoPor, Guid? DispositivoId,
+    Guid RutaId);
+
+public sealed record PedidoCapturado(Guid PedidoId, string Folio, bool Duplicado);
+
 public sealed record EntregarPedidoComando(
     OrigenVenta Origen,
     Guid PedidoId,
@@ -270,7 +289,7 @@ public sealed record ListaPrecioInfo(Guid Id, string Nombre, Guid? CanalId, bool
 
 public sealed record PedidoPartidaInfo(Guid Id, Guid ProductoId, Guid UnidadId, decimal FactorABase, decimal Cantidad,
     decimal CantidadBase, decimal PrecioUnitario, decimal TasaIva, decimal? TasaIeps, decimal Importe,
-    decimal CantidadEntregadaBase);
+    decimal CantidadEntregadaBase, TipoPartidaPedido Tipo = TipoPartidaPedido.Venta);
 
 public sealed record PedidoInfo(
     Guid Id,
@@ -287,7 +306,8 @@ public sealed record PedidoInfo(
     decimal Ieps,
     decimal Total,
     long VersionSync,
-    IReadOnlyList<PedidoPartidaInfo> Partidas);
+    IReadOnlyList<PedidoPartidaInfo> Partidas,
+    bool EsRuta = false);
 
 /// <summary>Casos de uso y consultas de Ventas para Logística, Facturación y Sincronización.</summary>
 public interface IVentasService
@@ -297,6 +317,9 @@ public interface IVentasService
 
     /// <summary>RN-VEN-08.</summary>
     Task<Result<VentaRegistrada>> EntregarPedidoAsync(EntregarPedidoComando comando, CancellationToken ct);
+
+    /// <summary>RN-SYN-10, RN-VEN-15 a 18. Idempotente por <c>OpId</c> (y por el id del pedido).</summary>
+    Task<Result<PedidoCapturado>> CapturarPedidoAsync(CapturarPedidoComando comando, CancellationToken ct);
 
     /// <summary>[SUP-08] Idempotente por <c>OpId</c>.</summary>
     Task<Result<CobroRegistrado>> RegistrarCobroAsync(RegistrarCobroComando comando, CancellationToken ct);
@@ -407,4 +430,6 @@ public static class ErroresVentas
     public const string VentaCancelada = "VEN-017";
     public const string PedidoOtraCarga = "VEN-018";
     public const string ProductoExclusivo = "VEN-019";
+    public const string PedidoRutaDuplicado = "VEN-020";
+    public const string FechaEntregaPasada = "VEN-021";
 }

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { EstadoPedido } from './estadoPedido';
+import type { OrigenVenta } from './origenVenta';
 
 export type ListarPedidosParams = {
 estado?: EstadoPedido;
@@ -17,4 +18,5 @@ envioId?: string;
 sinCarga?: boolean;
 pagina?: number;
 tamano?: number;
+origen?: OrigenVenta;
 };

@@ -18,7 +18,7 @@ import {
   type PedidoDto,
   type PedidoPartidaDto,
 } from '@tg/api-client';
-import { formatoCantidad, formatoFecha, formatoMoneda, sumarDias, fechaOperativa } from '@tg/shared';
+import { formatoCantidad, formatoFecha, formatoFechaHora, formatoMoneda, sumarDias, fechaOperativa } from '@tg/shared';
 import {
   Aviso,
   BarraAccion,
@@ -44,6 +44,8 @@ import { EditorPartidasVenta, ResumenTotales } from './EditorPartidasVenta';
 import { calcularLineas, combinarPrecios, nuevaLinea, type LineaVenta } from './partidas';
 import { SelectorCliente, SelectorRuta, useRutas } from './selectores';
 
+const ETIQUETA_ORIGEN: Record<string, string> = { App: 'App de ruta', Web: 'Web' };
+
 const ESTADOS: EstadoPedido[] = ['Capturado', 'Confirmado', 'Asignado', 'Entregado', 'EntregadoParcial', 'Cancelado'];
 
 export function Pedidos() {
@@ -51,12 +53,16 @@ export function Pedidos() {
   const { tienePermiso } = useSesion();
   const rutas = useRutas();
   const [estado, setEstado] = useState('');
+  const [bandeja, setBandeja] = useState('');
   const [rutaId, setRutaId] = useState('');
   const [desde, setDesde] = useState(sumarDias(fechaOperativa(), -30));
   const [hasta, setHasta] = useState('');
   const [pagina, setPagina] = useState(1);
+  // RN-VEN-18: "Por validar" = pedidos de la app todavía Capturado.
+  const porValidar = bandeja === 'porValidar';
   const { data, isLoading, isFetching } = useListarPedidos({
-    estado: (estado || undefined) as EstadoPedido | undefined,
+    estado: porValidar ? 'Capturado' : ((estado || undefined) as EstadoPedido | undefined),
+    origen: porValidar ? 'App' : undefined,
     rutaId: rutaId || undefined,
     desde: desde || undefined,
     hasta: hasta || undefined,
@@ -68,7 +74,17 @@ export function Pedidos() {
   const columnas = useMemo<ColumnDef<PedidoDto, unknown>[]>(
     () => [
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
-      { header: 'Cliente', accessorKey: 'cliente' },
+      {
+        header: 'Cliente',
+        accessorKey: 'cliente',
+        cell: ({ row }) => (
+          <span>
+            {row.original.cliente}
+            {row.original.esRuta && <span className="ml-2 text-xs text-muted">Pedido de ruta</span>}
+          </span>
+        ),
+      },
+      { header: 'Origen', accessorKey: 'origen', cell: ({ row }) => ETIQUETA_ORIGEN[row.original.origen], meta: { ocultarEnMovil: true } },
       { header: 'Fecha', accessorKey: 'fecha', cell: ({ row }) => formatoFecha(row.original.fecha), meta: { ocultarEnMovil: true } },
       { header: 'Entrega', accessorKey: 'fechaEntrega', cell: ({ row }) => formatoFecha(row.original.fechaEntrega), meta: { ocultarEnMovil: true } },
       { header: 'Ruta', accessorKey: 'rutaId', cell: ({ row }) => nombreRuta(row.original.rutaId), meta: { ocultarEnMovil: true } },
@@ -113,7 +129,18 @@ export function Pedidos() {
       />
       <BarraFiltros>
         <Selector
+          etiqueta="Bandeja"
+          vacio="Todos los pedidos"
+          opciones={[{ valor: 'porValidar', etiqueta: 'Por validar (app)' }]}
+          value={bandeja}
+          onChange={(e) => {
+            setBandeja(e.target.value);
+            setPagina(1);
+          }}
+        />
+        <Selector
           etiqueta="Estado"
+          disabled={porValidar}
           vacio="Todos"
           opciones={ESTADOS.map((e) => ({ valor: e, etiqueta: e === 'EntregadoParcial' ? 'Entregado parcial' : e }))}
           value={estado}
@@ -145,6 +172,8 @@ async function lineasDePedido(partidas: PedidoPartidaDto[]): Promise<LineaVenta[
   const productos = await Promise.all([...new Set(partidas.map((p) => p.productoId))].map((id) => obtenerProducto(id)));
   return partidas.map((p) => ({
     ...nuevaLinea(),
+    id: p.id,
+    tipo: p.tipo,
     producto: productos.find((x) => x.id === p.productoId) ?? null,
     unidadId: p.unidadId,
     cantidad: String(p.cantidad),
@@ -188,6 +217,12 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
   const especiales = useListarPreciosCliente(clienteId, { query: { enabled: !!clienteId } });
   const precios = combinarPrecios(lista.data?.partidas, especiales.data, fechaOperativa());
   const calculo = calcularLineas(lineas, precios);
+  // RN-VEN-16: en canales por cliente se permite más de un pedido por fecha; solo se avisa.
+  const mismos = useListarPedidos(
+    { clienteId: clienteId || undefined, desde: fechaEntrega || undefined, hasta: fechaEntrega || undefined, tamano: 5 },
+    { query: { enabled: !pedido && !!clienteId && !!fechaEntrega } },
+  );
+  const existente = mismos.data?.items.find((x) => x.estado !== 'Cancelado' && x.fechaEntrega === fechaEntrega);
 
   const guardar = async () => {
     setError(null);
@@ -200,7 +235,13 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
         fechaEntrega: fechaEntrega || null,
         ordenCompraCliente: ordenCompra || null,
         notas: notas || null,
-        partidas: lineas.map((l) => ({ productoId: l.producto!.id, unidadId: l.unidadId, cantidad: Number(l.cantidad) })),
+        partidas: lineas.map((l) => ({
+          id: l.id ?? null,
+          productoId: l.producto!.id,
+          unidadId: l.unidadId,
+          cantidad: Number(l.cantidad),
+          tipo: l.tipo ?? 'Venta',
+        })),
       };
       const guardado = pedido ? await actualizar.mutateAsync({ id: pedido.id, data }) : await crear.mutateAsync({ data });
       toast.success(pedido ? 'Pedido actualizado.' : `Pedido ${guardado.folio} capturado.`);
@@ -226,6 +267,12 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
       />
       <div className="flex flex-col gap-4">
         {error && <Aviso tipo="error">{error}</Aviso>}
+        {existente && (
+          <Aviso tipo="advertencia">
+            {existente.cliente} ya tiene el pedido {existente.folio} para esa fecha
+            {existente.esRuta ? '; los pedidos de ruta son uno por fecha, edita ese.' : '. Puedes capturar otro si hace falta.'}
+          </Aviso>
+        )}
         <Tarjeta>
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectorCliente
@@ -251,7 +298,7 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
           {!clienteId ? (
             <p className="m-0 text-sm text-muted">Elige el cliente para usar su lista de precios.</p>
           ) : (
-            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={precios} />
+            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={precios} conTipo />
           )}
         </Tarjeta>
         <BarraAccion resumen={<span>Total <strong>{formatoMoneda(calculo.totales.total / 100)}</strong></span>}>
@@ -284,15 +331,48 @@ export function PedidoDetalle() {
   const [pestana, setPestana] = useState('detalle');
   const p = consulta.data;
 
+  const conSolicitado = !!p?.partidas.some((x) => x.cantidadSolicitada != null);
   const columnas = useMemo<ColumnDef<PedidoPartidaDto, unknown>[]>(
     () => [
-      { header: 'Producto', accessorKey: 'producto', cell: ({ row }) => <span><span className="block">{row.original.producto}</span><span className="text-xs text-muted">{row.original.sku}</span></span> },
-      { header: 'Cantidad', accessorKey: 'cantidad', cell: ({ row }) => `${formatoCantidad(row.original.cantidad)} ${row.original.unidad}`, meta: { alinear: 'fin' } },
+      {
+        header: 'Producto',
+        accessorKey: 'producto',
+        cell: ({ row }) => (
+          <span>
+            <span className="block">{row.original.producto}</span>
+            <span className="text-xs text-muted">
+              {row.original.sku}
+              {row.original.tipo === 'CambioFisico' && ' · Cambio físico'}
+              {row.original.notas && ` · ${row.original.notas}`}
+            </span>
+          </span>
+        ),
+      },
+      ...(conSolicitado
+        ? ([
+            {
+              header: 'Solicitado (app)',
+              accessorKey: 'cantidadSolicitada',
+              cell: ({ row }) => (row.original.cantidadSolicitada != null ? `${formatoCantidad(row.original.cantidadSolicitada)} ${row.original.unidad}` : '—'),
+              meta: { alinear: 'fin' },
+            },
+          ] as ColumnDef<PedidoPartidaDto, unknown>[])
+        : []),
+      {
+        header: 'Cantidad',
+        accessorKey: 'cantidad',
+        cell: ({ row }) => {
+          const x = row.original;
+          const corregida = x.cantidadSolicitada != null && x.cantidadSolicitada !== x.cantidad;
+          return <span className={corregida ? 'font-semibold text-[var(--tg-status-yellow-fg)]' : undefined}>{`${formatoCantidad(x.cantidad)} ${x.unidad}`}</span>;
+        },
+        meta: { alinear: 'fin' },
+      },
       { header: 'Entregado (base)', accessorKey: 'cantidadEntregadaBase', cell: ({ row }) => `${formatoCantidad(row.original.cantidadEntregadaBase)} de ${formatoCantidad(row.original.cantidadBase)}`, meta: { alinear: 'fin', ocultarEnMovil: true } },
       { header: 'Precio', accessorKey: 'precioUnitario', cell: ({ row }) => formatoMoneda(row.original.precioUnitario), meta: { alinear: 'fin' } },
       { header: 'Importe', accessorKey: 'importe', cell: ({ row }) => formatoMoneda(row.original.importe), meta: { alinear: 'fin' } },
     ],
-    [],
+    [conSolicitado],
   );
 
   return (
@@ -339,6 +419,8 @@ export function PedidoDetalle() {
                       <Tarjeta>
                         <Datos>
                           <Dato etiqueta="Estado"><EtiquetaEstado estado={p.estado} /></Dato>
+                          <Dato etiqueta="Origen">{ETIQUETA_ORIGEN[p.origen]}{p.esRuta ? ' · Pedido de ruta' : ''}</Dato>
+                          {p.confirmadoEn && <Dato etiqueta="Confirmado">{formatoFechaHora(p.confirmadoEn)}</Dato>}
                           <Dato etiqueta="Entrega">{formatoFecha(p.fechaEntrega)}</Dato>
                           <Dato etiqueta="Ruta">{rutas.find((r) => r.rutaId === p.rutaId)?.codigo ?? 'Sin asignar'}</Dato>
                           <Dato etiqueta="Carga">

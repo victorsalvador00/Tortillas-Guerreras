@@ -113,6 +113,20 @@ duplicado (RN-VEN-16), `VEN-021` fecha de entrega anterior a la fecha operativa 
 La entrega de un pedido conserva el precio del pedido y guarda como `precio_referencia` el vigente de ese día.
 `GuardarClienteRequest.listaPrecioId` es opcional si se indica `grupoClienteId` con lista.
 
+**Notas de implementación (T-8.6).**
+- RN-VEN-15: se valida al crear y al cambiar la fecha; corregir un pedido `Capturado` de días anteriores sin tocar su
+  fecha no falla. En la app, la referencia es la fecha operativa de `creadaEn`. `fecha_entrega` sigue siendo opcional
+  en la web.
+- RN-VEN-16: `es_ruta` lo decide el servidor (cliente genérico de un canal con `pedido_por = Ruta`). Como el genérico es
+  uno por ruta, la unicidad es el índice parcial `ux_pedidos_ruta_fecha_entrega (cliente_id, fecha_entrega)` con
+  `es_ruta AND estado <> 'Cancelado'`. Un pedido a un cliente DET que no es el genérico se trata como pedido por
+  cliente [SUP-29].
+- RN-VEN-18: el PUT de un pedido acepta `partidas[].id`; las partidas con id se actualizan en su lugar (la bitácora
+  guarda `cantidad: [antes, después]`), las nuevas se agregan y las que faltan se borran. `cantidad_solicitada` solo se
+  llena en el alta desde la app. Al confirmar se guardan `confirmado_por/en`. Bandeja "Por validar":
+  `GET /pedidos?origen=App&estado=Capturado`.
+- RN-VEN-17: `EntregarPedido` rechaza partidas `CambioFisico` (se entregan con retorno, T-8.9).
+
 Las ventas, entregas, retornos y cobros desde la app entran por `sync` (ver
 `05-sincronizacion-offline.md`), que invoca los mismos handlers.
 

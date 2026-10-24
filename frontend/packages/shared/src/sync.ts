@@ -105,6 +105,8 @@ export interface PedidoPartidaSync {
   tasaIva: number;
   tasaIeps: number | null;
   cantidadEntregadaBase: number;
+  /** RN-VEN-17: el cambio físico va a precio 0 y se entrega con un retorno. */
+  tipo: 'Venta' | 'CambioFisico';
 }
 
 export interface PedidoSync {
@@ -119,6 +121,8 @@ export interface PedidoSync {
   envioFolio: string | null;
   versionSync: number;
   partidas: PedidoPartidaSync[];
+  /** RN-VEN-16: pedido global de la ruta (al cliente genérico). */
+  esRuta: boolean;
 }
 
 /** RN-VEN-12: gana sobre la lista desde `vigenteDesde`. `activo = false`: la app lo borra. */
@@ -275,6 +279,29 @@ export const datosProponerUbicacion = z.object({
   gps: gpsSync,
 });
 
+/** RN-SYN-10: requiere `ventas.pedidos_app`. Los precios los pone el servidor (lista o especial vigente). */
+export const datosCapturarPedido = z.object({
+  pedidoId: z.string().uuid(),
+  clienteId: z.string().uuid(),
+  fechaEntrega: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  ordenCompraCliente: z.string().nullable(),
+  /** Informativo: el servidor decide si es pedido de ruta (RN-VEN-16). */
+  esRuta: z.boolean(),
+  partidas: z
+    .array(
+      z.object({
+        productoId: z.string().uuid(),
+        unidadId: z.string().uuid(),
+        cantidad: z.number().positive(),
+        tipo: z.enum(['Venta', 'CambioFisico']),
+        notas: z.string().nullable(),
+      }),
+    )
+    .min(1),
+  notas: z.string().nullable(),
+  gps: gpsSync.nullable(),
+});
+
 export const datosReportarEstado = z.object({
   pendientes: z.number().int().nonnegative(),
   bateria: z.number().min(0).max(1).nullable(),
@@ -288,7 +315,8 @@ export type TipoOperacion =
   | 'RegistrarRetorno'
   | 'RegistrarCobro'
   | 'ProponerUbicacionCliente'
-  | 'ReportarEstado';
+  | 'ReportarEstado'
+  | 'CapturarPedido';
 
 export interface OperacionSync {
   /** UUID v7 generado en el teléfono. */
@@ -303,7 +331,8 @@ export interface OperacionSync {
     | z.infer<typeof datosRegistrarRetorno>
     | z.infer<typeof datosRegistrarCobro>
     | z.infer<typeof datosProponerUbicacion>
-    | z.infer<typeof datosReportarEstado>;
+    | z.infer<typeof datosReportarEstado>
+    | z.infer<typeof datosCapturarPedido>;
 }
 
 export interface SolicitudPush {

@@ -21,4 +21,5 @@ export interface PedidoSync {
   envioFolio?: PedidoSyncEnvioFolio;
   versionSync: number;
   partidas: PedidoPartidaSync[];
+  esRuta?: boolean;
 }

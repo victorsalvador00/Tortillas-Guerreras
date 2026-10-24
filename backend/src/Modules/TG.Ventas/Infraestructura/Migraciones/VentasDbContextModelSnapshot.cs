@@ -693,9 +693,21 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("actualizado_por");
 
+                    b.Property<Guid>("CapturadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("capturado_por");
+
                     b.Property<Guid>("ClienteId")
                         .HasColumnType("uuid")
                         .HasColumnName("cliente_id");
+
+                    b.Property<DateTimeOffset?>("ConfirmadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmado_en");
+
+                    b.Property<Guid?>("ConfirmadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("confirmado_por");
 
                     b.Property<DateTimeOffset>("CreadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -705,9 +717,17 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("creado_por");
 
+                    b.Property<Guid?>("DispositivoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dispositivo_id");
+
                     b.Property<Guid?>("EnvioId")
                         .HasColumnType("uuid")
                         .HasColumnName("envio_id");
+
+                    b.Property<bool>("EsRuta")
+                        .HasColumnType("boolean")
+                        .HasColumnName("es_ruta");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -741,9 +761,18 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("text")
                         .HasColumnName("notas");
 
+                    b.Property<Guid?>("OpId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("op_id");
+
                     b.Property<string>("OrdenCompraCliente")
                         .HasColumnType("text")
                         .HasColumnName("orden_compra_cliente");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("origen");
 
                     b.Property<Guid?>("RutaId")
                         .HasColumnType("uuid")
@@ -772,12 +801,22 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.HasKey("Id")
                         .HasName("pk_pedidos");
 
-                    b.HasIndex("ClienteId")
-                        .HasDatabaseName("ix_pedidos_cliente_id");
-
                     b.HasIndex("Folio")
                         .IsUnique()
                         .HasDatabaseName("ux_pedidos_folio");
+
+                    b.HasIndex("OpId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_pedidos_op_id")
+                        .HasFilter("op_id IS NOT NULL");
+
+                    b.HasIndex("ClienteId", "FechaEntrega")
+                        .IsUnique()
+                        .HasDatabaseName("ux_pedidos_ruta_fecha_entrega")
+                        .HasFilter("es_ruta AND estado <> 'Cancelado'");
+
+                    b.HasIndex("FechaEntrega", "Estado")
+                        .HasDatabaseName("ix_pedidos_fecha_entrega_estado");
 
                     b.HasIndex("RutaId", "VersionSync")
                         .HasDatabaseName("ix_pedidos_ruta_version_sync");
@@ -785,6 +824,8 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.ToTable("pedidos", "ventas", t =>
                         {
                             t.HasCheckConstraint("ck_pedidos_estado", "estado IN ('Capturado', 'Confirmado', 'Asignado', 'Entregado', 'EntregadoParcial', 'Cancelado')");
+
+                            t.HasCheckConstraint("ck_pedidos_origen", "origen IN ('App', 'Web')");
                         });
                 });
 
@@ -809,6 +850,11 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("cantidad_entregada_base");
 
+                    b.Property<decimal?>("CantidadSolicitada")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_solicitada");
+
                     b.Property<decimal>("FactorABase")
                         .HasPrecision(18, 6)
                         .HasColumnType("numeric(18,6)")
@@ -818,6 +864,10 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("importe");
+
+                    b.Property<string>("Notas")
+                        .HasColumnType("text")
+                        .HasColumnName("notas");
 
                     b.Property<Guid>("PedidoId")
                         .HasColumnType("uuid")
@@ -842,6 +892,11 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("numeric(9,6)")
                         .HasColumnName("tasa_iva");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
                     b.Property<Guid>("UnidadId")
                         .HasColumnType("uuid")
                         .HasColumnName("unidad_id");
@@ -852,7 +907,10 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.HasIndex("PedidoId")
                         .HasDatabaseName("ix_pedidos_partidas_pedido_id");
 
-                    b.ToTable("pedidos_partidas", "ventas");
+                    b.ToTable("pedidos_partidas", "ventas", t =>
+                        {
+                            t.HasCheckConstraint("ck_pedidos_partidas_tipo", "tipo IN ('Venta', 'CambioFisico')");
+                        });
                 });
 
             modelBuilder.Entity("TG.Ventas.Dominio.PrecioCliente", b =>

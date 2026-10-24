@@ -78,3 +78,16 @@ describe('combinarPrecios', () => {
     expect(precioDeLista(precios, 'b', 'u')).toBe(5);
   });
 });
+
+describe('cambio físico', () => {
+  it('RN-VEN-17: va a precio 0, no exige precio de lista y no suma', () => {
+    const lineas: LineaVenta[] = [
+      { ...nuevaLinea(), producto: tortilla, unidadId: tortilla.unidadBaseId, cantidad: '2' },
+      { ...nuevaLinea(), producto: tortilla, unidadId: 'sin-precio', cantidad: '5', tipo: 'CambioFisico' },
+    ];
+    const r = calcularLineas(lineas, [{ productoId: tortilla.id, unidadId: tortilla.unidadBaseId, precioUnitario: 10 }]);
+    expect(r.completas).toBe(true);
+    expect(r.lineas[1].precio).toBe(0);
+    expect(r.totales.subtotal).toBe(2000);
+  });
+});

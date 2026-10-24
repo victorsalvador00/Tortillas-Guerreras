@@ -6,6 +6,9 @@
  * OpenAPI spec version: v1
  */
 import type { PedidoPartidaDtoTasaIeps } from './pedidoPartidaDtoTasaIeps';
+import type { TipoPartidaPedido } from './tipoPartidaPedido';
+import type { PedidoPartidaDtoCantidadSolicitada } from './pedidoPartidaDtoCantidadSolicitada';
+import type { PedidoPartidaDtoNotas } from './pedidoPartidaDtoNotas';
 
 export interface PedidoPartidaDto {
   id: string;
@@ -21,4 +24,7 @@ export interface PedidoPartidaDto {
   tasaIeps?: PedidoPartidaDtoTasaIeps;
   importe: number;
   cantidadEntregadaBase: number;
+  tipo: TipoPartidaPedido;
+  cantidadSolicitada?: PedidoPartidaDtoCantidadSolicitada;
+  notas?: PedidoPartidaDtoNotas;
 }

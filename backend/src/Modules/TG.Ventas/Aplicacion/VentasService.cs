@@ -23,7 +23,8 @@ public sealed class VentasService(
     IInventarioService inventario,
     ICatalogosService catalogos,
     IGeneradorFolios folios,
-    TimeProvider reloj) : IVentasService
+    TimeProvider reloj,
+    PedidosHandler pedidos) : IVentasService
 {
     internal sealed record Encabezado(
         OrigenVenta Origen,
@@ -334,6 +335,30 @@ public sealed class VentasService(
         }
     }
 
+    // ───────────────────────────── Pedido desde la app ─────────────────────────────
+
+    public async Task<Result<PedidoCapturado>> CapturarPedidoAsync(CapturarPedidoComando c, CancellationToken ct)
+    {
+        // RN-SYN-02: el reenvío (mismo op_id o mismo id generado por la app) devuelve el pedido original.
+        var previo = await db.Pedidos.AsNoTracking().Where(p => p.OpId == c.OpId || p.Id == c.PedidoId)
+            .Select(p => new { p.Id, p.Folio }).FirstOrDefaultAsync(ct);
+        if (previo is not null)
+        {
+            return new PedidoCapturado(previo.Id, previo.Folio, true);
+        }
+
+        var solicitud = new GuardarPedidoRequest(c.ClienteId, c.FechaEntrega, c.OrdenCompraCliente, c.Notas,
+            c.Partidas.Select(p => new PartidaPedidoRequest(p.ProductoId, p.UnidadId, p.Cantidad, p.Tipo, p.Notas)).ToList());
+        if (c.Partidas.Count == 0 || c.Partidas.Any(p => p.Cantidad <= 0))
+        {
+            return Error.Validacion("VAL-001", "El pedido requiere partidas con cantidad mayor que cero.");
+        }
+
+        var captura = new CapturaPedido(OrigenVenta.App, c.OpId, c.CapturadoPor, c.DispositivoId, c.RutaId, c.FechaCaptura);
+        var guardado = await pedidos.GuardarInternoAsync(null, solicitud, captura, c.PedidoId, ct);
+        return guardado.EsExito ? new PedidoCapturado(guardado.Valor.Id, guardado.Valor.Folio, false) : guardado.Error!;
+    }
+
     // ───────────────────────────── Entrega de pedido ─────────────────────────────
 
     public async Task<Result<VentaRegistrada>> EntregarPedidoAsync(EntregarPedidoComando c, CancellationToken ct)
@@ -372,6 +397,12 @@ public sealed class VentasService(
                     return Error.Validacion(ErroresVentas.PedidoNoEncontrado, "Una partida no pertenece al pedido.");
                 }
 
+                // RN-VEN-17: el cambio físico se entrega con un retorno CambioFisico, no con venta.
+                if (partida.Tipo == TipoPartidaPedido.CambioFisico)
+                {
+                    return Error.Validacion("VAL-001", "Las partidas de cambio físico se entregan con un retorno, no con venta.");
+                }
+
                 var conversion = await catalogos.ConvertirABaseAsync(partida.ProductoId, partida.UnidadId, entrega.Cantidad, null, t);
                 if (!conversion.EsExito)
                 {
@@ -406,7 +437,8 @@ public sealed class VentasService(
                 pedido.Partidas.Single(x => x.Id == p.PedidoPartidaId).CantidadEntregadaBase += p.Base;
             }
 
-            pedido.Estado = pedido.Partidas.All(p => p.CantidadEntregadaBase >= p.CantidadBase)
+            // RN-VEN-17: el estado se calcula solo con las partidas de venta.
+            pedido.Estado = pedido.Partidas.Where(p => p.Tipo == TipoPartidaPedido.Venta).All(p => p.CantidadEntregadaBase >= p.CantidadBase)
                 ? EstadoPedido.Entregado
                 : EstadoPedido.EntregadoParcial;
             await db.SaveChangesAsync(t);

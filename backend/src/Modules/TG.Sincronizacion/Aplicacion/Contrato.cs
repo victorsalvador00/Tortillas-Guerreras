@@ -33,12 +33,13 @@ public sealed record EnvioPartidaSync(Guid Id, Guid ProductoId, string Lote, dec
 public sealed record EnvioSync(Guid Id, string Folio, DateOnly FechaOperativa, string Tipo, string Estado,
     DateTimeOffset? DespachadoEn, long VersionSync, IReadOnlyList<EnvioPartidaSync> Partidas);
 
+/// <param name="Tipo">RN-VEN-17: <c>Venta</c> o <c>CambioFisico</c> (precio 0; se entrega con un retorno).</param>
 public sealed record PedidoPartidaSync(Guid Id, Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal CantidadBase,
-    decimal PrecioUnitario, decimal TasaIva, decimal? TasaIeps, decimal CantidadEntregadaBase);
+    decimal PrecioUnitario, decimal TasaIva, decimal? TasaIeps, decimal CantidadEntregadaBase, string Tipo = "Venta");
 
 /// <summary>Pedido por entregar; <c>EnvioId</c>/<c>EnvioFolio</c>: la carga en la que va (RN-LOG-11), nulos si no va en ninguna.</summary>
 public sealed record PedidoSync(Guid Id, string Folio, Guid ClienteId, DateOnly? FechaEntrega, string Estado, decimal Total,
-    Guid? EnvioId, string? EnvioFolio, long VersionSync, IReadOnlyList<PedidoPartidaSync> Partidas);
+    Guid? EnvioId, string? EnvioFolio, long VersionSync, IReadOnlyList<PedidoPartidaSync> Partidas, bool EsRuta = false);
 
 public sealed record SaldoClienteSync(Guid ClienteId, decimal Saldo);
 
@@ -103,6 +104,12 @@ public sealed record RegistrarRetornoDatos(Guid RetornoId, string Folio, int Con
 
 public sealed record RegistrarCobroDatos(Guid CobroId, Guid ClienteId, decimal Importe, string FormaPago, IReadOnlyList<Guid>? VentaIds);
 
+public sealed record PartidaPedidoDatos(Guid ProductoId, Guid UnidadId, decimal Cantidad, string Tipo, string? Notas);
+
+/// <param name="EsRuta">Informativo: el servidor decide si es pedido de ruta (cliente genérico de un canal por ruta, RN-VEN-16).</param>
+public sealed record CapturarPedidoDatos(Guid PedidoId, Guid ClienteId, DateOnly FechaEntrega, string? OrdenCompraCliente, bool EsRuta,
+    IReadOnlyList<PartidaPedidoDatos> Partidas, string? Notas, GpsDatos? Gps);
+
 public sealed record ProponerUbicacionDatos(Guid ClienteId, GpsDatos Gps);
 
 public sealed record ReportarEstadoDatos(int Pendientes, decimal? Bateria, string? VersionApp, int UltimoConsecutivo);
@@ -115,6 +122,7 @@ public static class TiposOperacion
     public const string RegistrarCobro = "RegistrarCobro";
     public const string ProponerUbicacionCliente = "ProponerUbicacionCliente";
     public const string ReportarEstado = "ReportarEstado";
+    public const string CapturarPedido = "CapturarPedido";
 }
 
 public static class ErroresSync
@@ -125,6 +133,10 @@ public static class ErroresSync
     public const string LoteDemasiadoGrande = "SYN-003";
     public const string TipoDesconocido = "SYN-004";
     public const string DatosInvalidos = "SYN-005";
+    /// <summary>RN-SYN-10: el cliente no pertenece a la ruta de la operación.</summary>
+    public const string ClienteFueraDeRuta = "SYN-007";
+    /// <summary>RN-SYN-10: falta el permiso <c>ventas.pedidos_app</c>.</summary>
+    public const string SinPermisoPedidos = "SYN-008";
 
     /// <summary>RN-SYN-07: la app parte lotes más grandes.</summary>
     public const int MaximoOperacionesLote = 200;

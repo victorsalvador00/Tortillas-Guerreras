@@ -250,7 +250,7 @@ public sealed class PullHandler(
                 pedidos.Add(new PedidoSync(p.Id, p.Folio, p.ClienteId, p.FechaEntrega, p.Estado.ToString(), p.Total, p.EnvioId,
                     p.EnvioId is { } envioId ? foliosCargas.GetValueOrDefault(envioId) : null, p.VersionSync,
                     p.Partidas.Select(x => new PedidoPartidaSync(x.Id, x.ProductoId, x.UnidadId, x.Cantidad, x.CantidadBase,
-                        x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.CantidadEntregadaBase)).ToList()));
+                        x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.CantidadEntregadaBase, x.Tipo.ToString())).ToList(), p.EsRuta));
             }
 
             // Saldos de crédito: siempre completos [SUP-08].
@@ -475,6 +475,36 @@ public sealed class PushHandler(
 
                 case TiposOperacion.ReportarEstado:
                     return new Aplicacion(new Dictionary<string, Guid>(), [], false);
+
+                case TiposOperacion.CapturarPedido:
+                {
+                    // RN-SYN-10: permiso y cliente de la ruta se validan aquí; Ventas no consulta rutas.
+                    if (!sp.GetRequiredService<IUsuarioActual>().TienePermiso(Permisos.Ventas.PedidosApp))
+                    {
+                        return Error.Prohibido(ErroresSync.SinPermisoPedidos, "Tu usuario no tiene permiso para capturar pedidos desde la app.");
+                    }
+
+                    if (rutaOperacion is not { } ruta)
+                    {
+                        return SinRuta();
+                    }
+
+                    var d = Leer<CapturarPedidoDatos>(op) ?? throw new JsonException();
+                    var clientesRuta = await logistica.ClientesDeRutaAsync(ruta.Id, 0, ct);
+                    if (!clientesRuta.Any(c => c.ClienteId == d.ClienteId && c.Activo))
+                    {
+                        return Error.Validacion(ErroresSync.ClienteFueraDeRuta, "El cliente no pertenece a la ruta de esta operación.");
+                    }
+
+                    var pedido = await ventas.CapturarPedidoAsync(new CapturarPedidoComando(
+                        d.PedidoId, op.OpId, d.ClienteId, d.FechaEntrega, fecha, d.OrdenCompraCliente, d.Notas,
+                        d.Partidas.Select(p => new PartidaPedidoComando(p.ProductoId, p.UnidadId, p.Cantidad,
+                            Enum.Parse<TipoPartidaPedido>(p.Tipo), p.Notas)).ToList(),
+                        ctx.UsuarioId, dispositivo, ruta.Id), ct);
+                    return pedido.EsExito
+                        ? new Aplicacion(new Dictionary<string, Guid> { ["pedidoId"] = pedido.Valor.PedidoId }, [], pedido.Valor.Duplicado)
+                        : pedido.Error!;
+                }
 
                 default:
                     return Error.Validacion(ErroresSync.TipoDesconocido, $"Tipo de operación desconocido: {op.Tipo}.");

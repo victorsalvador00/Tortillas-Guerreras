@@ -143,6 +143,19 @@ public sealed class Pedido : EntidadAuditable, IVersionSync, IConcurrencia
     public decimal Iva { get; set; }
     public decimal Ieps { get; set; }
     public decimal Total { get; set; }
+    public OrigenVenta Origen { get; set; } = OrigenVenta.Web;
+
+    /// <summary>Idempotencia de <c>CapturarPedido</c> (RN-SYN-10).</summary>
+    public Guid? OpId { get; set; }
+
+    public Guid CapturadoPor { get; set; }
+    public Guid? DispositivoId { get; set; }
+    public Guid? ConfirmadoPor { get; set; }
+    public DateTimeOffset? ConfirmadoEn { get; set; }
+
+    /// <summary>RN-VEN-16: pedido global de la ruta al cliente genérico (canal con <c>pedido_por = Ruta</c>).</summary>
+    public bool EsRuta { get; set; }
+
     public long VersionSync { get; set; }
     public uint Version { get; set; }
     public List<PedidoPartida> Partidas { get; set; } = [];
@@ -163,6 +176,14 @@ public sealed class PedidoPartida
     public decimal? TasaIeps { get; set; }
     public decimal Importe { get; set; }
     public decimal CantidadEntregadaBase { get; set; }
+
+    /// <summary>RN-VEN-17: las de cambio físico llevan precio 0, no suman al total ni al estado del pedido.</summary>
+    public TipoPartidaPedido Tipo { get; set; } = TipoPartidaPedido.Venta;
+
+    /// <summary>RN-VEN-18: lo que capturó el vendedor en la app antes de validarse en oficina.</summary>
+    public decimal? CantidadSolicitada { get; set; }
+
+    public string? Notas { get; set; }
 }
 
 public sealed class Venta : EntidadAuditable

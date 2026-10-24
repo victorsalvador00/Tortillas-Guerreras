@@ -134,7 +134,7 @@ regenerado (definición de terminado).
   bajada a la app
   (`precios_cliente`, `productos_exclusivos`). *Lee:* `ventas.md` (RN-VEN-01, 11 a 14). *Acepta:* RN-VEN-01, 11 a 14
   y criterios v0.2 de ventas.
-- [ ] **T-8.6 Pedidos v0.2 y `CapturarPedido`** *(ajusta T-4.3, T-5.1)*. Columnas nuevas de pedidos y partidas,
+- [x] **T-8.6 Pedidos v0.2 y `CapturarPedido`** *(ajusta T-4.3, T-5.1)*. Columnas nuevas de pedidos y partidas,
   pedido de ruta (DET), partidas `CambioFisico`, `cantidad_solicitada`, bandeja "Por validar" con historial, operación
   de sync idempotente con permiso `ventas.pedidos_app` y validación de cliente en la ruta en Sincronización.
   *Lee:* `ventas.md` (RN-VEN-15 a 18), 05 (RN-SYN-10). *Acepta:* RN-VEN-15 a 18, RN-SYN-10;

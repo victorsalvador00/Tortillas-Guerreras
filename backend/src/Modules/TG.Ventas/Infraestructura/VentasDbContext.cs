@@ -106,6 +106,13 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
             e.Property(p => p.Iva).Importe();
             e.Property(p => p.Ieps).Importe();
             e.Property(p => p.Total).Importe();
+            e.Property(p => p.Origen).ComoTexto("pedidos");
+            e.HasIndex(p => p.OpId).IsUnique().HasFilter("op_id IS NOT NULL").HasDatabaseName("ux_pedidos_op_id");
+            e.HasIndex(p => new { p.FechaEntrega, p.Estado }).HasDatabaseName("ix_pedidos_fecha_entrega_estado");
+
+            // RN-VEN-16: el genérico es uno por ruta, así que (cliente, fecha de entrega) equivale a (ruta, fecha de entrega).
+            e.HasIndex(p => new { p.ClienteId, p.FechaEntrega }).IsUnique()
+                .HasFilter("es_ruta AND estado <> 'Cancelado'").HasDatabaseName("ux_pedidos_ruta_fecha_entrega");
             e.HasMany(p => p.Partidas).WithOne().HasForeignKey(p => p.PedidoId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Cliente>().WithMany().HasForeignKey(p => p.ClienteId).OnDelete(DeleteBehavior.Restrict);
             e.ConcurrenciaXmin();
@@ -122,6 +129,8 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
             e.Property(p => p.TasaIeps).Tasa();
             e.Property(p => p.Importe).Importe();
             e.Property(p => p.CantidadEntregadaBase).Cantidad();
+            e.Property(p => p.Tipo).ComoTexto("pedidos_partidas");
+            e.Property(p => p.CantidadSolicitada).Cantidad();
         });
 
         builder.Entity<Venta>(e =>

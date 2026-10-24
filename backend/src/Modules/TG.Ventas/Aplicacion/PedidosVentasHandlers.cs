@@ -18,7 +18,9 @@ namespace TG.Ventas.Aplicacion;
 
 // ───────────────────────────── Pedidos ─────────────────────────────
 
-public sealed record PartidaPedidoRequest(Guid ProductoId, Guid UnidadId, decimal Cantidad);
+/// <param name="Id">Partida existente que se corrige (RN-VEN-18: queda en la bitácora con antes y después).</param>
+public sealed record PartidaPedidoRequest(Guid ProductoId, Guid UnidadId, decimal Cantidad,
+    TipoPartidaPedido Tipo = TipoPartidaPedido.Venta, string? Notas = null, Guid? Id = null);
 
 public sealed record GuardarPedidoRequest(Guid ClienteId, DateOnly? FechaEntrega, string? OrdenCompraCliente, string? Notas,
     IReadOnlyList<PartidaPedidoRequest> Partidas);
@@ -36,31 +38,44 @@ public sealed class GuardarPedidoValidator : AbstractValidator<GuardarPedidoRequ
             p.RuleFor(x => x.ProductoId).NotEmpty();
             p.RuleFor(x => x.UnidadId).NotEmpty();
             p.RuleFor(x => x.Cantidad).GreaterThan(0).WithMessage("La cantidad debe ser mayor que cero.");
+            p.RuleFor(x => x.Tipo).IsInEnum();
         });
     }
 }
 
 public sealed record PedidoPartidaDto(Guid Id, Guid ProductoId, string Sku, string Producto, Guid UnidadId, string Unidad,
     decimal Cantidad, decimal CantidadBase, decimal PrecioUnitario, decimal TasaIva, decimal? TasaIeps, decimal Importe,
-    decimal CantidadEntregadaBase);
+    decimal CantidadEntregadaBase, TipoPartidaPedido Tipo, decimal? CantidadSolicitada, string? Notas);
 
 public sealed record PedidoDto(Guid Id, string Folio, Guid ClienteId, string Cliente, DateOnly Fecha, DateOnly? FechaEntrega,
     EstadoPedido Estado, Guid? RutaId, Guid? EnvioId, string? OrdenCompraCliente, string? Notas, decimal Subtotal, decimal Iva,
-    decimal Ieps, decimal Total, IReadOnlyList<PedidoPartidaDto> Partidas);
+    decimal Ieps, decimal Total, IReadOnlyList<PedidoPartidaDto> Partidas, OrigenVenta Origen, bool EsRuta, Guid CapturadoPor,
+    Guid? DispositivoId, Guid? ConfirmadoPor, DateTimeOffset? ConfirmadoEn);
+
+/// <summary>Quién y desde dónde captura un pedido nuevo.</summary>
+internal sealed record CapturaPedido(OrigenVenta Origen, Guid? OpId, Guid CapturadoPor, Guid? DispositivoId, Guid? RutaId,
+    DateOnly FechaCaptura);
 
 public sealed class PedidosHandler(
     VentasDbContext db,
     ICatalogosService catalogos,
     IInventarioService inventario,
     IGeneradorFolios folios,
-    IFechaOperativa fechaOperativa)
+    IFechaOperativa fechaOperativa,
+    IUsuarioActual usuario,
+    TimeProvider reloj)
 {
     /// <param name="envioId">Pedidos que van en esa carga.</param>
     /// <param name="sinCarga">Solo pedidos que todavía no van en ninguna carga.</param>
     public async Task<Paginado<PedidoDto>> ListarAsync(EstadoPedido? estado, Guid? clienteId, Guid? rutaId, DateOnly? desde,
-        DateOnly? hasta, Guid? envioId, bool? sinCarga, int? pagina, int? tamano, CancellationToken ct)
+        DateOnly? hasta, Guid? envioId, bool? sinCarga, int? pagina, int? tamano, CancellationToken ct, OrigenVenta? origen = null)
     {
         var consulta = db.Pedidos.AsNoTracking().Include(p => p.Partidas).AsQueryable();
+        if (origen is not null)
+        {
+            consulta = consulta.Where(p => p.Origen == origen);
+        }
+
         if (estado is not null)
         {
             consulta = consulta.Where(p => p.Estado == estado);
@@ -111,23 +126,25 @@ public sealed class PedidosHandler(
 
     public async Task<Result<PedidoDto>> GuardarAsync(Guid? id, GuardarPedidoRequest r, CancellationToken ct)
     {
+        var guardado = await GuardarInternoAsync(id, r, null, null, ct);
+        return guardado.EsExito ? await ObtenerAsync(guardado.Valor.Id, ct) : guardado.Error!;
+    }
+
+    /// <summary>
+    /// Alta o corrección de un pedido <c>Capturado</c> (web o app). Las partidas con <c>Id</c> se actualizan en su lugar
+    /// para que la bitácora guarde antes y después (RN-VEN-18).
+    /// </summary>
+    internal async Task<Result<Pedido>> GuardarInternoAsync(Guid? id, GuardarPedidoRequest r, CapturaPedido? captura, Guid? idNuevo,
+        CancellationToken ct)
+    {
         var cliente = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == r.ClienteId && c.Activo, ct);
         if (cliente is null)
         {
             return Error.NoEncontrado(ErroresVentas.ClienteNoEncontrado, "El cliente no existe o está inactivo.");
         }
 
-        Pedido? pedido;
-        if (id is null)
-        {
-            pedido = new Pedido
-            {
-                Folio = await folios.SiguienteAsync(VentasDbContext.Esquema, "PED", ct),
-                Fecha = fechaOperativa.Hoy(),
-            };
-            db.Pedidos.Add(pedido);
-        }
-        else
+        Pedido? pedido = null;
+        if (id is not null)
         {
             pedido = await db.Pedidos.Include(p => p.Partidas).FirstOrDefaultAsync(p => p.Id == id, ct);
             if (pedido is null)
@@ -139,9 +156,26 @@ public sealed class PedidosHandler(
             {
                 return Error.Conflicto(ErroresVentas.EstadoPedido, "Solo se edita un pedido capturado.");
             }
+        }
 
-            db.RemoveRange(pedido.Partidas);
-            pedido.Partidas.Clear();
+        var hoy = captura?.FechaCaptura ?? fechaOperativa.Hoy();
+
+        // RN-VEN-15: corregir cantidades de un pedido de días anteriores no exige cambiar su fecha.
+        if (r.FechaEntrega is { } fechaEntrega && fechaEntrega < hoy && (pedido is null || pedido.FechaEntrega != fechaEntrega))
+        {
+            return Error.Campo(ErroresVentas.FechaEntregaPasada, "fechaEntrega",
+                $"La fecha de entrega no puede ser anterior a {hoy:dd/MM/yyyy}.");
+        }
+
+        // RN-VEN-16: el pedido al genérico de un canal que pide por ruta es el global de la ruta; uno por fecha de entrega.
+        var pedidoPor = await db.Canales.AsNoTracking().Where(c => c.Id == cliente.CanalId).Select(c => c.PedidoPor).FirstOrDefaultAsync(ct);
+        var esRuta = cliente.EsGenerico && pedidoPor == PedidoPor.Ruta;
+        var propioId = pedido?.Id ?? idNuevo;
+        if (esRuta && r.FechaEntrega is { } fechaRuta && await db.Pedidos.AnyAsync(p => p.EsRuta && p.ClienteId == cliente.Id
+                && p.FechaEntrega == fechaRuta && p.Estado != EstadoPedido.Cancelado && p.Id != propioId, ct))
+        {
+            return Error.Conflicto(ErroresVentas.PedidoRutaDuplicado,
+                $"La ruta ya tiene pedido para el {fechaRuta:dd/MM/yyyy}; edita ese pedido.");
         }
 
         var productos = await catalogos.ObtenerProductosAsync(r.Partidas.Select(p => p.ProductoId), ct);
@@ -152,7 +186,26 @@ public sealed class PedidosHandler(
             return Error.Validacion(ErroresVentas.ProductoExclusivo, $"{nombre} es exclusivo de otros clientes; no se pide para {cliente.Nombre}.");
         }
 
-        var hoy = fechaOperativa.Hoy();
+        var nuevo = pedido is null;
+        if (pedido is null)
+        {
+            var c = captura ?? new CapturaPedido(OrigenVenta.Web, null, usuario.Id ?? Guid.Empty, null, null, hoy);
+            pedido = new Pedido
+            {
+                Id = idNuevo ?? SharedKernel.Dominio.Id.Nuevo(),
+                Folio = await folios.SiguienteAsync(VentasDbContext.Esquema, "PED", ct),
+                Fecha = hoy,
+                Origen = c.Origen,
+                OpId = c.OpId,
+                CapturadoPor = c.CapturadoPor,
+                DispositivoId = c.DispositivoId,
+                RutaId = c.RutaId,
+            };
+            db.Pedidos.Add(pedido);
+        }
+
+        var existentes = pedido.Partidas.ToDictionary(p => p.Id);
+        var conservadas = new HashSet<Guid>();
         foreach (var p in r.Partidas)
         {
             if (!productos.TryGetValue(p.ProductoId, out var producto) || !producto.EsVendible || !producto.Activo)
@@ -166,29 +219,62 @@ public sealed class PedidosHandler(
                 return conversion.Error!;
             }
 
-            var precio = await db.VigenteAsync(cliente, p.ProductoId, p.UnidadId, hoy, ct);
-            if (precio is null)
+            // RN-VEN-17: el cambio físico va a precio 0.
+            decimal precio = 0;
+            if (p.Tipo == TipoPartidaPedido.Venta)
             {
-                return Error.Validacion(ErroresVentas.SinPrecio, $"{producto.Nombre} no tiene precio en la lista del cliente.");
+                var vigente = await db.VigenteAsync(cliente, p.ProductoId, p.UnidadId, hoy, ct);
+                if (vigente is null)
+                {
+                    return Error.Validacion(ErroresVentas.SinPrecio, $"{producto.Nombre} no tiene precio en la lista del cliente.");
+                }
+
+                precio = vigente.Value;
             }
 
-            var (importe, _, _) = CalculoImportes.Partida(p.Cantidad, precio.Value, producto.TasaIva, producto.TasaIeps);
-            var partida = new PedidoPartida
+            PedidoPartida partida;
+            if (p.Id is { } partidaId && existentes.TryGetValue(partidaId, out var existente))
             {
-                PedidoId = pedido.Id, ProductoId = p.ProductoId, UnidadId = p.UnidadId, FactorABase = conversion.Valor.FactorABase,
-                Cantidad = p.Cantidad, CantidadBase = conversion.Valor.Base, PrecioUnitario = precio.Value,
-                TasaIva = producto.TasaIva, TasaIeps = producto.TasaIeps, Importe = importe,
-            };
-            pedido.Partidas.Add(partida);
+                partida = existente;
+                conservadas.Add(partidaId);
+            }
+            else
+            {
+                partida = new PedidoPartida
+                {
+                    PedidoId = pedido.Id,
+                    CantidadSolicitada = nuevo && pedido.Origen == OrigenVenta.App ? p.Cantidad : null,
+                };
+                pedido.Partidas.Add(partida);
+            }
+
+            partida.ProductoId = p.ProductoId;
+            partida.UnidadId = p.UnidadId;
+            partida.Tipo = p.Tipo;
+            partida.FactorABase = conversion.Valor.FactorABase;
+            partida.Cantidad = p.Cantidad;
+            partida.CantidadBase = conversion.Valor.Base;
+            partida.PrecioUnitario = precio;
+            partida.TasaIva = producto.TasaIva;
+            partida.TasaIeps = producto.TasaIeps;
+            partida.Importe = CalculoImportes.Partida(p.Cantidad, precio, producto.TasaIva, producto.TasaIeps).Importe;
+            partida.Notas = string.IsNullOrWhiteSpace(p.Notas) ? null : p.Notas.Trim();
+        }
+
+        foreach (var quitada in existentes.Values.Where(x => !conservadas.Contains(x.Id)))
+        {
+            pedido.Partidas.Remove(quitada);
+            db.Remove(quitada);
         }
 
         pedido.ClienteId = r.ClienteId;
+        pedido.EsRuta = esRuta;
         pedido.FechaEntrega = r.FechaEntrega;
         pedido.OrdenCompraCliente = string.IsNullOrWhiteSpace(r.OrdenCompraCliente) ? null : r.OrdenCompraCliente.Trim();
         pedido.Notas = string.IsNullOrWhiteSpace(r.Notas) ? null : r.Notas.Trim();
         Totales(pedido);
         await db.SaveChangesAsync(ct);
-        return await ObtenerAsync(pedido.Id, ct);
+        return pedido;
     }
 
     /// <summary>RN-VEN-13: al confirmar, el pedido toma los precios vigentes del cliente y desde ahí quedan fijos.</summary>
@@ -207,7 +293,7 @@ public sealed class PedidosHandler(
 
         var cliente = await db.Clientes.AsNoTracking().FirstAsync(c => c.Id == pedido.ClienteId, ct);
         var hoy = fechaOperativa.Hoy();
-        foreach (var partida in pedido.Partidas)
+        foreach (var partida in pedido.Partidas.Where(p => p.Tipo == TipoPartidaPedido.Venta))
         {
             var precio = await db.VigenteAsync(cliente, partida.ProductoId, partida.UnidadId, hoy, ct);
             if (precio is null)
@@ -224,6 +310,8 @@ public sealed class PedidosHandler(
 
         Totales(pedido);
         pedido.Estado = EstadoPedido.Confirmado;
+        pedido.ConfirmadoPor = usuario.Id;
+        pedido.ConfirmadoEn = reloj.GetUtcNow();
         await db.SaveChangesAsync(ct);
         return await ObtenerAsync(id, ct);
     }
@@ -266,7 +354,8 @@ public sealed class PedidosHandler(
 
     private static void Totales(Pedido pedido)
     {
-        var calculos = pedido.Partidas.Select(p => CalculoImportes.Partida(p.Cantidad, p.PrecioUnitario, p.TasaIva, p.TasaIeps)).ToList();
+        // RN-VEN-17: el cambio físico no suma.
+        var calculos = pedido.Partidas.Where(p => p.Tipo == TipoPartidaPedido.Venta).Select(p => CalculoImportes.Partida(p.Cantidad, p.PrecioUnitario, p.TasaIva, p.TasaIeps)).ToList();
         pedido.Subtotal = calculos.Sum(c => c.Importe);
         pedido.Ieps = calculos.Sum(c => c.Ieps);
         pedido.Iva = calculos.Sum(c => c.Iva);
@@ -283,14 +372,16 @@ public sealed class PedidosHandler(
             p.FechaEntrega, p.Estado, p.RutaId, p.EnvioId, p.OrdenCompraCliente, p.Notas, p.Subtotal, p.Iva, p.Ieps, p.Total,
             p.Partidas.Select(x => new PedidoPartidaDto(x.Id, x.ProductoId, productos.GetValueOrDefault(x.ProductoId)?.Sku ?? "?",
                 productos.GetValueOrDefault(x.ProductoId)?.Nombre ?? "?", x.UnidadId, unidades.GetValueOrDefault(x.UnidadId)?.Clave ?? "?",
-                x.Cantidad, x.CantidadBase, x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.Importe, x.CantidadEntregadaBase)).ToList()))
+                x.Cantidad, x.CantidadBase, x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.Importe, x.CantidadEntregadaBase, x.Tipo,
+                x.CantidadSolicitada, x.Notas)).ToList(), p.Origen, p.EsRuta, p.CapturadoPor, p.DispositivoId, p.ConfirmadoPor,
+            p.ConfirmadoEn))
             .ToList();
     }
 
     internal static PedidoInfo AInfo(Pedido p) => new(p.Id, p.Folio, p.ClienteId, p.Fecha, p.FechaEntrega, p.Estado, p.RutaId,
         p.EnvioId, p.OrdenCompraCliente, p.Subtotal, p.Iva, p.Ieps, p.Total, p.VersionSync,
         p.Partidas.Select(x => new PedidoPartidaInfo(x.Id, x.ProductoId, x.UnidadId, x.FactorABase, x.Cantidad, x.CantidadBase,
-            x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.Importe, x.CantidadEntregadaBase)).ToList());
+            x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.Importe, x.CantidadEntregadaBase, x.Tipo)).ToList(), p.EsRuta);
 }
 
 // ───────────────────────────── Ventas (web) ─────────────────────────────
@@ -306,7 +397,10 @@ public sealed class RegistrarVentaWebValidator : AbstractValidator<RegistrarVent
         RuleFor(x => x.AlmacenId).NotEmpty().WithMessage("Elige el almacén.");
         RuleFor(x => x.Partidas).NotEmpty().WithMessage("Agrega al menos una partida.");
         RuleForEach(x => x.Partidas).ChildRules(p =>
-            p.RuleFor(x => x.Cantidad).GreaterThan(0).WithMessage("La cantidad debe ser mayor que cero."));
+        {
+            p.RuleFor(x => x.Cantidad).GreaterThan(0).WithMessage("La cantidad debe ser mayor que cero.");
+            p.RuleFor(x => x.Tipo).Equal(TipoPartidaPedido.Venta).WithMessage("Una venta no lleva partidas de cambio físico.");
+        });
     }
 }
 

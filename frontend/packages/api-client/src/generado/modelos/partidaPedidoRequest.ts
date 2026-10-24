@@ -5,9 +5,15 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { TipoPartidaPedido } from './tipoPartidaPedido';
+import type { PartidaPedidoRequestNotas } from './partidaPedidoRequestNotas';
+import type { PartidaPedidoRequestId } from './partidaPedidoRequestId';
 
 export interface PartidaPedidoRequest {
   productoId: string;
   unidadId: string;
   cantidad: number;
+  tipo?: TipoPartidaPedido;
+  notas?: PartidaPedidoRequestNotas;
+  id?: PartidaPedidoRequestId;
 }

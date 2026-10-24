@@ -13,11 +13,14 @@ export function EditorPartidasVenta({
   onCambiar,
   precios,
   deshabilitado,
+  conTipo,
 }: {
   lineas: LineaVenta[];
   onCambiar: (lineas: LineaVenta[]) => void;
   precios: Pick<ListaPrecioPartidaDto, 'productoId' | 'unidadId' | 'precioUnitario'>[] | undefined;
   deshabilitado?: boolean;
+  /** Pedidos: permite partidas de cambio físico (RN-VEN-17). */
+  conTipo?: boolean;
 }) {
   const calculo = calcularLineas(lineas, precios);
   const cambiar = (i: number, cambio: Partial<LineaVenta>) =>
@@ -32,7 +35,9 @@ export function EditorPartidasVenta({
         return (
           <div
             key={l.clave}
-            className="grid items-start gap-2 rounded-xl border border-row-divider p-3 sm:grid-cols-[minmax(0,1fr)_202px_162px_176px_auto]"
+            className={`grid items-start gap-2 rounded-xl border border-row-divider p-3 ${
+              conTipo ? 'sm:grid-cols-[minmax(0,1fr)_150px_172px_132px_150px_auto]' : 'sm:grid-cols-[minmax(0,1fr)_202px_162px_176px_auto]'
+            }`}
           >
             <SelectorProducto
               compacto
@@ -52,6 +57,19 @@ export function EditorPartidasVenta({
               disabled={deshabilitado || !l.producto}
               onChange={(e) => cambiar(i, { unidadId: e.target.value })}
             />
+            {conTipo && (
+              <Selector
+                compacto
+                etiqueta="Tipo"
+                opciones={[
+                  { valor: 'Venta', etiqueta: 'Venta' },
+                  { valor: 'CambioFisico', etiqueta: 'Cambio físico' },
+                ]}
+                value={l.tipo ?? 'Venta'}
+                disabled={deshabilitado}
+                onChange={(e) => cambiar(i, { tipo: e.target.value as LineaVenta['tipo'] })}
+              />
+            )}
             <Campo
               compacto
               etiqueta="Cantidad"
@@ -64,7 +82,9 @@ export function EditorPartidasVenta({
               onChange={(e) => cambiar(i, { cantidad: e.target.value })}
             />
             <div className="flex min-h-11 flex-col justify-center text-right text-sm">
-              <span className="text-xs text-muted">{c.precio != null ? `${formatoMoneda(c.precio)} c/u` : 'Precio'}</span>
+              <span className="text-xs text-muted">
+                {l.tipo === 'CambioFisico' ? 'Cambio físico' : c.precio != null ? `${formatoMoneda(c.precio)} c/u` : 'Precio'}
+              </span>
               <span className="font-medium tabular-nums">{c.importes ? formatoCentavos(c.importes.total) : '—'}</span>
             </div>
             {!deshabilitado ? (
@@ -73,7 +93,7 @@ export function EditorPartidasVenta({
               <span />
             )}
             {sinPrecio && (
-              <p className="m-0 text-xs text-error sm:col-span-5">
+              <p className={`m-0 text-xs text-error ${conTipo ? 'sm:col-span-6' : 'sm:col-span-5'}`}>
                 El producto no tiene precio en la lista del cliente para esa unidad (RN-VEN-01).
               </p>
             )}

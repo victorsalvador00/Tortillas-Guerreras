@@ -74,8 +74,8 @@ internal static class VentasEndpoints
 
         var pedidos = grupo.MapGroup("/pedidos").RequireAuthorization(P.Pedidos);
         pedidos.MapGet("/", (EstadoPedido? estado, Guid? clienteId, Guid? rutaId, DateOnly? desde, DateOnly? hasta, Guid? envioId,
-                bool? sinCarga, int? pagina, int? tamano, PedidosHandler h, CancellationToken ct) =>
-            h.ListarAsync(estado, clienteId, rutaId, desde, hasta, envioId, sinCarga, pagina, tamano, ct)).WithName("listarPedidos");
+                bool? sinCarga, int? pagina, int? tamano, OrigenVenta? origen, PedidosHandler h, CancellationToken ct) =>
+            h.ListarAsync(estado, clienteId, rutaId, desde, hasta, envioId, sinCarga, pagina, tamano, ct, origen)).WithName("listarPedidos");
         pedidos.MapGet("/{id:guid}", async (Guid id, PedidosHandler h, CancellationToken ct) =>
             (await h.ObtenerAsync(id, ct)).AHttp()).WithName("obtenerPedido");
         pedidos.MapPost("/", async (GuardarPedidoRequest r, PedidosHandler h, CancellationToken ct) =>

@@ -12,6 +12,10 @@ import type { PedidoDtoEnvioId } from './pedidoDtoEnvioId';
 import type { PedidoDtoOrdenCompraCliente } from './pedidoDtoOrdenCompraCliente';
 import type { PedidoDtoNotas } from './pedidoDtoNotas';
 import type { PedidoPartidaDto } from './pedidoPartidaDto';
+import type { OrigenVenta } from './origenVenta';
+import type { PedidoDtoDispositivoId } from './pedidoDtoDispositivoId';
+import type { PedidoDtoConfirmadoPor } from './pedidoDtoConfirmadoPor';
+import type { PedidoDtoConfirmadoEn } from './pedidoDtoConfirmadoEn';
 
 export interface PedidoDto {
   id: string;
@@ -30,4 +34,10 @@ export interface PedidoDto {
   ieps: number;
   total: number;
   partidas: PedidoPartidaDto[];
+  origen: OrigenVenta;
+  esRuta: boolean;
+  capturadoPor: string;
+  dispositivoId?: PedidoDtoDispositivoId;
+  confirmadoPor?: PedidoDtoConfirmadoPor;
+  confirmadoEn?: PedidoDtoConfirmadoEn;
 }

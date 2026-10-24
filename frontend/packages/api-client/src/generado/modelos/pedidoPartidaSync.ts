@@ -17,4 +17,5 @@ export interface PedidoPartidaSync {
   tasaIva: number;
   tasaIeps?: PedidoPartidaSyncTasaIeps;
   cantidadEntregadaBase: number;
+  tipo?: string;
 }

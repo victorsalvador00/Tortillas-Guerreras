@@ -7,6 +7,10 @@ export interface LineaVenta {
   producto: Pick<ProductoDto, 'id' | 'sku' | 'nombre' | 'unidadBaseId' | 'unidadBaseClave' | 'tasaIva' | 'tasaIeps' | 'conversiones'> | null;
   unidadId: string;
   cantidad: string;
+  /** Partida guardada que se corrige (RN-VEN-18); vacío en las nuevas. */
+  id?: string;
+  /** RN-VEN-17: el cambio físico va a precio 0 y no suma. Por omisión, `Venta`. */
+  tipo?: 'Venta' | 'CambioFisico';
 }
 
 export interface LineaCalculada {
@@ -77,7 +81,7 @@ export function calcularLineas(
       completas = false;
       return { precio: l.producto ? precioDeLista(precios, l.producto.id, l.unidadId) : null, importes: null };
     }
-    const precio = precioDeLista(precios, l.producto.id, l.unidadId);
+    const precio = l.tipo === 'CambioFisico' ? 0 : precioDeLista(precios, l.producto.id, l.unidadId);
     if (precio == null) {
       completas = false;
       return { precio, importes: null };
