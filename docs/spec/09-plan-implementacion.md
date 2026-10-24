@@ -163,7 +163,7 @@ regenerado (definición de terminado).
   `rutaCambiada`, pantallas Nuevo pedido / Pedido de la ruta / Pedidos / Cambio físico / cambios pendientes, forma de
   pago Cheque, precios especiales, productos exclusivos, cajas + paquetes, RN-APP-09. *Lee:* 06, 05.
   *Acepta:* RN-APP-09, 11 y criterios v0.2 de 06.
-- [ ] **T-8.13 Distribución APK** *(ajusta T-5.5)*. Perfil `production` con `buildType: apk` y distribución interna;
+- [x] **T-8.13 Distribución APK** *(ajusta T-5.5)*. Perfil `production` con `buildType: apk` y distribución interna;
   instrucciones de instalación y de actualización encima de la versión anterior en el README; `app-update.yml` solo
   publica a `production` desde un tag. *Acepta:* RN-APP-10; instalar el APK nuevo sobre el anterior conserva las
   operaciones pendientes.

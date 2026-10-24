@@ -47,6 +47,34 @@ pnpm -C frontend -r lint && pnpm -C frontend -r typecheck && pnpm -C frontend -r
 
 Cada regla de negocio `RN-…` del spec tiene al menos una prueba con su ID en `[Trait("Regla", …)]` o en el nombre.
 
+## App de ruta: instalación y actualizaciones (RN-APP-10)
+
+La app es solo Android y se instala con un APK directo (no hay Play Store). El APK lleva siempre el paquete
+`mx.tortillasguerreras.ruta` y la firma que guarda EAS: **no borres ni regeneres las credenciales de Android en EAS**
+(respáldalas con `eas credentials`); con otra firma el APK nuevo ya no se instala encima y habría que desinstalar,
+perdiendo la base local.
+
+**Generar el APK** (desde `frontend/apps/ruta`, con `eas login`):
+
+```bash
+eas build:version:set --platform android   # solo la primera vez: versionCode inicial (lo lleva EAS)
+eas build --profile production --platform android   # APK firmado, canal production; versionCode +1 automático
+eas build --profile preview --platform android      # APK de pruebas contra api-pruebas
+```
+
+**Instalar por primera vez:** descarga el APK desde el enlace de EAS en el teléfono, permite "instalar apps de origen
+desconocido" para el navegador y ábrelo. Inicia sesión y espera a que un supervisor apruebe el dispositivo.
+
+**Actualizar:**
+
+- *Correcciones de JS (lo normal):* se publican con EAS Update al crear un tag `vX.Y.Z` en `main` (workflow
+  `app-update.yml`); cada push a `main` publica solo a `preview`. El teléfono la descarga y la aplica la siguiente vez
+  que se abre la app, nunca a mitad de una venta (RN-APP-08).
+- *APK nuevo (solo si cambió código nativo: SDK de Expo, paquetes nativos, permisos):* sube `version` en `app.json`
+  (las actualizaciones OTA solo llegan a los APK de la misma versión), genera el APK y **instálalo encima** del
+  anterior abriendo el archivo; **nunca desinstales**. Así se conservan la base local, las operaciones pendientes y el
+  consecutivo de folios. Antes de instalar, sincroniza para dejar Pendientes en cero (por si el teléfono falla).
+
 ## Producción
 
 `deploy/docker-compose.prod.yml` (API + Caddy con HTTPS para `api.`, `app.` y `factura.` del dominio del cliente),

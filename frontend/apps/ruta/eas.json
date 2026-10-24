@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 16.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "remote"
   },
   "build": {
     "preview": {
@@ -15,14 +15,13 @@
     },
     "production": {
       "channel": "production",
-      "android": { "buildType": "app-bundle" },
+      "distribution": "internal",
+      "autoIncrement": true,
+      "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.tortillasguerreras.mx",
         "EXPO_PUBLIC_PORTAL_URL": "https://factura.tortillasguerreras.mx"
       }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

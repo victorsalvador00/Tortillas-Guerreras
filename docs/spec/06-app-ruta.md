@@ -124,3 +124,16 @@ de Drizzle; los datos existentes se conservan.
 - Los criterios en modo avión se cubren con el motor (`motor.test.ts`, cambio de ruta R51→R52) y con integración del
   servidor (`SincronizacionTests`: 3 pedidos `Capturado` de origen App + un cambio pendiente en un lote); falta
   probarlos en un teléfono real.
+
+## Distribución (T-8.13)
+
+- `eas.json`: `production` = APK (`buildType: apk`), `distribution: internal`, canal `production`; el `versionCode` lo
+  lleva EAS (`appVersionSource: remote`, `autoIncrement`) para que cada APK nuevo sea mayor y se instale encima. Se
+  quitó `submit` (no hay Play Store). `preview` sigue igual contra el ambiente de pruebas.
+- `app-update.yml`: push a `main` → EAS Update a `preview`; tag `v*` → `production`. `runtimeVersion: appVersion`:
+  una OTA solo llega a los APK con la misma `version`; un cambio nativo sube `version` y requiere APK nuevo.
+- La firma la guarda EAS; perderla obliga a desinstalar (y perder la base local), por eso el README pide respaldarla.
+  Instrucciones de instalación y actualización en el `README.md` raíz. `src/distribucion.test.ts` vigila esta
+  configuración. Que el APK nuevo conserve la cola al instalarse encima depende de Android (mismo paquete y firma) y se
+  verifica a mano en un teléfono.
+
