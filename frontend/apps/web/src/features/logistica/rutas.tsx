@@ -1,5 +1,6 @@
 import type { AnyRoute } from '@tanstack/react-router';
 import { pantalla } from '@/app/rutas-base';
+import { CambiosPendientes } from './CambiosPendientes';
 import { CargaDetalle, CargaNueva, Cargas } from './Cargas';
 import { Rutas, Vehiculos } from './Configuracion';
 import { LiquidacionDetalle, Liquidaciones } from './Liquidaciones';
@@ -15,6 +16,7 @@ export function rutasLogistica(): AnyRoute[] {
     pantalla('/logistica/liquidaciones/$id', LiquidacionDetalle, 'logistica.ver'),
     pantalla('/logistica/retornos', Retornos, ['logistica.retornos', 'logistica.ver']),
     pantalla('/logistica/retornos/nuevo', RetornoNuevo, 'logistica.retornos'),
+    pantalla('/logistica/cambios-pendientes', CambiosPendientes, 'logistica.ver'),
     pantalla('/logistica/rutas', Rutas, 'logistica.configurar'),
     pantalla('/logistica/rutas/$id', RutaDetalle, 'logistica.configurar'),
     pantalla('/logistica/vehiculos', Vehiculos, 'logistica.configurar'),

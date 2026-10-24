@@ -21,6 +21,7 @@ export interface LiquidacionPartidaDto {
   devueltoClientesVendible: number;
   devueltoClientesNoVendible: number;
   sobranteEsperado: number;
+  cambiosEntregados: number;
   sobranteContado?: LiquidacionPartidaDtoSobranteContado;
   diferencia?: LiquidacionPartidaDtoDiferencia;
   destinoSobrante: DestinoSobrante;

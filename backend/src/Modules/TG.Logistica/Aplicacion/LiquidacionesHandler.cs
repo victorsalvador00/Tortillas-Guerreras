@@ -25,6 +25,7 @@ public sealed record LiquidacionPartidaDto(
     decimal DevueltoClientesVendible,
     decimal DevueltoClientesNoVendible,
     decimal SobranteEsperado,
+    decimal CambiosEntregados,
     decimal? SobranteContado,
     decimal? Diferencia,
     DestinoSobrante DestinoSobrante,
@@ -173,7 +174,7 @@ public sealed class LiquidacionesHandler(
                 var producto = productos.GetValueOrDefault(p.ProductoId);
                 return new LiquidacionPartidaDto(p.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?",
                     producto?.UnidadBaseClave ?? string.Empty, p.Lote, p.Cargado, p.Vendido, p.DevueltoClientesVendible,
-                    p.DevueltoClientesNoVendible, p.SobranteEsperado, p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId);
+                    p.DevueltoClientesNoVendible, p.SobranteEsperado, p.CambiosEntregados, p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId);
             }).ToList());
     }
 
@@ -450,12 +451,16 @@ public sealed class LiquidacionesHandler(
 
         var retornos = await db.Retornos.AsNoTracking().Include(r => r.Partidas)
             .Where(r => r.RutaId == ruta.Id && r.FechaOperativa == liquidacion.FechaOperativa && r.Estado == EstadoRetorno.Registrado
-                && r.Tipo == TipoRetorno.DevolucionCliente)
+                && (r.Tipo == TipoRetorno.DevolucionCliente || r.Tipo == TipoRetorno.CambioFisico))
             .ToListAsync(ct);
         foreach (var p in retornos.SelectMany(r => r.Partidas))
         {
             var partida = Partida(p.ProductoId, p.Lote);
-            if (p.Condicion == CondicionRetorno.Vendible)
+            if (p.Sentido == SentidoRetorno.Entregado)
+            {
+                partida.CambiosEntregados += p.CantidadBase;
+            }
+            else if (p.Condicion == CondicionRetorno.Vendible)
             {
                 partida.DevueltoClientesVendible += p.CantidadBase;
             }
@@ -472,7 +477,7 @@ public sealed class LiquidacionesHandler(
 
         foreach (var p in mapa.Values)
         {
-            p.SobranteEsperado = ReglasLogistica.SobranteEsperado(p.Cargado, p.Vendido, p.DevueltoClientesVendible);
+            p.SobranteEsperado = ReglasLogistica.SobranteEsperado(p.Cargado, p.Vendido, p.DevueltoClientesVendible, p.CambiosEntregados);
             p.Diferencia = p.SobranteContado is { } contado ? ReglasLogistica.Diferencia(contado, p.SobranteEsperado) : null;
         }
 
@@ -496,6 +501,7 @@ public sealed class LiquidacionesHandler(
             guardada.Vendido = nueva.Vendido;
             guardada.DevueltoClientesVendible = nueva.DevueltoClientesVendible;
             guardada.DevueltoClientesNoVendible = nueva.DevueltoClientesNoVendible;
+            guardada.CambiosEntregados = nueva.CambiosEntregados;
             guardada.SobranteEsperado = nueva.SobranteEsperado;
             guardada.SobranteContado = nueva.SobranteContado;
             guardada.Diferencia = nueva.Diferencia;

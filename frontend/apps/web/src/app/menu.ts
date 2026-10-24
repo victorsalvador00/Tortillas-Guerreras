@@ -57,6 +57,7 @@ export const MENU: SeccionMenu[] = [
       { etiqueta: 'Cargas del día', ruta: '/logistica/cargas', icono: 'delivery_truck_speed', permiso: 'logistica.ver' },
       { etiqueta: 'Liquidaciones', ruta: '/logistica/liquidaciones', icono: 'account_balance_wallet', permiso: 'logistica.ver' },
       { etiqueta: 'Retornos', ruta: '/logistica/retornos', icono: 'u_turn_left', permiso: ['logistica.retornos', 'logistica.ver'] },
+      { etiqueta: 'Cambios pendientes', ruta: '/logistica/cambios-pendientes', icono: 'swap_horiz', permiso: 'logistica.ver' },
       { etiqueta: 'Rutas', ruta: '/logistica/rutas', icono: 'route', permiso: 'logistica.configurar' },
       { etiqueta: 'Vehículos', ruta: '/logistica/vehiculos', icono: 'local_shipping', permiso: 'logistica.configurar' },
     ],

@@ -235,7 +235,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
           <TarjetaIndicador icono="savings" valor={formatoMoneda(l.efectivoEsperado)} titulo="Efectivo esperado" nota="RN-LOG-08" />
         </div>
 
-        <Tarjeta titulo="Producto" subtitulo="Sobrante esperado = cargado − vendido + devuelto vendible. Lo no vendible ya salió como merma.">
+        <Tarjeta titulo="Producto" subtitulo="Sobrante esperado = cargado − vendido − cambios entregados + devuelto vendible. Lo no vendible ya salió como merma.">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -245,6 +245,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                   <th className="px-3 text-right font-medium">Vendido</th>
                   <th className="px-3 text-right font-medium">Dev. vendible</th>
                   <th className="px-3 text-right font-medium">Dev. no vendible</th>
+                  <th className="px-3 text-right font-medium">Cambios</th>
                   <th className="px-3 text-right font-medium">Esperado</th>
                   <th className="px-3 font-medium">Contado</th>
                   <th className="px-3 font-medium">Destino del sobrante</th>
@@ -269,6 +270,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                       <td className="px-3 text-right tabular-nums">{formatoCantidad(p.vendido)}</td>
                       <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesVendible)}</td>
                       <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesNoVendible)}</td>
+                      <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cambiosEntregados)}</td>
                       <td className="px-3 text-right font-medium tabular-nums">
                         {formatoCantidad(p.sobranteEsperado)} {p.unidad}
                       </td>

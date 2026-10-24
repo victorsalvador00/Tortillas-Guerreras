@@ -102,7 +102,8 @@ los dos depende de Producción, no hay ciclo).
 - "Usar referencia" (`PRO-017` si la ruta ya tiene pedido o no hay referencia) copia los pedidos de la referencia
   con la nueva fecha de entrega como `Capturado`.
 - Plan sugerido: la demanda incluye todos los pedidos de la fecha (tengan ruta o no); las órdenes abiertas cuentan
-  si su fecha operativa es ≤ la fecha de entrega. Los **cambios pendientes** se suman en T-8.9 (todavía no existen).
+  si su fecha operativa es ≤ la fecha de entrega. Los **cambios pendientes** de los clientes
+  que se visitan ese día se suman a la demanda (columna `cambiosPendientes`, T-8.9).
   "Crear órdenes" redondea la cantidad hacia arriba a los decimales de la unidad base y devuelve creadas y omitidas.
 - Copiar receta: `PRO-005` si el destino no es producible; `PRO-018` si el destino es componente de la receta.
 - Errores nuevos: `PRO-014` canal inexistente, `PRO-015`, `PRO-016` ruta o producto inválido, `PRO-017`, `PRO-018`.

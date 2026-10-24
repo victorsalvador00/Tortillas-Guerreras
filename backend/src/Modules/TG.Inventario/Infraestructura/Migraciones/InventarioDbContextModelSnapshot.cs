@@ -378,7 +378,7 @@ namespace TG.Inventario.Infraestructura.Migraciones
                         {
                             t.HasCheckConstraint("ck_movimientos_documento_tipo", "documento_tipo IN ('Recepcion', 'OrdenProduccion', 'Envio', 'Venta', 'Retorno', 'Liquidacion', 'Ajuste', 'Traspaso', 'ConteoFisico')");
 
-                            t.HasCheckConstraint("ck_movimientos_tipo", "tipo IN ('EntradaCompra', 'DevolucionProveedor', 'EntradaProduccion', 'SalidaConsumo', 'Merma', 'TraspasoSalida', 'TraspasoEntrada', 'Venta', 'RetornoCliente', 'AjusteEntrada', 'AjusteSalida')");
+                            t.HasCheckConstraint("ck_movimientos_tipo", "tipo IN ('EntradaCompra', 'DevolucionProveedor', 'EntradaProduccion', 'SalidaConsumo', 'Merma', 'TraspasoSalida', 'TraspasoEntrada', 'Venta', 'RetornoCliente', 'AjusteEntrada', 'AjusteSalida', 'SalidaCambio')");
                         });
                 });
 

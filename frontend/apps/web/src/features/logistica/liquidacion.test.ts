@@ -13,6 +13,7 @@ function partida(lote: string, esperado: number, extra: Partial<LiquidacionParti
     vendido: 260,
     devueltoClientesVendible: 0,
     devueltoClientesNoVendible: 5,
+    cambiosEntregados: 0,
     sobranteEsperado: esperado,
     destinoSobrante: 'Reintegrar',
     ...extra,

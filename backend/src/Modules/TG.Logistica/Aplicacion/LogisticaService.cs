@@ -24,6 +24,33 @@ internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos r
                     .Select(rc => new { rc.ClienteId, rc.RutaId }).ToListAsync(ct))
                 .GroupBy(x => x.ClienteId).ToDictionary(g => g.Key, g => g.Min(x => x.RutaId));
 
+    public async Task<IReadOnlyList<CambioPendienteInfo>> CambiosPendientesAsync(IReadOnlyCollection<Guid> clienteIds, long desde,
+        CancellationToken ct) =>
+        clienteIds.Count == 0
+            ? []
+            : await db.CambiosPendientes.AsNoTracking().Where(x => clienteIds.Contains(x.ClienteId) && x.VersionSync > desde)
+                .OrderBy(x => x.VersionSync)
+                .Select(x => new CambioPendienteInfo(x.Id, x.ClienteId, x.RutaId, x.ProductoId, x.CantidadBase, x.CantidadSaldadaBase,
+                    x.FechaOperativa, x.Estado, x.VersionSync))
+                .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<PendienteDelDiaInfo>> CambiosPendientesDelDiaAsync(DateOnly fecha, CancellationToken ct)
+    {
+        // 1 = lunes … 7 = domingo.
+        var dia = (short)(fecha.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)fecha.DayOfWeek);
+        var visitas = await (from rc in db.RutasClientes.AsNoTracking()
+                             join r in db.Rutas.AsNoTracking() on rc.RutaId equals r.Id
+                             where rc.Activo && r.Activo && rc.DiasVisita.Contains(dia)
+                             select new { rc.RutaId, rc.ClienteId }).ToListAsync(ct);
+        var clientes = visitas.Select(v => v.ClienteId).Distinct().ToList();
+        var pendientes = await db.CambiosPendientes.AsNoTracking()
+            .Where(x => clientes.Contains(x.ClienteId) && x.Estado == EstadoCambioPendiente.Pendiente).ToListAsync(ct);
+        // Un cliente en varias rutas el mismo día: lo lleva la de menor id (igual que RutasDeClientesAsync).
+        var rutaDe = visitas.GroupBy(v => v.ClienteId).ToDictionary(g => g.Key, g => g.Min(v => v.RutaId));
+        return pendientes.Select(x => new PendienteDelDiaInfo(rutaDe[x.ClienteId], x.ClienteId, x.ProductoId, x.CantidadBase - x.CantidadSaldadaBase))
+            .Where(x => x.RestanteBase > 0).ToList();
+    }
+
     public async Task<RutaInfo?> RutaDeChoferAsync(Guid usuarioId, DateOnly fecha, CancellationToken ct)
     {
         var rutaId = await RutaDeCargaAsync(db, usuarioId, fecha, ct);

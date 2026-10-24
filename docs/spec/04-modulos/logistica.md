@@ -156,6 +156,20 @@ producto y efectivo.
 mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas,
 `LOG-026` la jornada (ruta y fecha) ya tiene otro chofer, `LOG-027` canal inexistente o inactivo.
 
+**Notas de implementación (T-8.9).**
+- `ServicioRetornos` atiende web y app. En `CambioFisico` exige cliente no genérico (`LOG-019`); las partidas
+  `Retirado` se tratan como una devolución (`RetornoCliente` y, si no son vendibles, `Merma`); cada partida
+  `Entregado` genera `SalidaCambio` por FEFO (o del lote indicado) y se guarda partida por cada lote que salió.
+  Si deja negativo el almacén de ruta se crea la incidencia `ExistenciaNegativaRuta`.
+- RN-LOG-16 por producto: `pendiente = max(0, min(retirado − entregado normal, retirado con dejarPendiente))`; lo
+  entregado contra un pendiente no cuenta como entrega normal.
+- RN-LOG-17: una partida que salda un pendiente salda como máximo lo que resta y el excedente es entrega normal.
+  `LOG-020` si el pendiente no existe, es de otro cliente o producto, o ya no está `Pendiente` (también al cancelar).
+- `GET /cambios-pendientes` devuelve hasta 500 registros (más recientes primero). Cancelar pide motivo.
+- `ILogisticaService.CambiosPendientesDelDiaAsync(fecha)`: pendientes de los clientes con visita ese día de la
+  semana (si un cliente está en varias rutas, la de menor id), para el plan sugerido y las cargas sugeridas.
+- La liquidación guarda `cambios_entregados` y cuenta lo retirado en un cambio en las columnas de devuelto.
+
 **Notas de implementación (T-8.8).**
 - Pedidos considerados: `Confirmado`/`Asignado` sin carga con entrega (`fecha_entrega`, o `fecha`) ≤ la fecha (la
   misma ventana de RN-LOG-11), con lo pendiente de entregar de cada partida (`Venta` y `CambioFisico`), vía
@@ -165,7 +179,8 @@ mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte c
   ligan los pedidos.
 - Cada ruta es una operación independiente: si falla (p. ej. `LOG-017` sin chofer) se reporta en `omitidas` y las
   demás siguen.
-- Los **cambios pendientes** se agregan en T-8.9 (todavía no existen).
+- Los **cambios pendientes** del día de visita (T-8.9) se agregan solo a la primera carga inicial del día de la ruta (si
+  ya hay una carga inicial no cancelada, no se repiten) y solo en rutas con pedidos (`pendienteBase` en la vista previa).
 
 ## Endpoints (`/api/v1/logistica`)
 | Método | Ruta | Permiso |

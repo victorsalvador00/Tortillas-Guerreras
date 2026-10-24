@@ -48,6 +48,9 @@ public sealed record MotivoMermaSync(Guid Id, string Clave, string Nombre, bool 
 
 public sealed record ParametroSync(string Clave, string Valor, long VersionSync);
 
+public sealed record CambioPendienteSync(Guid Id, Guid ClienteId, Guid ProductoId, decimal CantidadBase, decimal CantidadSaldadaBase,
+    DateOnly FechaOperativa, long VersionSync);
+
 public sealed record CambiosSync(
     IReadOnlyList<ProductoSync> Productos,
     IReadOnlyList<ClienteSync> Clientes,
@@ -60,7 +63,8 @@ public sealed record CambiosSync(
     IReadOnlyList<ParametroSync> Parametros,
     IReadOnlyDictionary<string, IReadOnlyList<Guid>> Eliminados,
     IReadOnlyList<PrecioClienteSync>? PreciosCliente = null,
-    IReadOnlyList<ProductoExclusivoSync>? ProductosExclusivos = null);
+    IReadOnlyList<ProductoExclusivoSync>? ProductosExclusivos = null,
+    IReadOnlyList<CambioPendienteSync>? CambiosPendientes = null);
 
 public sealed record RutaSync(Guid Id, string Codigo, string Nombre, Guid AlmacenId);
 
@@ -97,7 +101,9 @@ public sealed record PartidaEntregaDatos(Guid PedidoPartidaId, decimal Cantidad)
 public sealed record EntregarPedidoDatos(Guid VentaId, string Folio, int Consecutivo, Guid PedidoId, string FormaPago,
     IReadOnlyList<PartidaEntregaDatos> Partidas, decimal TotalApp, GpsDatos? Gps);
 
-public sealed record PartidaRetornoDatos(Guid ProductoId, decimal Cantidad, string Condicion, Guid? MotivoMermaId);
+/// <param name="Sentido">RN-SYN-11: <c>Retirado</c> (por defecto) o <c>Entregado</c> en un <c>CambioFisico</c>.</param>
+public sealed record PartidaRetornoDatos(Guid ProductoId, decimal Cantidad, string Condicion, Guid? MotivoMermaId, string? Sentido = null,
+    Guid? CambioPendienteId = null, bool? DejarPendiente = null);
 
 public sealed record RegistrarRetornoDatos(Guid RetornoId, string Folio, int Consecutivo, string Tipo, Guid? ClienteId,
     Guid? VentaId, Guid? PedidoId, IReadOnlyList<PartidaRetornoDatos> Partidas, GpsDatos? Gps);

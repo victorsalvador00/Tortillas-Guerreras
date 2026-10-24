@@ -42,4 +42,18 @@ public sealed class ReglasLogisticaTests
         ReglasLogistica.DiasValidos([0]).ShouldBeFalse();
         ReglasLogistica.DiasValidos([8]).ShouldBeFalse();
     }
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-18")]
+    public void SobranteEsperado_RestaLosCambiosEntregados() =>
+        ReglasLogistica.SobranteEsperado(20, 0, 1, 3).ShouldBe(18m);
+
+    [Theory]
+    [Trait("Regla", "RN-LOG-16")]
+    [InlineData(5, 5, 3, 2)]   // retira 5, entrega 3 → debe 2
+    [InlineData(5, 0, 3, 0)]   // "no queda pendiente"
+    [InlineData(5, 5, 7, 0)]   // entrega de más: no hay pendiente
+    [InlineData(5, 1, 0, 1)]   // solo una partida de 1 deja pendiente
+    public void NuevoPendiente_LoRetiradoNoEntregado(decimal retirado, decimal conPendiente, decimal entregado, decimal esperado) =>
+        ReglasLogistica.NuevoPendiente(retirado, conPendiente, entregado).ShouldBe(esperado);
 }

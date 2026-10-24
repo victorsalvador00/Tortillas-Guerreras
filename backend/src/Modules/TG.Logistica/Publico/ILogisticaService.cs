@@ -20,6 +20,23 @@ public enum TipoRetorno
 {
     DevolucionCliente,
     RechazoEntrega,
+
+    /// <summary>RN-LOG-15: se retira producto y se entrega otro a cambio, sin venta.</summary>
+    CambioFisico,
+}
+
+/// <summary><c>Retirado</c> entra a la camioneta; <c>Entregado</c> sale de la camioneta a cambio (solo <c>CambioFisico</c>).</summary>
+public enum SentidoRetorno
+{
+    Retirado,
+    Entregado,
+}
+
+public enum EstadoCambioPendiente
+{
+    Pendiente,
+    Saldado,
+    Cancelado,
 }
 
 public enum CondicionRetorno
@@ -64,8 +81,21 @@ public sealed record EnvioInfo(Guid Id, string Folio, DateOnly FechaOperativa, G
 /// <param name="Lote">Opcional: si falta se usa el lote de la venta original o el más reciente de la camioneta.</param>
 /// <param name="Condicion">Opcional: [SUP-13] por defecto, producto terminado perecedero (vida útil ≤ 2 días) = NoVendible.</param>
 /// <param name="UnidadId">Opcional: si falta, la cantidad viene en unidad base.</param>
+/// <param name="CambioPendienteId">RN-LOG-17: partida <c>Entregado</c> que salda ese pendiente.</param>
+/// <param name="DejarPendiente">RN-LOG-16: en partidas <c>Retirado</c>, si lo no entregado queda como cambio pendiente.</param>
 public sealed record PartidaRetornoComando(Guid ProductoId, decimal Cantidad, Guid? UnidadId = null, string? Lote = null,
-    CondicionRetorno? Condicion = null, Guid? MotivoMermaId = null);
+    CondicionRetorno? Condicion = null, Guid? MotivoMermaId = null, SentidoRetorno Sentido = SentidoRetorno.Retirado,
+    Guid? CambioPendienteId = null, bool DejarPendiente = true);
+
+/// <summary>Cambio que se le debe a un cliente (RN-LOG-16).</summary>
+public sealed record CambioPendienteInfo(Guid Id, Guid ClienteId, Guid RutaId, Guid ProductoId, decimal CantidadBase, decimal CantidadSaldadaBase,
+    DateOnly FechaOperativa, EstadoCambioPendiente Estado, long VersionSync)
+{
+    public decimal RestanteBase => CantidadBase - CantidadSaldadaBase;
+}
+
+/// <summary>Lo pendiente de un cliente que la ruta visita ese día (RN-LOG-14, RN-PRO-13).</summary>
+public sealed record PendienteDelDiaInfo(Guid RutaId, Guid ClienteId, Guid ProductoId, decimal RestanteBase);
 
 /// <summary>Retorno compartido web/app (RN-LOG-04/05). Idempotente por <c>OpId</c> (y por <c>RetornoId</c>).</summary>
 /// <param name="Folio">Folio de la app (<c>R01-D03-000045</c>); null en web = <c>RET-000001</c>.</param>
@@ -127,6 +157,12 @@ public interface ILogisticaService
     /// <summary>Ruta activa de cada cliente (la primera asignación activa); los clientes sin ruta no aparecen.</summary>
     Task<IReadOnlyDictionary<Guid, Guid>> RutasDeClientesAsync(IReadOnlyCollection<Guid> clienteIds, CancellationToken ct);
 
+    /// <summary>RN-SYN-11: cambios pendientes de esos clientes con versión mayor que <paramref name="desde"/> (todos los estados).</summary>
+    Task<IReadOnlyList<CambioPendienteInfo>> CambiosPendientesAsync(IReadOnlyCollection<Guid> clienteIds, long desde, CancellationToken ct);
+
+    /// <summary>Pendientes de los clientes que cada ruta visita en el día de la semana de <paramref name="fecha"/>.</summary>
+    Task<IReadOnlyList<PendienteDelDiaInfo>> CambiosPendientesDelDiaAsync(DateOnly fecha, CancellationToken ct);
+
     Task<Result<RetornoRegistrado>> RegistrarRetornoAsync(RegistrarRetornoComando comando, CancellationToken ct);
 
     Task<ResumenLogistica> ResumenTableroAsync(DateOnly fecha, CancellationToken ct);
@@ -162,6 +198,8 @@ public static class ErroresLogistica
     public const string ClienteInvalido = "LOG-016";
     public const string ChoferInvalido = "LOG-017";
     public const string ChoferEnOtraRuta = "LOG-018";
+    public const string CambioSinCliente = "LOG-019";
+    public const string PendienteInvalido = "LOG-020";
     public const string ClienteOtroCanal = "LOG-025";
     public const string ChoferDistintoJornada = "LOG-026";
     public const string CanalInvalido = "LOG-027";

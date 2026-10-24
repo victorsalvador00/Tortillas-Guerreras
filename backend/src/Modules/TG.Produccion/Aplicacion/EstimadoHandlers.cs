@@ -229,9 +229,10 @@ public enum AccionPlan
 
 /// <param name="Demanda">Σ partidas (Venta + CambioFisico) en unidad base, incluida la referencia si se pidió.</param>
 /// <param name="DemandaEstimada">Parte de la demanda que viene de la referencia (rutas sin pedido, RN-PRO-12).</param>
+/// <param name="CambiosPendientes">Parte de la demanda por cambios pendientes de los clientes que se visitan ese día (RN-LOG-16).</param>
 /// <param name="EnOrdenes">Órdenes Planeada/Liberada/EnProceso con fecha operativa hasta la fecha de entrega.</param>
 public sealed record PlanSugeridoFilaDto(Guid ProductoId, string Sku, string Producto, string Unidad, short Decimales, AccionPlan Accion,
-    decimal Demanda, decimal DemandaEstimada, decimal Cargado, decimal Disponible, decimal EnOrdenes, decimal Faltante, bool TieneReceta);
+    decimal Demanda, decimal DemandaEstimada, decimal CambiosPendientes, decimal Cargado, decimal Disponible, decimal EnOrdenes, decimal Faltante, bool TieneReceta);
 
 public sealed record PlanSugeridoDto(DateOnly FechaEntrega, bool IncluyeReferencia, IReadOnlyList<PlanSugeridoFilaDto> Filas);
 
@@ -294,7 +295,9 @@ public sealed class PlanSugeridoHandler(
             : (await inventario.ExistenciasDeAlmacenAsync(pt.Id, ct))
                 .Where(e => e.Cantidad > 0 && (e.FechaCaducidad is null || e.FechaCaducidad >= fechaEntrega))
                 .GroupBy(e => e.ProductoId).ToDictionary(g => g.Key, g => g.Sum(e => e.Cantidad));
-        var productoIds = demanda.Keys.Concat(estimada.Keys).Distinct().ToList();
+        var pendientes = (await logistica.CambiosPendientesDelDiaAsync(fechaEntrega, ct)).GroupBy(p => p.ProductoId)
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.RestanteBase));
+        var productoIds = demanda.Keys.Concat(estimada.Keys).Concat(pendientes.Keys).Distinct().ToList();
         var enOrdenes = (await db.Ordenes.AsNoTracking()
                 .Where(o => productoIds.Contains(o.ProductoId) && Abiertas.Contains(o.Estado) && o.FechaOperativa <= fechaEntrega)
                 .Select(o => new { o.ProductoId, o.CantidadPlaneada }).ToListAsync(ct))
@@ -311,13 +314,14 @@ public sealed class PlanSugeridoHandler(
                 continue;
             }
 
-            var total = demanda.GetValueOrDefault(id) + estimada.GetValueOrDefault(id);
+            var total = demanda.GetValueOrDefault(id) + estimada.GetValueOrDefault(id) + pendientes.GetValueOrDefault(id);
             var neta = total - cargado.GetValueOrDefault(id);
             var producir = p.EsProducible;
             var ordenesAbiertas = producir ? enOrdenes.GetValueOrDefault(id) : 0m;
             var faltante = Math.Max(0, neta - disponible.GetValueOrDefault(id) - ordenesAbiertas);
             filas.Add(new PlanSugeridoFilaDto(id, p.Sku, p.Nombre, p.UnidadBaseClave, p.UnidadBaseDecimales,
-                producir ? AccionPlan.Producir : AccionPlan.Comprar, total, estimada.GetValueOrDefault(id), cargado.GetValueOrDefault(id),
+                producir ? AccionPlan.Producir : AccionPlan.Comprar, total, estimada.GetValueOrDefault(id), pendientes.GetValueOrDefault(id),
+                cargado.GetValueOrDefault(id),
                 disponible.GetValueOrDefault(id), ordenesAbiertas, faltante, conReceta.Contains(id)));
         }
 

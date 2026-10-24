@@ -34,7 +34,7 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
     private sealed record CargaPull(Guid Id, string Folio);
 
     private sealed record Cambios(List<ProductoPull> Productos, List<ClienteRuta> Clientes, List<PrecioPull> Precios,
-        List<JsonObject> RutasClientes, List<PedidoPull> Pedidos);
+        List<JsonObject> RutasClientes, List<PedidoPull> Pedidos, List<JsonObject>? CambiosPendientes = null);
 
     private sealed record RespuestaPull(long Cursor, bool HayMas, RutaPull? Ruta, Cambios Cambios);
 
@@ -346,5 +346,38 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
 
         respuesta.Resultados.ShouldAllBe(r => r.Estado == "Aplicada");
         respuesta.Resultados[0].IdsServidor!.ShouldContainKey("retornoId");
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-SYN-11")]
+    [Trait("Regla", "RN-LOG-16")]
+    public async Task Push_CambioFisico_DejaPendiente_QueBajaEnElPull_YElReenvioNoLoDuplica()
+    {
+        var s = await SesionAppAsync();
+        var (_, cliente, producto, _) = await DatosRutaAsync(s);
+        var operacion = new
+        {
+            opId = Id.Nuevo(), secuencia = 1, tipo = "RegistrarRetorno", creadaEn = DateTimeOffset.UtcNow,
+            datos = new
+            {
+                retornoId = Id.Nuevo(), folio = Folio(s, 451), consecutivo = 451, tipo = "CambioFisico",
+                clienteId = cliente.Id, ventaId = (Guid?)null, pedidoId = (Guid?)null,
+                partidas = new object[]
+                {
+                    new { productoId = producto.Id, cantidad = 3m, condicion = "Vendible", motivoMermaId = (Guid?)null, sentido = "Retirado", dejarPendiente = true },
+                    new { productoId = producto.Id, cantidad = 1m, condicion = "Vendible", motivoMermaId = (Guid?)null, sentido = "Entregado" },
+                },
+                gps = (object?)null,
+            },
+        };
+        object Lote() => new { dispositivoId = s.DispositivoId, loteId = Id.Nuevo(), versionApp = "1.0.0", operaciones = new object[] { operacion } };
+
+        (await s.Cliente.PostOkAsync<RespuestaPush>("/api/v1/sync/push", Lote())).Resultados.ShouldHaveSingleItem().Estado.ShouldBe("Aplicada");
+        await s.Cliente.PostOkAsync<RespuestaPush>("/api/v1/sync/push", Lote());
+
+        var pull = await s.Cliente.GetOkAsync<RespuestaPull>("/api/v1/sync/pull?desde=0");
+        var pendiente = pull.Cambios.CambiosPendientes!.ShouldHaveSingleItem();
+        pendiente["clienteId"]!.GetValue<Guid>().ShouldBe(cliente.Id);
+        pendiente["cantidadBase"]!.GetValue<decimal>().ShouldBe(2m);
     }
 }

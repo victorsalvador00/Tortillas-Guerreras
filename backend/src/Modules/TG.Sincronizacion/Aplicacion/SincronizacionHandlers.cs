@@ -156,6 +156,7 @@ public sealed class PullHandler(
         var pedidos = new List<PedidoSync>();
         var saldos = new List<SaldoClienteSync>();
         var preciosCliente = new List<PrecioClienteSync>();
+        var cambiosPendientes = new List<CambioPendienteSync>();
 
         // RN-VEN-14: todos los registros (también de clientes fuera de la ruta) para ocultar el producto a los demás.
         var exclusivos = new List<ProductoExclusivoSync>();
@@ -253,13 +254,30 @@ public sealed class PullHandler(
                         x.PrecioUnitario, x.TasaIva, x.TasaIeps, x.CantidadEntregadaBase, x.Tipo.ToString())).ToList(), p.EsRuta));
             }
 
+            // RN-SYN-11: cambios pendientes de los clientes de la ruta; los saldados o cancelados se eliminan.
+            var pendientes = (await logistica.CambiosPendientesAsync(activos, cursor, ct))
+                .Concat(nuevos.Count > 0 ? await logistica.CambiosPendientesAsync(nuevos, 0, ct) : [])
+                .DistinctBy(x => x.Id);
+            foreach (var x in pendientes)
+            {
+                Version(x.VersionSync);
+                if (x.Estado != EstadoCambioPendiente.Pendiente)
+                {
+                    Eliminar("cambiosPendientes", x.Id);
+                    continue;
+                }
+
+                cambiosPendientes.Add(new CambioPendienteSync(x.Id, x.ClienteId, x.ProductoId, x.CantidadBase, x.CantidadSaldadaBase,
+                    x.FechaOperativa, x.VersionSync));
+            }
+
             // Saldos de crédito: siempre completos [SUP-08].
             var saldosServidor = await ventas.SaldosClientesAsync(activos, ct);
             saldos.AddRange(saldosServidor.Select(s => new SaldoClienteSync(s.Key, s.Value)));
         }
 
         var cambios = new CambiosSync(productos, clientes, rutasClientes, precios, envios, pedidos, saldos, motivos, parametros,
-            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value), preciosCliente, exclusivos);
+            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value), preciosCliente, exclusivos, cambiosPendientes);
         return new RespuestaPull(maximo, false, reloj.GetUtcNow(),
             ruta is null ? null : new RutaSync(ruta.Id, ruta.Codigo, ruta.Nombre, ruta.AlmacenId), cambios, rutaCambiada);
     }
@@ -443,7 +461,9 @@ public sealed class PushHandler(
                     var retorno = await logistica.RegistrarRetornoAsync(new RegistrarRetornoComando(
                         Enum.Parse<TipoRetorno>(d.Tipo), ruta.Id, fecha, ctx.UsuarioId,
                         d.Partidas.Select(p => new PartidaRetornoComando(p.ProductoId, p.Cantidad, null, null,
-                            Enum.Parse<CondicionRetorno>(p.Condicion), p.MotivoMermaId)).ToList(),
+                            Enum.Parse<CondicionRetorno>(p.Condicion), p.MotivoMermaId,
+                            p.Sentido is null ? SentidoRetorno.Retirado : Enum.Parse<SentidoRetorno>(p.Sentido), p.CambioPendienteId,
+                            p.DejarPendiente ?? true)).ToList(),
                         d.RetornoId, op.OpId, d.Folio, d.ClienteId, d.VentaId, dispositivo, op.CreadaEn,
                         d.Gps?.Lat, d.Gps?.Lng, d.Gps?.PrecisionM,
                         d.PedidoId is { } pedido ? $"Pedido {pedido}" : null), ct);

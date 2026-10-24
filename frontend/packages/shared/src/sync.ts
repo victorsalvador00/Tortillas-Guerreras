@@ -166,6 +166,16 @@ export interface ParametroSync {
   versionSync: number;
 }
 
+export interface CambioPendienteSync {
+  id: string;
+  clienteId: string;
+  productoId: string;
+  cantidadBase: number;
+  cantidadSaldadaBase: number;
+  fechaOperativa: string;
+  versionSync: number;
+}
+
 export interface CambiosSync {
   productos: ProductoSync[];
   clientes: ClienteSync[];
@@ -179,8 +189,10 @@ export interface CambiosSync {
   parametros: ParametroSync[];
   preciosCliente: PrecioClienteSync[];
   productosExclusivos: ProductoExclusivoSync[];
+  /** RN-SYN-11: cambios pendientes de los clientes de la ruta (los saldados o cancelados llegan en `eliminados`). */
+  cambiosPendientes?: CambioPendienteSync[];
   /** Ids que la app debe borrar por colección (inactivos o fuera de alcance). `rutasClientes` usa el `clienteId`. */
-  eliminados: Partial<Record<'productos' | 'clientes' | 'rutasClientes' | 'envios' | 'pedidos' | 'motivosMerma' | 'productosExclusivos', string[]>>;
+  eliminados: Partial<Record<'productos' | 'clientes' | 'rutasClientes' | 'envios' | 'pedidos' | 'motivosMerma' | 'productosExclusivos' | 'cambiosPendientes', string[]>>;
 }
 
 export interface RespuestaPull {
@@ -248,7 +260,7 @@ export const datosRegistrarRetorno = z.object({
   retornoId: z.string().uuid(),
   folio: z.string(),
   consecutivo: z.number().int().positive(),
-  tipo: z.enum(['DevolucionCliente', 'RechazoEntrega']),
+  tipo: z.enum(['DevolucionCliente', 'RechazoEntrega', 'CambioFisico']),
   clienteId: z.string().uuid().nullable(),
   ventaId: z.string().uuid().nullable(),
   pedidoId: z.string().uuid().nullable(),
@@ -260,6 +272,11 @@ export const datosRegistrarRetorno = z.object({
         cantidad: z.number().positive(),
         condicion: z.enum(['Vendible', 'NoVendible']),
         motivoMermaId: z.string().uuid().nullable(),
+        /** RN-SYN-11 (solo CambioFisico): `Entregado` sale de la camioneta a cambio. */
+        sentido: z.enum(['Retirado', 'Entregado']).optional(),
+        cambioPendienteId: z.string().uuid().nullable().optional(),
+        /** RN-LOG-16: en `Retirado`, si lo no entregado queda pendiente (por defecto sí). */
+        dejarPendiente: z.boolean().optional(),
       }),
     )
     .min(1),

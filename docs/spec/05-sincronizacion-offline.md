@@ -138,7 +138,9 @@ Estados: `Aplicada`, `Duplicada` (ya existía; se devuelve el resultado original
   *Implementación (T-8.6):* el reenvío con el mismo `op_id` **o** el mismo `pedidoId` responde `Duplicada` con el
   pedido original; `esRuta` es informativo (lo decide el servidor). La bajada de `pedidos` agrega `esRuta` y
   `partidas[].tipo`. La app guarda y captura pedidos en T-8.12.
-- **RN-SYN-11 (v0.2)** `RegistrarRetorno` con `CambioFisico`: partidas con `sentido`; las `Entregado` pueden traer
+- **RN-SYN-11 (v0.2)** *(implementado en T-8.9; la bajada es `cambiosPendientes` con `id, clienteId, productoId,
+  cantidadBase, cantidadSaldadaBase, fechaOperativa, versionSync` y los saldados o cancelados llegan en
+  `eliminados.cambiosPendientes`)* `RegistrarRetorno` con `CambioFisico`: partidas con `sentido`; las `Entregado` pueden traer
   `cambioPendienteId`; las `Retirado` traen `dejarPendiente` (por partida, por defecto `true`), que aplica RN-LOG-16.
 
 **Errores nuevos (v0.2):** `SYN-006` el chofer no tiene carga ni ruta predeterminada en la fecha de la operación,

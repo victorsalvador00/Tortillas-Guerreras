@@ -5966,6 +5966,105 @@
         }
       }
     },
+    "/api/v1/logistica/cambios-pendientes": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarCambiosPendientes",
+        "parameters": [
+          {
+            "name": "clienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoCambioPendiente"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CambioPendienteDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cambios-pendientes/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "cancelarCambioPendiente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelarCambioPendienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CambioPendienteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logistica/envios": {
       "get": {
         "tags": [
@@ -8079,6 +8178,143 @@
           }
         }
       },
+      "CambioPendienteDto": {
+        "required": [
+          "id",
+          "clienteId",
+          "cliente",
+          "rutaId",
+          "rutaCodigo",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "cantidadBase",
+          "cantidadSaldadaBase",
+          "restanteBase",
+          "fechaOperativa",
+          "estado",
+          "retornoOrigenId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadSaldadaBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "restanteBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCambioPendiente"
+          },
+          "retornoOrigenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "retornoFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "motivoCancelacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "canceladoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CambioPendienteSync": {
+        "required": [
+          "id",
+          "clienteId",
+          "productoId",
+          "cantidadBase",
+          "cantidadSaldadaBase",
+          "fechaOperativa",
+          "versionSync"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadSaldadaBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "versionSync": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "CambiosSync": {
         "required": [
           "productos",
@@ -8175,6 +8411,15 @@
             "items": {
               "$ref": "#/components/schemas/ProductoExclusivoSync"
             }
+          },
+          "cambiosPendientes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CambioPendienteSync"
+            }
           }
         }
       },
@@ -8220,6 +8465,17 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "CancelarCambioPendienteRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
           }
         }
       },
@@ -10162,6 +10418,13 @@
           }
         }
       },
+      "EstadoCambioPendiente": {
+        "enum": [
+          "Pendiente",
+          "Saldado",
+          "Cancelado"
+        ]
+      },
       "EstadoCobro": {
         "enum": [
           "Registrado",
@@ -12097,6 +12360,7 @@
           "devueltoClientesVendible",
           "devueltoClientesNoVendible",
           "sobranteEsperado",
+          "cambiosEntregados",
           "destinoSobrante"
         ],
         "type": "object",
@@ -12134,6 +12398,10 @@
             "format": "double"
           },
           "sobranteEsperado": {
+            "type": "number",
+            "format": "double"
+          },
+          "cambiosEntregados": {
             "type": "number",
             "format": "double"
           },
@@ -14150,6 +14418,20 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/SentidoRetorno"
+          },
+          "cambioPendienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dejarPendiente": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -14174,7 +14456,8 @@
           "producto",
           "unidad",
           "cantidadBase",
-          "cambioFisicoBase"
+          "cambioFisicoBase",
+          "pendienteBase"
         ],
         "type": "object",
         "properties": {
@@ -14196,6 +14479,10 @@
             "format": "double"
           },
           "cambioFisicoBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendienteBase": {
             "type": "number",
             "format": "double"
           }
@@ -14769,6 +15056,7 @@
           "accion",
           "demanda",
           "demandaEstimada",
+          "cambiosPendientes",
           "cargado",
           "disponible",
           "enOrdenes",
@@ -14802,6 +15090,10 @@
             "format": "double"
           },
           "demandaEstimada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cambiosPendientes": {
             "type": "number",
             "format": "double"
           },
@@ -16533,7 +16825,8 @@
           "unidad",
           "lote",
           "cantidadBase",
-          "condicion"
+          "condicion",
+          "sentido"
         ],
         "type": "object",
         "properties": {
@@ -16576,6 +16869,16 @@
               "null",
               "string"
             ]
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/SentidoRetorno"
+          },
+          "cambioPendienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -16815,6 +17118,12 @@
             "format": "double"
           }
         }
+      },
+      "SentidoRetorno": {
+        "enum": [
+          "Retirado",
+          "Entregado"
+        ]
       },
       "SesionDto": {
         "required": [
@@ -17216,7 +17525,8 @@
           "Venta",
           "RetornoCliente",
           "AjusteEntrada",
-          "AjusteSalida"
+          "AjusteSalida",
+          "SalidaCambio"
         ]
       },
       "TipoParametro": {
@@ -17245,7 +17555,8 @@
       "TipoRetorno": {
         "enum": [
           "DevolucionCliente",
-          "RechazoEntrega"
+          "RechazoEntrega",
+          "CambioFisico"
         ]
       },
       "TipoUnidad": {

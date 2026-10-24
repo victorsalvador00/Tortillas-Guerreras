@@ -10,7 +10,9 @@ namespace TG.Logistica.Aplicacion;
 
 public sealed record PedidoSugeridoDto(Guid PedidoId, string Folio, string Cliente, DateOnly FechaEntrega);
 
-public sealed record PartidaSugeridaDto(Guid ProductoId, string Sku, string Producto, string Unidad, decimal CantidadBase, decimal CambioFisicoBase);
+/// <param name="PendienteBase">Cambios pendientes de los clientes que se visitan ese día (solo en una carga inicial nueva).</param>
+public sealed record PartidaSugeridaDto(Guid ProductoId, string Sku, string Producto, string Unidad, decimal CantidadBase, decimal CambioFisicoBase,
+    decimal PendienteBase);
 
 /// <param name="EnvioId">Carga inicial <c>Preparado</c> de la ruta y fecha a la que se agregarían los pedidos.</param>
 public sealed record CargaSugeridaDto(Guid RutaId, string RutaCodigo, string RutaNombre, Guid? EnvioId, string? EnvioFolio,
@@ -45,18 +47,29 @@ public sealed class SugeridosHandler(
         var porRuta = await PedidosPorRutaAsync(dia, ct);
         var rutas = await db.Rutas.AsNoTracking().Where(r => r.Activo).ToDictionaryAsync(r => r.Id, ct);
         var preparadas = await CargasPreparadasAsync(dia, ct);
-        var productos = await catalogos.ObtenerProductosAsync(porRuta.SelectMany(p => p.Pedido.Partidas).Select(x => x.ProductoId), ct);
+
+        // RN-LOG-14: los cambios pendientes van en la primera carga inicial del día de la ruta (no se repiten al agregar
+        // pedidos a una carga existente ni si ya salió otra carga inicial).
+        var conCargaInicial = (await db.Envios.AsNoTracking()
+                .Where(e => e.FechaOperativa == dia && e.Tipo == TipoEnvio.CargaInicial && e.Estado != EstadoEnvio.Cancelado)
+                .Select(e => e.RutaId).Distinct().ToListAsync(ct)).ToHashSet();
+        var pendientes = (await logistica.CambiosPendientesDelDiaAsync(dia, ct)).Where(p => !conCargaInicial.Contains(p.RutaId)).ToList();
+        var productos = await catalogos.ObtenerProductosAsync(porRuta.SelectMany(p => p.Pedido.Partidas).Select(x => x.ProductoId)
+            .Concat(pendientes.Select(p => p.ProductoId)), ct);
         var resultado = porRuta.Where(p => rutas.ContainsKey(p.RutaId)).GroupBy(p => p.RutaId)
             .Select(g =>
             {
                 var ruta = rutas[g.Key];
                 var carga = preparadas.TryGetValue(g.Key, out var c) ? c : ((Guid Id, string Folio)?)null;
-                var partidas = g.SelectMany(p => p.Pedido.Partidas).GroupBy(x => x.ProductoId)
+                var pendientesRuta = pendientes.Where(p => p.RutaId == g.Key).ToList();
+                var partidas = g.SelectMany(p => p.Pedido.Partidas).Select(x => (x.ProductoId, x.Tipo, Cantidad: x.PendienteBase, Pendiente: 0m))
+                    .Concat(pendientesRuta.Select(p => (p.ProductoId, Tipo: TipoPartidaPedido.CambioFisico, Cantidad: p.RestanteBase, Pendiente: p.RestanteBase)))
+                    .GroupBy(x => x.ProductoId)
                     .Select(x =>
                     {
                         var producto = productos.GetValueOrDefault(x.Key);
                         return new PartidaSugeridaDto(x.Key, producto?.Sku ?? "?", producto?.Nombre ?? "?", producto?.UnidadBaseClave ?? "",
-                            x.Sum(y => y.PendienteBase), x.Where(y => y.Tipo == TipoPartidaPedido.CambioFisico).Sum(y => y.PendienteBase));
+                            x.Sum(y => y.Cantidad), x.Where(y => y.Tipo == TipoPartidaPedido.CambioFisico).Sum(y => y.Cantidad), x.Sum(y => y.Pendiente));
                     })
                     .OrderBy(x => x.Sku).ToList();
                 return new CargaSugeridaDto(ruta.Id, ruta.Codigo, ruta.Nombre, carga?.Id, carga?.Folio,

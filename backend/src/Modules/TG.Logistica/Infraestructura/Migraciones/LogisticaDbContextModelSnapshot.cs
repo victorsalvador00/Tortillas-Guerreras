@@ -23,6 +23,101 @@ namespace TG.Logistica.Infraestructura.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TG.Logistica.Dominio.CambioPendiente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<Guid?>("ActualizadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actualizado_por");
+
+                    b.Property<DateTimeOffset?>("CanceladoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelado_en");
+
+                    b.Property<Guid?>("CanceladoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelado_por");
+
+                    b.Property<decimal>("CantidadBase")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_base");
+
+                    b.Property<decimal>("CantidadSaldadaBase")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_saldada_base");
+
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("estado");
+
+                    b.Property<DateOnly>("FechaOperativa")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_operativa");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_cancelacion");
+
+                    b.Property<Guid>("ProductoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("producto_id");
+
+                    b.Property<Guid>("RetornoOrigenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("retorno_origen_id");
+
+                    b.Property<Guid>("RutaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ruta_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<long>("VersionSync")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version_sync");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cambios_pendientes");
+
+                    b.HasIndex("VersionSync")
+                        .HasDatabaseName("ix_cambios_pendientes_version_sync");
+
+                    b.HasIndex("ClienteId", "Estado")
+                        .HasDatabaseName("ix_cambios_pendientes_cliente_estado");
+
+                    b.ToTable("cambios_pendientes", "logistica", t =>
+                        {
+                            t.HasCheckConstraint("ck_cambios_pendientes_estado", "estado IN ('Pendiente', 'Saldado', 'Cancelado')");
+                        });
+                });
+
             modelBuilder.Entity("TG.Logistica.Dominio.Envio", b =>
                 {
                     b.Property<Guid>("Id")
@@ -268,6 +363,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<decimal>("CambiosEntregados")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cambios_entregados");
+
                     b.Property<decimal>("Cargado")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
@@ -441,7 +541,7 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         {
                             t.HasCheckConstraint("ck_retornos_estado", "estado IN ('Registrado', 'Cancelado')");
 
-                            t.HasCheckConstraint("ck_retornos_tipo", "tipo IN ('DevolucionCliente', 'RechazoEntrega')");
+                            t.HasCheckConstraint("ck_retornos_tipo", "tipo IN ('DevolucionCliente', 'RechazoEntrega', 'CambioFisico')");
                         });
                 });
 
@@ -450,6 +550,10 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("CambioPendienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cambio_pendiente_id");
 
                     b.Property<decimal>("CantidadBase")
                         .HasPrecision(18, 4)
@@ -478,6 +582,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("retorno_id");
 
+                    b.Property<string>("Sentido")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sentido");
+
                     b.HasKey("Id")
                         .HasName("pk_retornos_partidas");
 
@@ -487,6 +596,8 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.ToTable("retornos_partidas", "logistica", t =>
                         {
                             t.HasCheckConstraint("ck_retornos_partidas_condicion", "condicion IN ('Vendible', 'NoVendible')");
+
+                            t.HasCheckConstraint("ck_retornos_partidas_sentido", "sentido IN ('Retirado', 'Entregado')");
                         });
                 });
 

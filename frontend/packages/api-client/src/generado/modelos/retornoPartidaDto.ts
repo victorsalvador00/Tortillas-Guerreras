@@ -8,6 +8,8 @@
 import type { CondicionRetorno } from './condicionRetorno';
 import type { RetornoPartidaDtoMotivoMermaId } from './retornoPartidaDtoMotivoMermaId';
 import type { RetornoPartidaDtoMotivo } from './retornoPartidaDtoMotivo';
+import type { SentidoRetorno } from './sentidoRetorno';
+import type { RetornoPartidaDtoCambioPendienteId } from './retornoPartidaDtoCambioPendienteId';
 
 export interface RetornoPartidaDto {
   id: string;
@@ -20,4 +22,6 @@ export interface RetornoPartidaDto {
   condicion: CondicionRetorno;
   motivoMermaId?: RetornoPartidaDtoMotivoMermaId;
   motivo?: RetornoPartidaDtoMotivo;
+  sentido: SentidoRetorno;
+  cambioPendienteId?: RetornoPartidaDtoCambioPendienteId;
 }

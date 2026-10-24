@@ -146,7 +146,7 @@ regenerado (definición de terminado).
   producción.
 - [x] **T-8.8 Cargas sugeridas** *(ajusta T-4.5)*. `GET/POST /envios/sugeridos`, botón en Cargas del día, incluye
   pedidos y cambios pendientes del día de visita. *Lee:* `logistica.md` (RN-LOG-11, 14). *Acepta:* RN-LOG-14.
-- [ ] **T-8.9 Cambios físicos y cambios pendientes** *(ajusta T-4.6, T-5.1)*. Retorno `CambioFisico` con
+- [x] **T-8.9 Cambios físicos y cambios pendientes** *(ajusta T-4.6, T-5.1)*. Retorno `CambioFisico` con
   `sentido`, movimiento `SalidaCambio`, `cambios_pendientes`, saldar y cancelar; web: retorno de cambio y pantalla
   de pendientes; bajada de pendientes. *Lee:* `logistica.md` (RN-LOG-15 a 18), `inventario.md` (RN-INV-11), 05
   (RN-SYN-11). *Acepta:* RN-LOG-15 a 18, RN-INV-11, RN-SYN-11. Incluye sumar los cambios pendientes del día de

@@ -17,6 +17,7 @@ import type { ParametroSync } from './parametroSync';
 import type { CambiosSyncEliminados } from './cambiosSyncEliminados';
 import type { CambiosSyncPreciosCliente } from './cambiosSyncPreciosCliente';
 import type { CambiosSyncProductosExclusivos } from './cambiosSyncProductosExclusivos';
+import type { CambiosSyncCambiosPendientes } from './cambiosSyncCambiosPendientes';
 
 export interface CambiosSync {
   productos: ProductoSync[];
@@ -31,4 +32,5 @@ export interface CambiosSync {
   eliminados: CambiosSyncEliminados;
   preciosCliente?: CambiosSyncPreciosCliente;
   productosExclusivos?: CambiosSyncProductosExclusivos;
+  cambiosPendientes?: CambiosSyncCambiosPendientes;
 }

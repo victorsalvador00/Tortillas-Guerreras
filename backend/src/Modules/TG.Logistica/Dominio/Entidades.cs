@@ -112,6 +112,8 @@ public sealed class RetornoPartida
     public decimal CantidadBase { get; set; }
     public CondicionRetorno Condicion { get; set; }
     public Guid? MotivoMermaId { get; set; }
+    public SentidoRetorno Sentido { get; set; } = SentidoRetorno.Retirado;
+    public Guid? CambioPendienteId { get; set; }
 }
 
 [Bitacora]
@@ -147,6 +149,10 @@ public sealed class LiquidacionPartida
     public decimal Vendido { get; set; }
     public decimal DevueltoClientesVendible { get; set; }
     public decimal DevueltoClientesNoVendible { get; set; }
+
+    /// <summary>RN-LOG-18: salidas <c>SalidaCambio</c> del día.</summary>
+    public decimal CambiosEntregados { get; set; }
+
     public decimal SobranteEsperado { get; set; }
     public decimal? SobranteContado { get; set; }
     public decimal? Diferencia { get; set; }
@@ -154,11 +160,36 @@ public sealed class LiquidacionPartida
     public Guid? MotivoMermaId { get; set; }
 }
 
+/// <summary>RN-LOG-16/17: cambio que se le debe a un cliente; se salda con entregas posteriores.</summary>
+public sealed class CambioPendiente : EntidadAuditable, IVersionSync, IConcurrencia
+{
+    public Guid ClienteId { get; set; }
+    public Guid RutaId { get; set; }
+    public Guid ProductoId { get; set; }
+    public decimal CantidadBase { get; set; }
+    public decimal CantidadSaldadaBase { get; set; }
+    public Guid RetornoOrigenId { get; set; }
+    public DateOnly FechaOperativa { get; set; }
+    public EstadoCambioPendiente Estado { get; set; } = EstadoCambioPendiente.Pendiente;
+    public Guid? CanceladoPor { get; set; }
+    public DateTimeOffset? CanceladoEn { get; set; }
+    public string? MotivoCancelacion { get; set; }
+    public long VersionSync { get; set; }
+    public uint Version { get; set; }
+}
+
 public static class ReglasLogistica
 {
-    /// <summary>RN-LOG-06: lo no vendible ya salió como merma.</summary>
-    public static decimal SobranteEsperado(decimal cargado, decimal vendido, decimal devueltoVendible) =>
-        cargado - vendido + devueltoVendible;
+    /// <summary>RN-LOG-06/18: lo no vendible ya salió como merma; los cambios entregados salieron de la camioneta.</summary>
+    public static decimal SobranteEsperado(decimal cargado, decimal vendido, decimal devueltoVendible, decimal cambiosEntregados = 0) =>
+        cargado - vendido - cambiosEntregados + devueltoVendible;
+
+    /// <summary>
+    /// RN-LOG-16: lo retirado que no se entregó (sin contar lo que saldó pendientes anteriores), limitado a lo retirado con
+    /// "dejar pendiente".
+    /// </summary>
+    public static decimal NuevoPendiente(decimal retirado, decimal retiradoDejarPendiente, decimal entregadoNormal) =>
+        Math.Max(0, Math.Min(retirado - entregadoNormal, retiradoDejarPendiente));
 
     public static decimal Diferencia(decimal contado, decimal esperado) => contado - esperado;
 

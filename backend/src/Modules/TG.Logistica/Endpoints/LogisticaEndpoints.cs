@@ -46,6 +46,14 @@ internal static class LogisticaEndpoints
             (await h.ReemplazarClientesAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<ClientesRutaRequest>()
             .WithName("actualizarClientesRuta");
 
+        // v0.2: cambios pendientes de clientes (RN-LOG-16).
+        var pendientes = grupo.MapGroup("/cambios-pendientes");
+        pendientes.MapGet("/", (Guid? clienteId, Guid? rutaId, EstadoCambioPendiente? estado, CambiosPendientesHandler h, CancellationToken ct) =>
+            h.ListarAsync(clienteId, rutaId, estado, ct)).RequireAuthorization(P.Ver).WithName("listarCambiosPendientes");
+        pendientes.MapPost("/{id:guid}/cancelar", async (Guid id, CancelarCambioPendienteRequest r, CambiosPendientesHandler h, CancellationToken ct) =>
+            (await h.CancelarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.CambiosCancelar).Validar<CancelarCambioPendienteRequest>()
+            .WithName("cancelarCambioPendiente");
+
         var envios = grupo.MapGroup("/envios");
         envios.MapGet("/", (DateOnly? fecha, Guid? rutaId, EstadoEnvio? estado, int? pagina, int? tamano, EnviosHandler h, CancellationToken ct) =>
             h.ListarAsync(fecha, rutaId, estado, pagina, tamano, ct)).AlgunPermiso(P.Ver, P.Cargar).WithName("listarEnvios");

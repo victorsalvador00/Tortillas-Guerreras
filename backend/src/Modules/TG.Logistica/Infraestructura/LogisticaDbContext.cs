@@ -15,6 +15,7 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
     public DbSet<Envio> Envios => Set<Envio>();
     public DbSet<Retorno> Retornos => Set<Retorno>();
     public DbSet<Liquidacion> Liquidaciones => Set<Liquidacion>();
+    public DbSet<CambioPendiente> CambiosPendientes => Set<CambioPendiente>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -80,6 +81,19 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.ToTable("retornos_partidas");
             e.Property(p => p.CantidadBase).Cantidad();
             e.Property(p => p.Condicion).ComoTexto("retornos_partidas");
+            e.Property(p => p.Sentido).ComoTexto("retornos_partidas");
+        });
+
+        builder.Entity<CambioPendiente>(e =>
+        {
+            e.ToTable("cambios_pendientes");
+            e.HasIndex(c => new { c.ClienteId, c.Estado }).HasDatabaseName("ix_cambios_pendientes_cliente_estado");
+            e.HasIndex(c => c.VersionSync).HasDatabaseName("ix_cambios_pendientes_version_sync");
+            e.Property(c => c.CantidadBase).Cantidad();
+            e.Property(c => c.CantidadSaldadaBase).Cantidad();
+            e.Property(c => c.Estado).ComoTexto("cambios_pendientes");
+            e.Property(c => c.MotivoCancelacion).HasMaxLength(500);
+            e.ConcurrenciaXmin();
         });
 
         builder.Entity<Liquidacion>(e =>
@@ -103,6 +117,7 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.Property(p => p.Vendido).Cantidad();
             e.Property(p => p.DevueltoClientesVendible).Cantidad();
             e.Property(p => p.DevueltoClientesNoVendible).Cantidad();
+            e.Property(p => p.CambiosEntregados).Cantidad();
             e.Property(p => p.SobranteEsperado).Cantidad();
             e.Property(p => p.SobranteContado).Cantidad();
             e.Property(p => p.Diferencia).Cantidad();

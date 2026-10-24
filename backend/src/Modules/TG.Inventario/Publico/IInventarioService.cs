@@ -15,6 +15,9 @@ public enum TipoMovimiento
     RetornoCliente,
     AjusteEntrada,
     AjusteSalida,
+
+    /// <summary>RN-INV-11: producto que se entrega al cliente a cambio de lo retirado, sin venta.</summary>
+    SalidaCambio,
 }
 
 public enum DocumentoInventario

@@ -13,4 +13,5 @@ export interface PartidaSugeridaDto {
   unidad: string;
   cantidadBase: number;
   cambioFisicoBase: number;
+  pendienteBase: number;
 }

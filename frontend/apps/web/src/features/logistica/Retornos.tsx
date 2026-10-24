@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   listarClientes,
   mensajeError,
+  useListarCambiosPendientes,
   useListarRetornos,
   useRegistrarRetorno,
   type CondicionRetorno,
@@ -17,6 +18,7 @@ import {
   BotonIcono,
   BuscadorSeleccion,
   Campo,
+  Casilla,
   EtiquetaEstado,
   Selector,
   TablaDatos,
@@ -35,6 +37,7 @@ import { SelectorRuta } from './comunes-logistica';
 const TIPOS: { valor: TipoRetorno; etiqueta: string }[] = [
   { valor: 'DevolucionCliente', etiqueta: 'Devolución de cliente' },
   { valor: 'RechazoEntrega', etiqueta: 'Rechazo de entrega' },
+  { valor: 'CambioFisico', etiqueta: 'Cambio físico' },
 ];
 
 function DetalleRetorno({ retorno }: { retorno: RetornoDto }) {
@@ -49,7 +52,11 @@ function DetalleRetorno({ retorno }: { retorno: RetornoDto }) {
             {formatoCantidad(p.cantidadBase)} {p.unidad}
           </span>
           <span>Lote {p.lote}</span>
-          <EtiquetaEstado etiqueta={p.condicion === 'Vendible' ? 'Vendible' : 'No vendible'} color={p.condicion === 'Vendible' ? 'verde' : 'naranja'} />
+          {p.sentido === 'Entregado' ? (
+            <EtiquetaEstado etiqueta={p.cambioPendienteId ? 'Entregado (salda pendiente)' : 'Entregado'} color="azul" />
+          ) : (
+            <EtiquetaEstado etiqueta={p.condicion === 'Vendible' ? 'Vendible' : 'No vendible'} color={p.condicion === 'Vendible' ? 'verde' : 'naranja'} />
+          )}
           {p.motivo && <span className="text-muted">{p.motivo}</span>}
         </li>
       ))}
@@ -132,10 +139,23 @@ interface PartidaRetorno {
   lote: string;
   condicion: '' | CondicionRetorno;
   motivoMermaId: string;
+  entregado: boolean;
+  cambioPendienteId: string;
+  dejarPendiente: boolean;
 }
 
 let clave = 1;
-const nueva = (): PartidaRetorno => ({ clave: clave++, producto: null, cantidad: '', lote: '', condicion: '', motivoMermaId: '' });
+const nueva = (): PartidaRetorno => ({
+  clave: clave++,
+  producto: null,
+  cantidad: '',
+  lote: '',
+  condicion: '',
+  motivoMermaId: '',
+  entregado: false,
+  cambioPendienteId: '',
+  dejarPendiente: true,
+});
 
 export function RetornoNuevo() {
   const navegar = useNavigate();
@@ -154,13 +174,19 @@ export function RetornoNuevo() {
     return r.items.map((c) => ({ valor: c.id, etiqueta: `${c.codigo} · ${c.nombre}`, detalle: c.canal }));
   }, []);
 
+  const esCambio = tipo === 'CambioFisico';
+  const pendientes = useListarCambiosPendientes(
+    { clienteId: cliente?.valor, estado: 'Pendiente' },
+    { query: { enabled: esCambio && !!cliente } },
+  );
   const cambiar = (k: number, c: Partial<PartidaRetorno>) => setPartidas((ps) => ps.map((p) => (p.clave === k ? { ...p, ...c } : p)));
   const validas = partidas.filter((p) => p.producto && Number(p.cantidad) > 0);
 
   const guardar = async () => {
     setIntento(true);
     setError(null);
-    if (!rutaId || validas.length === 0 || validas.some((p) => p.condicion === 'NoVendible' && !p.motivoMermaId)) return;
+    const motivoFaltante = validas.some((p) => !(esCambio && p.entregado) && p.condicion === 'NoVendible' && !p.motivoMermaId);
+    if (!rutaId || validas.length === 0 || motivoFaltante || (esCambio && !cliente)) return;
     try {
       const r = await registrar.mutateAsync({
         data: {
@@ -175,6 +201,9 @@ export function RetornoNuevo() {
             lote: p.lote.trim() || null,
             condicion: p.condicion || null,
             motivoMermaId: p.motivoMermaId || null,
+            sentido: esCambio && p.entregado ? 'Entregado' : 'Retirado',
+            cambioPendienteId: esCambio && p.entregado ? p.cambioPendienteId || null : null,
+            dejarPendiente: p.dejarPendiente,
           })),
         },
       });
@@ -197,12 +226,25 @@ export function RetornoNuevo() {
         {tipo === 'RechazoEntrega' && (
           <Aviso tipo="info">El rechazo de entrega no genera movimientos: el producto sigue en la camioneta (RN-LOG-05).</Aviso>
         )}
+        {esCambio && (
+          <Aviso tipo="info">
+            Lo retirado entra a la camioneta (lo no vendible es merma) y lo entregado sale de ella, sin venta. Lo retirado que no se
+            entregue queda como cambio pendiente del cliente, salvo que lo indiques (RN-LOG-15, 16).
+          </Aviso>
+        )}
         <Tarjeta titulo="Datos del retorno">
           <div className="grid gap-4 sm:grid-cols-2">
             <Selector etiqueta="Tipo" opciones={TIPOS} value={tipo} onChange={(e) => setTipo(e.target.value as TipoRetorno)} />
             <SelectorRuta vacio="Elige la ruta" value={rutaId} onChange={setRutaId} error={intento && !rutaId ? 'Elige la ruta.' : undefined} />
             <Campo etiqueta="Fecha operativa" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-            <BuscadorSeleccion etiqueta="Cliente (opcional)" valor={cliente?.valor} seleccion={cliente} buscar={buscarClientes} onCambiar={(_, o) => setCliente(o)} />
+            <BuscadorSeleccion
+              etiqueta={esCambio ? 'Cliente' : 'Cliente (opcional)'}
+              valor={cliente?.valor}
+              seleccion={cliente}
+              buscar={buscarClientes}
+              onCambiar={(_, o) => setCliente(o)}
+              error={intento && esCambio && !cliente ? 'Un cambio físico requiere el cliente.' : undefined}
+            />
             <Campo etiqueta="Notas (opcional)" className="sm:col-span-2" value={notas} onChange={(e) => setNotas(e.target.value)} />
           </div>
         </Tarjeta>
@@ -235,6 +277,40 @@ export function RetornoNuevo() {
                   error={intento && !(Number(p.cantidad) > 0) ? 'Mayor que cero.' : undefined}
                 />
                 <Campo etiqueta="Lote (opcional)" value={p.lote} onChange={(e) => cambiar(p.clave, { lote: e.target.value })} />
+                {esCambio && (
+                  <Selector
+                    etiqueta="Movimiento"
+                    opciones={[
+                      { valor: 'Retirado', etiqueta: 'Retirado (entra a la camioneta)' },
+                      { valor: 'Entregado', etiqueta: 'Entregado (sale a cambio)' },
+                    ]}
+                    value={p.entregado ? 'Entregado' : 'Retirado'}
+                    onChange={(e) => cambiar(p.clave, { entregado: e.target.value === 'Entregado' })}
+                  />
+                )}
+                {esCambio && p.entregado && (
+                  <Selector
+                    etiqueta="Salda pendiente"
+                    vacio="Ninguno (entrega normal)"
+                    opciones={(pendientes.data ?? [])
+                      .filter((x) => !p.producto || x.productoId === p.producto.id)
+                      .map((x) => ({
+                        valor: x.id,
+                        etiqueta: `${x.sku}: ${formatoCantidad(x.restanteBase)} ${x.unidad} del ${formatoFecha(x.fechaOperativa)}`,
+                      }))}
+                    value={p.cambioPendienteId}
+                    onChange={(e) => cambiar(p.clave, { cambioPendienteId: e.target.value })}
+                  />
+                )}
+                {esCambio && !p.entregado && (
+                  <Casilla
+                    etiqueta="Lo no entregado queda pendiente"
+                    descripcion="Desmárcalo si el cambio no está autorizado."
+                    checked={p.dejarPendiente}
+                    onChange={(e) => cambiar(p.clave, { dejarPendiente: e.target.checked })}
+                  />
+                )}
+                {!(esCambio && p.entregado) && (
                 <Selector
                   etiqueta="Condición"
                   vacio="Por defecto"
@@ -245,15 +321,18 @@ export function RetornoNuevo() {
                   value={p.condicion}
                   onChange={(e) => cambiar(p.clave, { condicion: e.target.value as PartidaRetorno['condicion'] })}
                 />
+                )}
                 <div className="flex items-start gap-2">
-                  <SelectorMotivo
-                    aplica="retorno"
-                    className="flex-1"
-                    vacio={p.condicion === 'NoVendible' ? 'Elige un motivo' : 'Sin motivo'}
-                    value={p.motivoMermaId}
-                    onChange={(v) => cambiar(p.clave, { motivoMermaId: v })}
-                    error={intento && p.condicion === 'NoVendible' && !p.motivoMermaId ? 'Elige el motivo.' : undefined}
-                  />
+                  {!(esCambio && p.entregado) && (
+                    <SelectorMotivo
+                      aplica="retorno"
+                      className="flex-1"
+                      vacio={p.condicion === 'NoVendible' ? 'Elige un motivo' : 'Sin motivo'}
+                      value={p.motivoMermaId}
+                      onChange={(v) => cambiar(p.clave, { motivoMermaId: v })}
+                      error={intento && p.condicion === 'NoVendible' && !p.motivoMermaId ? 'Elige el motivo.' : undefined}
+                    />
+                  )}
                   <BotonIcono
                     icono="delete"
                     etiqueta="Quitar producto"

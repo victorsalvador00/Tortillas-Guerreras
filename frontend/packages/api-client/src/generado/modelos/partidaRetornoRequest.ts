@@ -9,6 +9,8 @@ import type { PartidaRetornoRequestUnidadId } from './partidaRetornoRequestUnida
 import type { PartidaRetornoRequestLote } from './partidaRetornoRequestLote';
 import type { PartidaRetornoRequestCondicion } from './partidaRetornoRequestCondicion';
 import type { PartidaRetornoRequestMotivoMermaId } from './partidaRetornoRequestMotivoMermaId';
+import type { SentidoRetorno } from './sentidoRetorno';
+import type { PartidaRetornoRequestCambioPendienteId } from './partidaRetornoRequestCambioPendienteId';
 
 export interface PartidaRetornoRequest {
   productoId: string;
@@ -17,4 +19,7 @@ export interface PartidaRetornoRequest {
   lote?: PartidaRetornoRequestLote;
   condicion?: PartidaRetornoRequestCondicion;
   motivoMermaId?: PartidaRetornoRequestMotivoMermaId;
+  sentido?: SentidoRetorno;
+  cambioPendienteId?: PartidaRetornoRequestCambioPendienteId;
+  dejarPendiente?: boolean;
 }

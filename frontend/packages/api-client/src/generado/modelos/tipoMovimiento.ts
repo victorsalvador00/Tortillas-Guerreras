@@ -22,4 +22,5 @@ export const TipoMovimiento = {
   RetornoCliente: 'RetornoCliente',
   AjusteEntrada: 'AjusteEntrada',
   AjusteSalida: 'AjusteSalida',
+  SalidaCambio: 'SalidaCambio',
 } as const;

@@ -25,6 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CambioPendienteDto,
+  CancelarCambioPendienteRequest,
   CapturarConteoLiquidacionRequest,
   CargasSugeridasDto,
   CerrarLiquidacionBody,
@@ -38,6 +40,7 @@ import type {
   GuardarVehiculoRequest,
   HttpValidationProblemDetails,
   LiquidacionDto,
+  ListarCambiosPendientesParams,
   ListarEnviosParams,
   ListarLiquidacionesParams,
   ListarRetornosParams,
@@ -785,6 +788,152 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getActualizarClientesRutaMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listarCambiosPendientes = (
+    params?: ListarCambiosPendientesParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CambioPendienteDto[]>(
+      {url: `/api/v1/logistica/cambios-pendientes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarCambiosPendientesQueryKey = (params?: ListarCambiosPendientesParams,) => {
+    return [
+    `/api/v1/logistica/cambios-pendientes`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListarCambiosPendientesQueryOptions = <TData = Awaited<ReturnType<typeof listarCambiosPendientes>>, TError = ErrorType<unknown>>(params?: ListarCambiosPendientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarCambiosPendientesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarCambiosPendientes>>> = ({ signal }) => listarCambiosPendientes(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarCambiosPendientesQueryResult = NonNullable<Awaited<ReturnType<typeof listarCambiosPendientes>>>
+export type ListarCambiosPendientesQueryError = ErrorType<unknown>
+
+
+export function useListarCambiosPendientes<TData = Awaited<ReturnType<typeof listarCambiosPendientes>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListarCambiosPendientesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarCambiosPendientes>>,
+          TError,
+          Awaited<ReturnType<typeof listarCambiosPendientes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarCambiosPendientes<TData = Awaited<ReturnType<typeof listarCambiosPendientes>>, TError = ErrorType<unknown>>(
+ params?: ListarCambiosPendientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarCambiosPendientes>>,
+          TError,
+          Awaited<ReturnType<typeof listarCambiosPendientes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarCambiosPendientes<TData = Awaited<ReturnType<typeof listarCambiosPendientes>>, TError = ErrorType<unknown>>(
+ params?: ListarCambiosPendientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarCambiosPendientes<TData = Awaited<ReturnType<typeof listarCambiosPendientes>>, TError = ErrorType<unknown>>(
+ params?: ListarCambiosPendientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCambiosPendientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarCambiosPendientesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const cancelarCambioPendiente = (
+    id: string,
+    cancelarCambioPendienteRequest: BodyType<CancelarCambioPendienteRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CambioPendienteDto>(
+      {url: `/api/v1/logistica/cambios-pendientes/${id}/cancelar`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: cancelarCambioPendienteRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCancelarCambioPendienteMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelarCambioPendiente>>, TError,{id: string;data: BodyType<CancelarCambioPendienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelarCambioPendiente>>, TError,{id: string;data: BodyType<CancelarCambioPendienteRequest>}, TContext> => {
+
+const mutationKey = ['cancelarCambioPendiente'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelarCambioPendiente>>, {id: string;data: BodyType<CancelarCambioPendienteRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelarCambioPendiente(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelarCambioPendienteMutationResult = NonNullable<Awaited<ReturnType<typeof cancelarCambioPendiente>>>
+    export type CancelarCambioPendienteMutationBody = BodyType<CancelarCambioPendienteRequest>
+    export type CancelarCambioPendienteMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useCancelarCambioPendiente = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelarCambioPendiente>>, TError,{id: string;data: BodyType<CancelarCambioPendienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelarCambioPendiente>>,
+        TError,
+        {id: string;data: BodyType<CancelarCambioPendienteRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCancelarCambioPendienteMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

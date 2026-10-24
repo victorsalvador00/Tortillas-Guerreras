@@ -13,4 +13,5 @@ export type TipoRetorno = typeof TipoRetorno[keyof typeof TipoRetorno];
 export const TipoRetorno = {
   DevolucionCliente: 'DevolucionCliente',
   RechazoEntrega: 'RechazoEntrega',
+  CambioFisico: 'CambioFisico',
 } as const;
