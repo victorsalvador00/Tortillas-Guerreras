@@ -14,4 +14,5 @@ export interface RespuestaPull {
   fechaServidor: string;
   ruta?: RespuestaPullRuta;
   cambios: CambiosSync;
+  rutaCambiada?: boolean;
 }

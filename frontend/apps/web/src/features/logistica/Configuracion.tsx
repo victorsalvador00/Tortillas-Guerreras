@@ -5,6 +5,7 @@ import {
   useActualizarVehiculo,
   useCrearRuta,
   useCrearVehiculo,
+  useListarCanales,
   useListarRutas,
   useListarVendedores,
   useListarVehiculos,
@@ -129,6 +130,7 @@ export function Vehiculos() {
 const esquemaRuta = z.object({
   codigo: z.string().trim().min(1, 'Captura el código (R01…).').max(10),
   nombre: z.string().trim().min(1, 'Captura el nombre.'),
+  canalId: z.string().min(1, 'Elige el canal de la ruta.'),
   vendedorId: z.string(),
   vehiculoId: z.string(),
   activo: z.boolean(),
@@ -148,13 +150,21 @@ export function DialogoRuta({ ruta, abierto, onCambiar }: { ruta: RutaDto | null
   const crear = useCrearRuta();
   const actualizar = useActualizarRuta();
   const { data: vehiculos } = useListarVehiculos({ activo: true });
+  const { data: canales } = useListarCanales();
   const vendedores = useVendedores(ruta?.vendedorId ? { id: ruta.vendedorId, nombre: ruta.vendedorNombre ?? 'Vendedor actual' } : null);
   const [error, setErrorGeneral] = useState<string | null>(null);
   const { register, handleSubmit, setError, formState } = useForm<DatosRuta>({
     resolver: zodResolver(esquemaRuta),
     values: ruta
-      ? { codigo: ruta.codigo, nombre: ruta.nombre, vendedorId: ruta.vendedorId ?? '', vehiculoId: ruta.vehiculoId ?? '', activo: ruta.activo }
-      : { codigo: '', nombre: '', vendedorId: '', vehiculoId: '', activo: true },
+      ? {
+          codigo: ruta.codigo,
+          nombre: ruta.nombre,
+          canalId: ruta.canalId,
+          vendedorId: ruta.vendedorId ?? '',
+          vehiculoId: ruta.vehiculoId ?? '',
+          activo: ruta.activo,
+        }
+      : { codigo: '', nombre: '', canalId: '', vendedorId: '', vehiculoId: '', activo: true },
   });
   const enviar = handleSubmit(async (d) => {
     setErrorGeneral(null);
@@ -206,15 +216,23 @@ export function DialogoRuta({ ruta, abierto, onCambiar }: { ruta: RutaDto | null
         />
         <Campo etiqueta="Nombre" error={formState.errors.nombre?.message} {...register('nombre')} />
         <Selector
-          etiqueta="Vendedor"
+          etiqueta="Canal"
+          vacio="Elige el canal"
+          opciones={(canales ?? []).filter((c) => c.activo || c.id === ruta?.canalId).map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
+          ayuda="Solo se asignan clientes de este canal; el cliente genérico toma su lista de precios."
+          error={formState.errors.canalId?.message}
+          {...register('canalId')}
+        />
+        <Selector
+          etiqueta="Chofer predeterminado"
           vacio="Sin asignar"
           opciones={vendedores.opciones}
-          ayuda={vendedores.puede ? 'Usuarios con rol Vendedor.' : 'Para elegir otro vendedor se requiere el permiso de usuarios.'}
+          ayuda="Se propone al crear las cargas; en cada carga se puede elegir otro."
           error={formState.errors.vendedorId?.message}
           {...register('vendedorId')}
         />
         <Selector
-          etiqueta="Vehículo"
+          etiqueta="Vehículo predeterminado"
           vacio="Sin asignar"
           opciones={(vehiculos ?? []).map((v) => ({ valor: v.id, etiqueta: `${v.placas} · ${v.descripcion}` }))}
           {...register('vehiculoId')}
@@ -233,7 +251,8 @@ export function Rutas() {
     () => [
       { header: 'Código', accessorKey: 'codigo', cell: ({ row }) => <span className="font-medium">{row.original.codigo}</span> },
       { header: 'Nombre', accessorKey: 'nombre' },
-      { header: 'Vendedor', accessorKey: 'vendedorNombre', cell: ({ row }) => row.original.vendedorNombre ?? '—' },
+      { header: 'Canal', accessorKey: 'canalNombre', meta: { ocultarEnMovil: true } },
+      { header: 'Chofer', accessorKey: 'vendedorNombre', cell: ({ row }) => row.original.vendedorNombre ?? '—' },
       { header: 'Vehículo', accessorKey: 'vehiculoPlacas', cell: ({ row }) => row.original.vehiculoPlacas ?? '—', meta: { ocultarEnMovil: true } },
       { header: 'Almacén', accessorKey: 'almacenCodigo', meta: { ocultarEnMovil: true } },
       { header: 'Clientes', accessorKey: 'clientes', meta: { alinear: 'fin' } },
@@ -245,7 +264,7 @@ export function Rutas() {
     <Pagina>
       <EncabezadoPagina
         titulo="Rutas"
-        subtitulo="Rutas de reparto con su vendedor, vehículo, almacén y clientes en orden de visita."
+        subtitulo="Rutas de reparto con su canal, chofer y vehículo predeterminados, almacén y clientes en orden de visita."
         acciones={
           <Boton icono="add" onClick={() => setDialogo(true)}>
             Nueva ruta

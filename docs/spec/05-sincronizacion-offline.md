@@ -172,5 +172,6 @@ datosRegistrarRetorno.tipo += 'CambioFisico'
 datosRegistrarRetorno.partidas[] += { sentido: 'Retirado' | 'Entregado', cambioPendienteId: uuid | null,
                                       dejarPendiente: boolean }
 datosRegistrarVenta.formaPago / datosEntregarPedido.formaPago += 'Cheque'
-RespuestaPull += { rutaCambiada: boolean }
+GET /sync/pull?desde&rutaId      // rutaId = ruta que la app tiene guardada (opcional)
+RespuestaPull += { rutaCambiada: boolean }  // con desde > 0: sin cambios y cursor = 0
 ```

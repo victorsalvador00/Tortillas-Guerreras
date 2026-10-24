@@ -43,7 +43,7 @@ sus Excel. Procedimiento (también disponible como comando `/actualizar-modelo`)
 | SUP-21 | Faltante de producto y de efectivo generan cargo automático al chofer; diferencia de precio solo si el supervisor lo decide | Logística | Cliente | Abierto (v0.2) |
 | SUP-22 | El corte semanal va de lunes a domingo | Logística | Crédito y cobranza | Abierto (v0.2) |
 | SUP-23 | Sin pedido, el estimado propone lo del mismo día de la semana anterior (7 días) | Producción | Cliente | Abierto (v0.2) |
-| SUP-24 | Un chofer lleva una sola ruta por día | Logística, Sync | Cliente | Abierto (v0.2) |
+| SUP-24 | Un chofer lleva una sola ruta por día (`logistica.chofer_una_ruta_por_dia`, por defecto `true`) | Logística, Sync | Cliente | Abierto (v0.2) |
 | SUP-25 | Lo retirado en un cambio físico es `NoVendible` por defecto | Logística, App | Almacén | Abierto (v0.2) |
 | SUP-26 | Paquetes por caja propios de cada producto (deducidos de los formatos: 24 T-800 y HNA, 18 sopes, 15 tostadas, 30 mini, 36 flautas) | Catálogos | Cliente | Abierto (v0.2) |
 | SUP-27 | Los gastos de ruta se capturan en la liquidación como texto libre, sin catálogo de conceptos | Logística | Cliente | Abierto (v0.2) |

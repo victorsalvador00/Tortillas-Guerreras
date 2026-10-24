@@ -9,4 +9,5 @@
 export type SyncPullParams = {
 desde?: number;
 limite?: number;
+rutaId?: string;
 };

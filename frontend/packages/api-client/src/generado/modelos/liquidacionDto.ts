@@ -5,6 +5,8 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { LiquidacionDtoChoferId } from './liquidacionDtoChoferId';
+import type { LiquidacionDtoChoferNombre } from './liquidacionDtoChoferNombre';
 import type { EstadoLiquidacion } from './estadoLiquidacion';
 import type { LiquidacionDtoEfectivoEntregado } from './liquidacionDtoEfectivoEntregado';
 import type { LiquidacionDtoDiferenciaEfectivo } from './liquidacionDtoDiferenciaEfectivo';
@@ -20,6 +22,8 @@ export interface LiquidacionDto {
   rutaCodigo: string;
   rutaNombre: string;
   fechaOperativa: string;
+  choferId?: LiquidacionDtoChoferId;
+  choferNombre?: LiquidacionDtoChoferNombre;
   estado: EstadoLiquidacion;
   ventas: number;
   totalVendido: number;

@@ -153,6 +153,7 @@ public static class ClavesParametro
     public const string AlertaCantidadFactor = "ruta.alerta_cantidad_factor";
     public const string AlertaCantidadMaxima = "ruta.alerta_cantidad_maxima";
     public const string ConsumoPromedioVisitas = "ruta.consumo_promedio_visitas";
+    public const string ChoferUnaRutaPorDia = "logistica.chofer_una_ruta_por_dia";
 }
 
 public static class ClavesMotivoMerma

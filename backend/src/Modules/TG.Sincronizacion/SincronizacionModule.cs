@@ -26,8 +26,8 @@ public static class SincronizacionModule
         var grupo = api.MapGroup("/sync").WithTags("Sincronización");
         var app = grupo.MapGroup("").RequireAuthorization(Permisos.Sincronizacion.Operar);
 
-        app.MapGet("/pull", async (long? desde, int? limite, PullHandler h, CancellationToken ct) =>
-            (await h.EjecutarAsync(desde, ct)).AHttp()).WithName("syncPull");
+        app.MapGet("/pull", async (long? desde, int? limite, Guid? rutaId, PullHandler h, CancellationToken ct) =>
+            (await h.EjecutarAsync(desde, rutaId, ct)).AHttp()).WithName("syncPull");
         app.MapPost("/push", async (SolicitudPush solicitud, PushHandler h, CancellationToken ct) =>
             (await h.EjecutarAsync(solicitud, ct)).AHttp()).WithName("syncPush");
         app.MapGet("/dispositivo", async (EstadoDispositivoHandler h, CancellationToken ct) =>

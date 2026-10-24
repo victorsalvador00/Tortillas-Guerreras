@@ -7,6 +7,9 @@ import {
   useDespacharEnvio,
   useListarEnvios,
   useListarPedidos,
+  useListarRutas,
+  useListarVehiculos,
+  useListarVendedores,
   useObtenerEnvio,
   type EnvioDto,
   type EnvioPartidaDto,
@@ -65,6 +68,7 @@ export function Cargas() {
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
       { header: 'Fecha', accessorKey: 'fechaOperativa', cell: ({ row }) => formatoFecha(row.original.fechaOperativa) },
       { header: 'Ruta', accessorKey: 'rutaCodigo' },
+      { header: 'Chofer', accessorKey: 'choferNombre', cell: ({ row }) => row.original.choferNombre ?? '—', meta: { ocultarEnMovil: true } },
       { header: 'Tipo', accessorKey: 'tipo', cell: ({ row }) => etiquetaEnum(row.original.tipo) },
       { header: 'Partidas', id: 'partidas', cell: ({ row }) => row.original.partidas.length, meta: { alinear: 'fin', ocultarEnMovil: true } },
       {
@@ -169,6 +173,11 @@ export function CargaNueva() {
   const navegar = useNavigate();
   const crear = useCrearEnvio();
   const [rutaId, setRutaId] = useState('');
+  const [choferId, setChoferId] = useState('');
+  const [vehiculoId, setVehiculoId] = useState('');
+  const { data: rutas } = useListarRutas({ activo: true });
+  const { data: vendedores } = useListarVendedores();
+  const { data: vehiculos } = useListarVehiculos({ activo: true });
   const [tipo, setTipo] = useState<TipoEnvio>('CargaInicial');
   const [fecha, setFecha] = useState(fechaOperativa());
   const [notas, setNotas] = useState('');
@@ -222,6 +231,8 @@ export function CargaNueva() {
       const envio = await crear.mutateAsync({
         data: {
           rutaId,
+          choferId: choferId || null,
+          vehiculoId: vehiculoId || null,
           tipo,
           fechaOperativa: fecha || null,
           notas: notas || null,
@@ -250,8 +261,30 @@ export function CargaNueva() {
             <SelectorRuta
               vacio="Elige la ruta"
               value={rutaId}
-              onChange={(v) => (setRutaId(v), setElegidos(new Set()))}
+              onChange={(v) => {
+                // RN-LOG-12: se proponen el chofer y el vehículo predeterminados de la ruta.
+                const ruta = rutas?.find((r) => r.id === v);
+                setRutaId(v);
+                setChoferId(ruta?.vendedorId ?? '');
+                setVehiculoId(ruta?.vehiculoId ?? '');
+                setElegidos(new Set());
+              }}
               error={intento && !rutaId ? 'Elige la ruta.' : undefined}
+            />
+            <Selector
+              etiqueta="Chofer"
+              vacio="Elige el chofer"
+              opciones={(vendedores ?? []).map((u) => ({ valor: u.id, etiqueta: u.nombreCompleto }))}
+              value={choferId}
+              onChange={(e) => setChoferId(e.target.value)}
+              ayuda="Un chofer lleva una sola ruta por día; todas las cargas de la ruta en el día van con él."
+            />
+            <Selector
+              etiqueta="Vehículo"
+              vacio="Sin vehículo"
+              opciones={(vehiculos ?? []).map((v) => ({ valor: v.id, etiqueta: `${v.placas} · ${v.descripcion}` }))}
+              value={vehiculoId}
+              onChange={(e) => setVehiculoId(e.target.value)}
             />
             <Selector etiqueta="Tipo" opciones={TIPOS_ENVIO} value={tipo} onChange={(e) => setTipo(e.target.value as TipoEnvio)} />
             <Campo
@@ -432,6 +465,8 @@ export function CargaDetalle() {
                 <Dato etiqueta="Estado">
                   <EtiquetaEstado estado={envio.estado} />
                 </Dato>
+                <Dato etiqueta="Chofer">{envio.choferNombre ?? '—'}</Dato>
+                <Dato etiqueta="Vehículo">{envio.vehiculoPlacas ?? '—'}</Dato>
                 <Dato etiqueta="Origen">{envio.almacenOrigen}</Dato>
                 <Dato etiqueta="Destino">{envio.almacenDestino}</Dato>
                 <Dato etiqueta="Despachado">{formatoFechaHora(envio.despachadoEn)}</Dato>

@@ -122,7 +122,7 @@ regenerado (definición de terminado).
   `logistica.liquidar_producto`, `logistica.revisar_liquidacion`, `logistica.cargos_chofer`,
   `logistica.cambios_cancelar`, `ventas.pedidos_app`, `seguridad.bitacora`; migración que los asigna a los roles
   existentes. *Acepta:* un Almacén no puede cerrar el dinero de una liquidación (403).
-- [ ] **T-8.4 Rutas con canal, chofer y vehículo por carga** *(ajusta T-4.2, T-4.5, T-5.1)*. `rutas.canal_id`
+- [x] **T-8.4 Rutas con canal, chofer y vehículo por carga** *(ajusta T-4.2, T-4.5, T-5.1)*. `rutas.canal_id`
   (migración: canal según el de sus clientes o `DET`), envíos con `chofer_id`/`vehiculo_id` (migración desde la
   ruta), liquidación con `chofer_id`; validación de canal al asignar clientes y genérico con el canal de la ruta
   (RN-LOG-31, `CrearClienteGenericoAsync(ruta, canalId)`); alcance de sync por carga (`RutaDeChoferAsync(usuario, fecha)` reemplaza a

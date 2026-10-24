@@ -572,23 +572,35 @@ public sealed class VentasService(
         return Result<IReadOnlyList<TipoIncidencia>>.Exito([TipoIncidencia.UbicacionPorAprobar]);
     }
 
-    public async Task<Result<ClienteInfo>> CrearClienteGenericoAsync(string rutaCodigo, CancellationToken ct)
+    public async Task<Result<ClienteInfo>> CrearClienteGenericoAsync(string rutaCodigo, Guid canalId, CancellationToken ct)
     {
-        var existente = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(x => x.RutaGenerico == rutaCodigo, ct);
-        if (existente is not null)
-        {
-            return await InfoAsync(existente, ct);
-        }
-
-        // El canal de la ruta llega en T-8.4 (RN-LOG-31); mientras, el genérico es de Detalle.
-        var canal = await db.Canales.AsNoTracking().OrderBy(x => x.Clave == ClavesCanal.Detalle ? 0 : 1).FirstOrDefaultAsync(ct);
+        var canal = await db.Canales.AsNoTracking().FirstOrDefaultAsync(x => x.Id == canalId, ct);
         var lista = canal is null
             ? null
             : await db.ListasPrecio.AsNoTracking().Where(l => l.Activo)
-                .OrderBy(l => l.CanalId == canal.Id ? 0 : 1).FirstOrDefaultAsync(ct);
+                .OrderBy(l => l.CanalId == canal.Id ? 0 : 1).ThenBy(l => l.Nombre).FirstOrDefaultAsync(ct);
         if (canal is null || lista is null)
         {
-            return Error.Conflicto(ErroresVentas.NoEncontrado, "Configura al menos un canal y una lista de precios antes de crear rutas.");
+            return Error.Conflicto(ErroresVentas.NoEncontrado, "Configura el canal y al menos una lista de precios antes de crear rutas.");
+        }
+
+        var existente = await db.Clientes.FirstOrDefaultAsync(x => x.RutaGenerico == rutaCodigo, ct);
+        if (existente is not null)
+        {
+            // La ruta cambió de canal (o se migró de v0.1): el genérico la sigue.
+            if (existente.CanalId != canal.Id)
+            {
+                var listaActual = await db.ListasPrecio.AsNoTracking().FirstOrDefaultAsync(l => l.Id == existente.ListaPrecioId, ct);
+                existente.CanalId = canal.Id;
+                if (listaActual?.CanalId != canal.Id)
+                {
+                    existente.ListaPrecioId = lista.Id;
+                }
+
+                await db.SaveChangesAsync(ct);
+            }
+
+            return await InfoAsync(existente, ct);
         }
 
         var cliente = new Cliente
@@ -607,6 +619,11 @@ public sealed class VentasService(
         await db.SaveChangesAsync(ct);
         return await InfoAsync(cliente, ct);
     }
+
+    public async Task<IReadOnlyList<CanalInfo>> ListarCanalesAsync(CancellationToken ct) =>
+        await db.Canales.AsNoTracking().OrderBy(c => c.Orden).ThenBy(c => c.Clave)
+            .Select(c => new CanalInfo(c.Id, c.Clave, c.Nombre, c.FormatoLiquidacion, c.AplicaProductoACobro, c.PedidoPor, c.Orden, c.Activo))
+            .ToListAsync(ct);
 
     public async Task<ClienteInfo?> ClienteGenericoDeRutaAsync(string rutaCodigo, CancellationToken ct)
     {

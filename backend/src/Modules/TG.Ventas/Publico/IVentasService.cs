@@ -34,6 +34,9 @@ public enum PedidoPor
     Ruta,
 }
 
+public sealed record CanalInfo(Guid Id, string Clave, string Nombre, FormatoLiquidacion FormatoLiquidacion,
+    bool AplicaProductoACobro, PedidoPor PedidoPor, short Orden, bool Activo);
+
 public enum CondicionPago
 {
     Contado,
@@ -298,8 +301,14 @@ public interface IVentasService
     Task<Result<IReadOnlyList<TipoIncidencia>>> ProponerUbicacionClienteAsync(ProponerUbicacionComando comando,
         CancellationToken ct);
 
-    /// <summary>RN-VEN-10: "Público en general &lt;ruta&gt;" (idempotente por código de ruta).</summary>
-    Task<Result<ClienteInfo>> CrearClienteGenericoAsync(string rutaCodigo, CancellationToken ct);
+    /// <summary>
+    /// RN-VEN-10 / RN-LOG-31: "Público en general &lt;ruta&gt;" del canal de la ruta, con la lista de precios de ese canal
+    /// (idempotente por código de ruta; si ya existe, lo alinea al canal).
+    /// </summary>
+    Task<Result<ClienteInfo>> CrearClienteGenericoAsync(string rutaCodigo, Guid canalId, CancellationToken ct);
+
+    /// <summary>Canales ordenados por <c>orden</c>.</summary>
+    Task<IReadOnlyList<CanalInfo>> ListarCanalesAsync(CancellationToken ct);
 
     Task<ClienteInfo?> ClienteGenericoDeRutaAsync(string rutaCodigo, CancellationToken ct);
 

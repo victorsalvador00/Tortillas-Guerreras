@@ -12,14 +12,21 @@ public sealed class Vehiculo : EntidadAuditable
     public bool Activo { get; set; } = true;
 }
 
-/// <summary>Ruta de reparto con su almacén tipo <c>Ruta</c> (RN-LOG-01).</summary>
+/// <summary>Ruta de reparto con su almacén tipo <c>Ruta</c> (RN-LOG-01) y su canal (RN-LOG-31).</summary>
 [Bitacora]
 public sealed class Ruta : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Codigo { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public Guid AlmacenId { get; set; }
+
+    /// <summary>Canal de Ventas (otro esquema, sin llave foránea).</summary>
+    public Guid CanalId { get; set; }
+
+    /// <summary>Chofer predeterminado: se propone al crear una carga (RN-LOG-12).</summary>
     public Guid? VendedorId { get; set; }
+
+    /// <summary>Vehículo predeterminado: se propone al crear una carga (RN-LOG-12).</summary>
     public Guid? VehiculoId { get; set; }
     public bool Activo { get; set; } = true;
     public long VersionSync { get; set; }
@@ -46,6 +53,11 @@ public sealed class Envio : EntidadAuditable, IVersionSync, IConcurrencia
     public string Folio { get; set; } = string.Empty;
     public DateOnly FechaOperativa { get; set; }
     public Guid RutaId { get; set; }
+
+    /// <summary>RN-LOG-12. Nulo solo en cargas de v0.1 cuya ruta no tenía vendedor.</summary>
+    public Guid? ChoferId { get; set; }
+
+    public Guid? VehiculoId { get; set; }
     public TipoEnvio Tipo { get; set; }
     public Guid AlmacenOrigenId { get; set; }
     public Guid AlmacenDestinoId { get; set; }
@@ -108,6 +120,10 @@ public sealed class Liquidacion : EntidadAuditable, IConcurrencia
     public string Folio { get; set; } = string.Empty;
     public Guid RutaId { get; set; }
     public DateOnly FechaOperativa { get; set; }
+
+    /// <summary>RN-LOG-13: el chofer de las cargas de la ruta y fecha.</summary>
+    public Guid? ChoferId { get; set; }
+
     public EstadoLiquidacion Estado { get; set; } = EstadoLiquidacion.Abierta;
     public decimal EfectivoEsperado { get; set; }
     public decimal? EfectivoEntregado { get; set; }

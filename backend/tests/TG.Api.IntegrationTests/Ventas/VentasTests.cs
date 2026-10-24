@@ -297,19 +297,26 @@ public sealed class VentasTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     [Fact]
     [Trait("Regla", "RN-VEN-10")]
-    public async Task ClienteGenerico_PorRuta_EsIdempotente()
+    [Trait("Regla", "RN-LOG-31")]
+    public async Task ClienteGenerico_PorRuta_EsIdempotente_YSigueElCanalDeLaRuta()
     {
         var resultado = await api.ConScopeAsync(async sp =>
         {
             var ventas = sp.GetRequiredService<IVentasService>();
-            var primero = await ventas.CrearClienteGenericoAsync("R77", CancellationToken.None);
-            var segundo = await ventas.CrearClienteGenericoAsync("R77", CancellationToken.None);
-            return (primero.Valor, segundo.Valor);
+            var canales = (await ventas.ListarCanalesAsync(CancellationToken.None)).ToDictionary(c => c.Clave, c => c.Id);
+            var primero = await ventas.CrearClienteGenericoAsync("R77", canales["DET"], CancellationToken.None);
+            var segundo = await ventas.CrearClienteGenericoAsync("R77", canales["DET"], CancellationToken.None);
+            var otroCanal = await ventas.CrearClienteGenericoAsync("R77", canales["INST"], CancellationToken.None);
+            return (primero.Valor, segundo.Valor, otroCanal.Valor, canales);
         });
 
         resultado.Item1.Id.ShouldBe(resultado.Item2.Id);
         resultado.Item1.EsGenerico.ShouldBeTrue();
         resultado.Item1.Nombre.ShouldBe("Público en general R77");
+        resultado.Item1.CanalClave.ShouldBe("DET");
+        resultado.Item3.Id.ShouldBe(resultado.Item1.Id);
+        resultado.Item3.CanalClave.ShouldBe("INST");
+        resultado.Item3.ListaPrecioId.ShouldNotBe(resultado.Item1.ListaPrecioId);
     }
 
     [Fact]

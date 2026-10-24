@@ -59,6 +59,7 @@ export function Liquidaciones() {
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
       { header: 'Fecha', accessorKey: 'fechaOperativa', cell: ({ row }) => formatoFecha(row.original.fechaOperativa) },
       { header: 'Ruta', accessorKey: 'rutaCodigo' },
+      { header: 'Chofer', accessorKey: 'choferNombre', cell: ({ row }) => row.original.choferNombre ?? '—', meta: { ocultarEnMovil: true } },
       { header: 'Efectivo esperado', accessorKey: 'efectivoEsperado', cell: ({ row }) => formatoMoneda(row.original.efectivoEsperado), meta: { alinear: 'fin' } },
       {
         header: 'Entregado',
@@ -213,7 +214,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
     <>
       <EncabezadoPagina
         titulo={`Liquidación ${l.folio}`}
-        subtitulo={`Ruta ${l.rutaCodigo} · ${l.rutaNombre} · ${formatoFecha(l.fechaOperativa)}`}
+        subtitulo={`Ruta ${l.rutaCodigo} · ${l.rutaNombre} · ${formatoFecha(l.fechaOperativa)}${l.choferNombre ? ` · Chofer ${l.choferNombre}` : ''}`}
         migas={[{ etiqueta: 'Logística' }, { etiqueta: 'Liquidaciones', a: '/logistica/liquidaciones' }, { etiqueta: l.folio }]}
         acciones={<EtiquetaEstado estado={l.estado} />}
       />

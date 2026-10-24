@@ -22,6 +22,28 @@ public static class DatosPrueba
 
     public static string Unico(string prefijo) => $"{prefijo}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
 
+    private sealed record ConId(Guid Id, string Clave = "");
+
+    /// <summary>
+    /// Usuario nuevo con rol Vendedor (contraseña de la semilla): un chofer propio evita choques de RN-LOG-13 entre pruebas.
+    /// </summary>
+    public static async Task<Guid> CrearChoferAsync(this HttpClient admin) => (await admin.CrearUsuarioChoferAsync()).Id;
+
+    public static async Task<(Guid Id, string Usuario)> CrearUsuarioChoferAsync(this HttpClient admin)
+    {
+        var usuario = Unico("chofer").ToLowerInvariant();
+        var creado = await admin.PostOkAsync<ConId>("/api/v1/seguridad/usuarios", new
+        {
+            usuario, nombreCompleto = $"Chofer {usuario}", email = $"{usuario}@tortillas.local", activo = true,
+            roles = new[] { "Vendedor" }, contrasena = ApiFactory.Contrasena,
+        });
+        return (creado.Id, usuario);
+    }
+
+    public static async Task<Guid> CanalAsync(this HttpClient cliente, string clave) =>
+        await CacheAsync(cliente, $"canal:{clave}", async () =>
+            (await cliente.GetOkAsync<List<ConId>>("/api/v1/ventas/canales")).Single(c => c.Clave == clave).Id);
+
     public static async Task<Guid> UnidadAsync(this HttpClient cliente, string clave) =>
         await CacheAsync(cliente, $"u:{clave}", async () =>
         {

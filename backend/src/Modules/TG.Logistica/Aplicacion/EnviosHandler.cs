@@ -5,6 +5,7 @@ using TG.Inventario.Publico;
 using TG.Logistica.Dominio;
 using TG.Logistica.Infraestructura;
 using TG.Logistica.Publico;
+using TG.Seguridad.Publico;
 using TG.SharedKernel.Api;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Folios;
@@ -17,6 +18,8 @@ namespace TG.Logistica.Aplicacion;
 
 public sealed record EnvioPartidaRequest(Guid ProductoId, decimal Cantidad, Guid? UnidadId, string? Lote);
 
+/// <param name="ChoferId">RN-LOG-12: si falta, el chofer predeterminado de la ruta (al editar, el que ya tiene).</param>
+/// <param name="VehiculoId">Si falta, el vehículo predeterminado de la ruta (al editar, el que ya tiene).</param>
 public sealed record GuardarEnvioRequest(
     Guid RutaId,
     TipoEnvio Tipo,
@@ -24,7 +27,9 @@ public sealed record GuardarEnvioRequest(
     Guid? AlmacenOrigenId,
     string? Notas,
     IReadOnlyList<EnvioPartidaRequest> Partidas,
-    IReadOnlyList<Guid>? PedidoIds);
+    IReadOnlyList<Guid>? PedidoIds,
+    Guid? ChoferId = null,
+    Guid? VehiculoId = null);
 
 public sealed class GuardarEnvioValidator : AbstractValidator<GuardarEnvioRequest>
 {
@@ -48,6 +53,10 @@ public sealed record EnvioDto(
     DateOnly FechaOperativa,
     Guid RutaId,
     string RutaCodigo,
+    Guid? ChoferId,
+    string? ChoferNombre,
+    Guid? VehiculoId,
+    string? VehiculoPlacas,
     TipoEnvio Tipo,
     Guid AlmacenOrigenId,
     string AlmacenOrigen,
@@ -66,6 +75,7 @@ public sealed class EnviosHandler(
     IInventarioService inventario,
     ICatalogosService catalogos,
     IVentasService ventas,
+    ISeguridadService seguridad,
     IGeneradorFolios folios,
     IFechaOperativa fechaOperativa,
     IUsuarioActual usuario,
@@ -122,13 +132,22 @@ public sealed class EnviosHandler(
             return partidas.Error!;
         }
 
+        var fecha = r.FechaOperativa ?? fechaOperativa.Hoy();
+        var asignacion = await ResolverChoferAsync(ruta, fecha, r.ChoferId ?? ruta.VendedorId, r.VehiculoId ?? ruta.VehiculoId, null, ct);
+        if (!asignacion.EsExito)
+        {
+            return asignacion.Error!;
+        }
+
         var resultado = await unitOfWork.EjecutarAsync(async c =>
         {
             var envio = new Envio
             {
                 Folio = await folios.SiguienteAsync(LogisticaDbContext.Esquema, "ENV", c),
-                FechaOperativa = r.FechaOperativa ?? fechaOperativa.Hoy(),
+                FechaOperativa = fecha,
                 RutaId = ruta.Id,
+                ChoferId = asignacion.Valor.ChoferId,
+                VehiculoId = asignacion.Valor.VehiculoId,
                 Tipo = r.Tipo,
                 AlmacenOrigenId = origen.Valor.Id,
                 AlmacenDestinoId = ruta.AlmacenId,
@@ -139,6 +158,7 @@ public sealed class EnviosHandler(
                 EnvioId = envio.Id, ProductoId = p.ProductoId, Lote = p.Lote, CantidadBase = p.Cantidad,
             }).ToList();
             db.Envios.Add(envio);
+            await AlinearChoferJornadaAsync(envio, c);
             await db.SaveChangesAsync(c);
             if (r.PedidoIds is { Count: > 0 })
             {
@@ -184,10 +204,22 @@ public sealed class EnviosHandler(
             return partidas.Error!;
         }
 
+        var ruta = await db.Rutas.AsNoTracking().FirstAsync(x => x.Id == envio.RutaId, ct);
+        var fecha = r.FechaOperativa ?? envio.FechaOperativa;
+        var asignacion = await ResolverChoferAsync(ruta, fecha, r.ChoferId ?? envio.ChoferId ?? ruta.VendedorId,
+            r.VehiculoId ?? envio.VehiculoId ?? ruta.VehiculoId, envio.Id, ct);
+        if (!asignacion.EsExito)
+        {
+            return asignacion.Error!;
+        }
+
         var resultado = await unitOfWork.EjecutarAsync(async c =>
         {
             envio.Tipo = r.Tipo;
-            envio.FechaOperativa = r.FechaOperativa ?? envio.FechaOperativa;
+            envio.FechaOperativa = fecha;
+            envio.ChoferId = asignacion.Valor.ChoferId;
+            envio.VehiculoId = asignacion.Valor.VehiculoId;
+            await AlinearChoferJornadaAsync(envio, c);
             envio.AlmacenOrigenId = origen.Valor.Id;
             envio.Notas = Limpiar(r.Notas);
             db.RemoveRange(envio.Partidas);
@@ -231,6 +263,17 @@ public sealed class EnviosHandler(
         {
             return Error.Conflicto(ErroresLogistica.EstadoEnvio, "Solo se despacha una carga en estado Preparado.");
         }
+
+        // Cargas de v0.1 sin chofer y cambios desde que se preparó: se valida igual que al guardar (RN-LOG-12/13).
+        var ruta = await db.Rutas.AsNoTracking().FirstAsync(x => x.Id == envio.RutaId, ct);
+        var asignacion = await ResolverChoferAsync(ruta, envio.FechaOperativa, envio.ChoferId ?? ruta.VendedorId, envio.VehiculoId,
+            envio.Id, ct);
+        if (!asignacion.EsExito)
+        {
+            return asignacion.Error!;
+        }
+
+        envio.ChoferId = asignacion.Valor.ChoferId;
 
         var resultado = await unitOfWork.EjecutarAsync(async c =>
         {
@@ -276,8 +319,14 @@ public sealed class EnviosHandler(
                     Folio = await folios.SiguienteAsync(LogisticaDbContext.Esquema, "LIQ", c),
                     RutaId = envio.RutaId,
                     FechaOperativa = envio.FechaOperativa,
+                    ChoferId = envio.ChoferId,
                 };
                 db.Liquidaciones.Add(liquidacion);
+            }
+            else
+            {
+                // RN-LOG-13: la liquidación lleva el chofer de las cargas de la jornada.
+                liquidacion.ChoferId ??= envio.ChoferId;
             }
 
             envio.Estado = EstadoEnvio.EnRuta;
@@ -330,6 +379,70 @@ public sealed class EnviosHandler(
         return almacen;
     }
 
+    private sealed record Asignacion(Guid ChoferId, Guid? VehiculoId);
+
+    /// <summary>
+    /// RN-LOG-12: chofer activo con rol Vendedor y vehículo activo. RN-LOG-13: la jornada (ruta y fecha) tiene un solo
+    /// chofer —no se cambia si ya hay cargas despachadas o una liquidación con otro— y [SUP-24] el chofer no lleva otra
+    /// ruta ese día.
+    /// </summary>
+    private async Task<Result<Asignacion>> ResolverChoferAsync(Ruta ruta, DateOnly fecha, Guid? choferId, Guid? vehiculoId, Guid? envioId,
+        CancellationToken ct)
+    {
+        if (choferId is not { } chofer)
+        {
+            return Error.Campo(ErroresLogistica.ChoferInvalido, "choferId", "Elige el chofer de la carga; la ruta no tiene chofer predeterminado.");
+        }
+
+        var vendedores = await seguridad.UsuariosConRolAsync(RutasHandler.RolVendedor, ct);
+        if (!vendedores.Any(u => u.Id == chofer && u.Activo))
+        {
+            return Error.Campo(ErroresLogistica.ChoferInvalido, "choferId", "El chofer debe ser un usuario activo con el rol Vendedor.");
+        }
+
+        if (vehiculoId is { } vehiculo && !await db.Vehiculos.AnyAsync(v => v.Id == vehiculo && v.Activo, ct))
+        {
+            return Error.Campo(ErroresLogistica.VehiculoNoEncontrado, "vehiculoId", "El vehículo no existe o está inactivo.");
+        }
+
+        var otroChofer = await db.Envios.AsNoTracking().AnyAsync(e => e.RutaId == ruta.Id && e.FechaOperativa == fecha && e.Id != envioId
+            && (e.Estado == EstadoEnvio.EnRuta || e.Estado == EstadoEnvio.Liquidado) && e.ChoferId != null && e.ChoferId != chofer, ct)
+            || await db.Liquidaciones.AsNoTracking().AnyAsync(l => l.RutaId == ruta.Id && l.FechaOperativa == fecha
+                && l.ChoferId != null && l.ChoferId != chofer, ct);
+        if (otroChofer)
+        {
+            return Error.Campo(ErroresLogistica.ChoferDistintoJornada, "choferId",
+                "La ruta ya salió ese día con otro chofer; todas las cargas de la jornada llevan el mismo. Liquida o cancela lo anterior.");
+        }
+
+        if (await catalogos.ObtenerParametroAsync(ClavesParametro.ChoferUnaRutaPorDia, true, ct))
+        {
+            var otraRuta = await db.Envios.AsNoTracking()
+                .Where(e => e.ChoferId == chofer && e.FechaOperativa == fecha && e.RutaId != ruta.Id
+                    && (e.Estado == EstadoEnvio.Preparado || e.Estado == EstadoEnvio.EnRuta))
+                .Join(db.Rutas, e => e.RutaId, x => x.Id, (e, x) => x.Codigo)
+                .FirstOrDefaultAsync(ct);
+            if (otraRuta is not null)
+            {
+                return Error.Campo(ErroresLogistica.ChoferEnOtraRuta, "choferId",
+                    $"El chofer ya tiene una carga en la ruta {otraRuta} ese día; liquídala o cancélala primero.");
+            }
+        }
+
+        return new Asignacion(chofer, vehiculoId);
+    }
+
+    /// <summary>RN-LOG-13: las demás cargas en <c>Preparado</c> de la jornada toman el chofer de esta.</summary>
+    private async Task AlinearChoferJornadaAsync(Envio envio, CancellationToken ct)
+    {
+        var hermanas = await db.Envios.Where(e => e.RutaId == envio.RutaId && e.FechaOperativa == envio.FechaOperativa && e.Id != envio.Id
+            && e.Estado == EstadoEnvio.Preparado && e.ChoferId != envio.ChoferId).ToListAsync(ct);
+        foreach (var h in hermanas)
+        {
+            h.ChoferId = envio.ChoferId;
+        }
+    }
+
     private sealed record PartidaBase(Guid ProductoId, string Lote, decimal Cantidad);
 
     private async Task<Result<List<PartidaBase>>> ConvertirPartidasAsync(IReadOnlyList<EnvioPartidaRequest> partidas, CancellationToken ct)
@@ -367,7 +480,11 @@ public sealed class EnviosHandler(
         var productos = await catalogos.ObtenerProductosAsync(envios.SelectMany(e => e.Partidas).Select(p => p.ProductoId), ct);
         var almacenes = (await inventario.ListarAlmacenesAsync(ct)).ToDictionary(a => a.Id, a => a.Codigo);
         var rutas = await db.Rutas.AsNoTracking().ToDictionaryAsync(r => r.Id, r => r.Codigo, ct);
-        return envios.Select(e => new EnvioDto(e.Id, e.Folio, e.FechaOperativa, e.RutaId, rutas.GetValueOrDefault(e.RutaId) ?? "?", e.Tipo,
+        var choferes = await seguridad.NombresUsuariosAsync(envios.Where(e => e.ChoferId != null).Select(e => e.ChoferId!.Value), ct);
+        var vehiculos = await db.Vehiculos.AsNoTracking().ToDictionaryAsync(v => v.Id, v => v.Placas, ct);
+        return envios.Select(e => new EnvioDto(e.Id, e.Folio, e.FechaOperativa, e.RutaId, rutas.GetValueOrDefault(e.RutaId) ?? "?",
+            e.ChoferId, e.ChoferId is { } ch ? choferes.GetValueOrDefault(ch) : null, e.VehiculoId,
+            e.VehiculoId is { } v ? vehiculos.GetValueOrDefault(v) : null, e.Tipo,
             e.AlmacenOrigenId, almacenes.GetValueOrDefault(e.AlmacenOrigenId) ?? "?", e.AlmacenDestinoId,
             almacenes.GetValueOrDefault(e.AlmacenDestinoId) ?? "?", e.Estado, e.DespachadoEn, e.LiquidacionId, e.Notas, e.CreadoEn,
             e.Partidas.OrderBy(p => productos.GetValueOrDefault(p.ProductoId)?.Sku).ThenBy(p => p.Lote).Select(p =>

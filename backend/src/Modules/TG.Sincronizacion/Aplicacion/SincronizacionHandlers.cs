@@ -18,8 +18,12 @@ namespace TG.Sincronizacion.Aplicacion;
 
 internal sealed record ContextoSync(DispositivoInfo Dispositivo, Guid UsuarioId, RutaInfo? Ruta);
 
-/// <summary>RN-SYN-05: el dispositivo del token debe estar activo y asignado al usuario.</summary>
-public sealed class ContextoDispositivoHandler(IUsuarioActual usuario, ISeguridadService seguridad, ILogisticaService logistica)
+/// <summary>
+/// RN-SYN-05: el dispositivo del token debe estar activo y asignado al usuario. RN-SYN-09: el alcance es la ruta del chofer
+/// hoy (su carga o, sin carga, su ruta predeterminada).
+/// </summary>
+public sealed class ContextoDispositivoHandler(IUsuarioActual usuario, ISeguridadService seguridad, ILogisticaService logistica,
+    IFechaOperativa fechaOperativa)
 {
     internal async Task<Result<ContextoSync>> ResolverAsync(Guid? dispositivoSolicitado, CancellationToken ct)
     {
@@ -36,7 +40,7 @@ public sealed class ContextoDispositivoHandler(IUsuarioActual usuario, ISegurida
             return NoAutorizado();
         }
 
-        var ruta = await logistica.RutaDeVendedorAsync(usuarioId, ct);
+        var ruta = await logistica.RutaDeChoferAsync(usuarioId, fechaOperativa.Hoy(), ct);
         return new ContextoSync(dispositivo, usuarioId, ruta);
     }
 
@@ -71,7 +75,8 @@ public sealed class PullHandler(
 {
     private static readonly string[] PrefijosParametros = ["gps.", "ruta."];
 
-    public async Task<Result<RespuestaPull>> EjecutarAsync(long? desde, CancellationToken ct)
+    /// <param name="rutaId">Ruta que la app tiene guardada; si ya no es la del alcance, <c>rutaCambiada</c> (RN-SYN-09).</param>
+    public async Task<Result<RespuestaPull>> EjecutarAsync(long? desde, Guid? rutaId, CancellationToken ct)
     {
         var r = await contexto.ResolverAsync(null, ct);
         if (!r.EsExito)
@@ -80,6 +85,15 @@ public sealed class PullHandler(
         }
 
         var cursor = Math.Max(0, desde ?? 0);
+        var rutaCambiada = rutaId is not null && rutaId != r.Valor.Ruta?.Id;
+        if (rutaCambiada && cursor > 0)
+        {
+            var actual = r.Valor.Ruta;
+            return new RespuestaPull(0, false, reloj.GetUtcNow(),
+                actual is null ? null : new RutaSync(actual.Id, actual.Codigo, actual.Nombre, actual.AlmacenId),
+                new CambiosSync([], [], [], [], [], [], [], [], [], new Dictionary<string, IReadOnlyList<Guid>>()), true);
+        }
+
         var maximo = cursor;
         void Version(long v) => maximo = Math.Max(maximo, v);
         var eliminados = new Dictionary<string, List<Guid>>();
@@ -221,7 +235,7 @@ public sealed class PullHandler(
         var cambios = new CambiosSync(productos, clientes, rutasClientes, precios, envios, pedidos, saldos, motivos, parametros,
             eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value));
         return new RespuestaPull(maximo, false, reloj.GetUtcNow(),
-            ruta is null ? null : new RutaSync(ruta.Id, ruta.Codigo, ruta.Nombre, ruta.AlmacenId), cambios);
+            ruta is null ? null : new RutaSync(ruta.Id, ruta.Codigo, ruta.Nombre, ruta.AlmacenId), cambios, rutaCambiada);
     }
 }
 
@@ -339,13 +353,16 @@ public sealed class PushHandler(
         var logistica = sp.GetRequiredService<ILogisticaService>();
         var dispositivo = ctx.Dispositivo.Id;
 
+        // RN-SYN-09: la ruta de la operación es la del chofer en la fecha operativa de la operación, no la de hoy.
+        var rutaOperacion = await logistica.RutaDeChoferAsync(ctx.UsuarioId, fecha, ct);
+
         try
         {
             switch (op.Tipo)
             {
                 case TiposOperacion.RegistrarVenta:
                 {
-                    if (ctx.Ruta is not { } ruta)
+                    if (rutaOperacion is not { } ruta)
                     {
                         return SinRuta();
                     }
@@ -368,7 +385,7 @@ public sealed class PushHandler(
 
                 case TiposOperacion.EntregarPedido:
                 {
-                    if (ctx.Ruta is not { } ruta)
+                    if (rutaOperacion is not { } ruta)
                     {
                         return SinRuta();
                     }
@@ -391,7 +408,7 @@ public sealed class PushHandler(
 
                 case TiposOperacion.RegistrarRetorno:
                 {
-                    if (ctx.Ruta is not { } ruta)
+                    if (rutaOperacion is not { } ruta)
                     {
                         return SinRuta();
                     }
@@ -413,7 +430,7 @@ public sealed class PushHandler(
                 {
                     var d = Leer<RegistrarCobroDatos>(op) ?? throw new JsonException();
                     var cobro = await ventas.RegistrarCobroAsync(new RegistrarCobroComando(
-                        d.ClienteId, fecha, Enum.Parse<FormaPago>(d.FormaPago), d.Importe, d.CobroId, op.OpId, ctx.Ruta?.Id,
+                        d.ClienteId, fecha, Enum.Parse<FormaPago>(d.FormaPago), d.Importe, d.CobroId, op.OpId, rutaOperacion?.Id,
                         dispositivo, d.VentaIds), ct);
                     return cobro.EsExito
                         ? new Aplicacion(new Dictionary<string, Guid> { ["cobroId"] = cobro.Valor.CobroId }, [], cobro.Valor.Duplicado)
@@ -475,7 +492,8 @@ public sealed class PushHandler(
     private static GpsLectura? Gps(GpsDatos? g) => g is null ? null : new GpsLectura(g.Lat, g.Lng, g.PrecisionM);
 
     private static Error SinRuta() =>
-        Error.Validacion(ErroresSync.SinRuta, "Tu usuario no tiene una ruta asignada; pide que te asignen una.");
+        Error.Validacion(ErroresSync.SinRuta,
+            "No tenías carga ni ruta asignada en la fecha de esta operación; pide a logística que te asignen una.");
 
     private Operacion Nueva(OperacionSync op, Guid loteId, ContextoSync ctx, EstadoOperacion estado, string? resultado,
         string? codigo, string? error) => new()

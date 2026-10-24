@@ -50,6 +50,7 @@ internal sealed class InicializadorCatalogos : InicializadorModulo<CatalogosDbCo
         (ClavesParametro.AlertaCantidadFactor, "3", TipoParametro.@decimal, "La app pide confirmar si la cantidad supera N veces el promedio (RN-APP-09)"),
         (ClavesParametro.AlertaCantidadMaxima, "500", TipoParametro.@decimal, "Tope por partida en unidad de venta que pide confirmación (RN-APP-09)"),
         (ClavesParametro.ConsumoPromedioVisitas, "8", TipoParametro.@int, "Ventas/entregas que promedia el consumo del cliente (RN-APP-09)"),
+        (ClavesParametro.ChoferUnaRutaPorDia, "true", TipoParametro.@bool, "Un chofer lleva una sola ruta por día (RN-LOG-13) [SUP-24]"),
     ];
 
     // (clave, nombre, producción, almacén, ruta, retorno)

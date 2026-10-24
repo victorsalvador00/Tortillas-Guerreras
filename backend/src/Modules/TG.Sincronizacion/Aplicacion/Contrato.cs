@@ -54,7 +54,12 @@ public sealed record CambiosSync(
 
 public sealed record RutaSync(Guid Id, string Codigo, string Nombre, Guid AlmacenId);
 
-public sealed record RespuestaPull(long Cursor, bool HayMas, DateTimeOffset FechaServidor, RutaSync? Ruta, CambiosSync Cambios);
+/// <param name="RutaCambiada">
+/// RN-SYN-09: la ruta del alcance ya no es la que la app tiene (<c>rutaId</c>). Con <c>desde &gt; 0</c> no trae cambios y
+/// el cursor vuelve a 0: la app borra las colecciones por ruta y baja todo de nuevo, conservando su cola y su consecutivo.
+/// </param>
+public sealed record RespuestaPull(long Cursor, bool HayMas, DateTimeOffset FechaServidor, RutaSync? Ruta, CambiosSync Cambios,
+    bool RutaCambiada = false);
 
 public sealed record EstadoDispositivoServidor(Guid DispositivoId, string Codigo, bool Activo, Guid? RutaId, string? RutaCodigo,
     int UltimoConsecutivo);
@@ -106,7 +111,8 @@ public static class TiposOperacion
 public static class ErroresSync
 {
     public const string DispositivoNoAutorizado = "SYN-001";
-    public const string SinRuta = "SYN-002";
+    /// <summary>RN-SYN-09: el chofer no tiene carga ni ruta predeterminada en la fecha de la operación (v0.1: SYN-002).</summary>
+    public const string SinRuta = "SYN-006";
     public const string LoteDemasiadoGrande = "SYN-003";
     public const string TipoDesconocido = "SYN-004";
     public const string DatosInvalidos = "SYN-005";

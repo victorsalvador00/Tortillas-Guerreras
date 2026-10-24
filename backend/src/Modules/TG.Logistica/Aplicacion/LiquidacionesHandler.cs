@@ -5,6 +5,7 @@ using TG.Inventario.Publico;
 using TG.Logistica.Dominio;
 using TG.Logistica.Infraestructura;
 using TG.Logistica.Publico;
+using TG.Seguridad.Publico;
 using TG.SharedKernel.Api;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Resultados;
@@ -36,6 +37,8 @@ public sealed record LiquidacionDto(
     string RutaCodigo,
     string RutaNombre,
     DateOnly FechaOperativa,
+    Guid? ChoferId,
+    string? ChoferNombre,
     EstadoLiquidacion Estado,
     int Ventas,
     decimal TotalVendido,
@@ -57,6 +60,8 @@ public sealed record LiquidacionResumenDto(
     Guid RutaId,
     string RutaCodigo,
     DateOnly FechaOperativa,
+    Guid? ChoferId,
+    string? ChoferNombre,
     EstadoLiquidacion Estado,
     decimal EfectivoEsperado,
     decimal? EfectivoEntregado,
@@ -95,6 +100,7 @@ public sealed class LiquidacionesHandler(
     IVentasService ventas,
     IIncidenciasService incidencias,
     IEstadoSincronizacionRuta estadoSync,
+    ISeguridadService seguridad,
     IUsuarioActual usuario,
     IUnitOfWork unitOfWork,
     TimeProvider reloj)
@@ -132,8 +138,9 @@ public sealed class LiquidacionesHandler(
 
         var rutas = await db.Rutas.AsNoTracking().ToDictionaryAsync(r => r.Id, r => r.Codigo, ct);
         var paginado = await consulta.OrderByDescending(l => l.FechaOperativa).ThenBy(l => l.RutaId).PaginarAsync(pagina, tamano, ct);
+        var choferes = await seguridad.NombresUsuariosAsync(paginado.Items.Where(l => l.ChoferId != null).Select(l => l.ChoferId!.Value), ct);
         return paginado.Map(l => new LiquidacionResumenDto(l.Id, l.Folio, l.RutaId, rutas.GetValueOrDefault(l.RutaId) ?? "?",
-            l.FechaOperativa, l.Estado, l.EfectivoEsperado, l.EfectivoEntregado, l.DiferenciaEfectivo, l.CerradaEn));
+            l.FechaOperativa, l.ChoferId, l.ChoferId is { } ch ? choferes.GetValueOrDefault(ch) : null, l.Estado, l.EfectivoEsperado, l.EfectivoEntregado, l.DiferenciaEfectivo, l.CerradaEn));
     }
 
     /// <summary>Detalle: si está abierta se calcula al momento (ventas y retornos del día); cerrada, lo guardado.</summary>
@@ -151,10 +158,13 @@ public sealed class LiquidacionesHandler(
             ? await CalcularPartidasAsync(liquidacion, ruta, resumen, ct)
             : liquidacion.Partidas;
         var efectivoEsperado = liquidacion.Estado == EstadoLiquidacion.Abierta ? resumen.EfectivoEsperado : liquidacion.EfectivoEsperado;
-        var pendientes = liquidacion.Estado == EstadoLiquidacion.Abierta ? await estadoSync.OperacionesPendientesAsync(ruta.Id, ct) : 0;
+        var pendientes = liquidacion.Estado == EstadoLiquidacion.Abierta ? await estadoSync.OperacionesPendientesAsync(ruta.Id, liquidacion.FechaOperativa, ct) : 0;
         var productos = await catalogos.ObtenerProductosAsync(partidas.Select(p => p.ProductoId), ct);
+        var chofer = liquidacion.ChoferId is { } choferId
+            ? (await seguridad.NombresUsuariosAsync([choferId], ct)).GetValueOrDefault(choferId)
+            : null;
         return new LiquidacionDto(liquidacion.Id, liquidacion.Folio, ruta.Id, ruta.Codigo, ruta.Nombre, liquidacion.FechaOperativa,
-            liquidacion.Estado, resumen.Ventas, resumen.TotalVendido, resumen.VentasContadoEfectivo, resumen.CobrosEfectivo,
+            liquidacion.ChoferId, chofer, liquidacion.Estado, resumen.Ventas, resumen.TotalVendido, resumen.VentasContadoEfectivo, resumen.CobrosEfectivo,
             efectivoEsperado, liquidacion.EfectivoEntregado,
             liquidacion.EfectivoEntregado is { } e ? ReglasLogistica.DiferenciaEfectivo(e, efectivoEsperado) : null,
             pendientes, liquidacion.CerradaEn, liquidacion.CerradaPor, liquidacion.CerradaForzada, liquidacion.Notas,
@@ -241,7 +251,7 @@ public sealed class LiquidacionesHandler(
         }
 
         var ruta = await db.Rutas.AsNoTracking().FirstAsync(x => x.Id == liquidacion.RutaId, ct);
-        var pendientes = await estadoSync.OperacionesPendientesAsync(ruta.Id, ct);
+        var pendientes = await estadoSync.OperacionesPendientesAsync(ruta.Id, liquidacion.FechaOperativa, ct);
         var forzada = false;
         if (pendientes > 0)
         {

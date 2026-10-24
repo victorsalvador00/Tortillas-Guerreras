@@ -6646,6 +6646,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "rutaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -8987,6 +8995,32 @@
           "rutaCodigo": {
             "type": "string"
           },
+          "choferId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "choferNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoPlacas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "tipo": {
             "$ref": "#/components/schemas/TipoEnvio"
           },
@@ -10007,6 +10041,20 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "choferId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -10390,6 +10438,7 @@
         "required": [
           "codigo",
           "nombre",
+          "canalId",
           "activo"
         ],
         "type": "object",
@@ -10399,6 +10448,10 @@
           },
           "nombre": {
             "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
           },
           "vendedorId": {
             "type": [
@@ -10735,6 +10788,19 @@
             "type": "string",
             "format": "date"
           },
+          "choferId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "choferNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "estado": {
             "$ref": "#/components/schemas/EstadoLiquidacion"
           },
@@ -10939,6 +11005,19 @@
           "fechaOperativa": {
             "type": "string",
             "format": "date"
+          },
+          "choferId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "choferNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "estado": {
             "$ref": "#/components/schemas/EstadoLiquidacion"
@@ -14458,6 +14537,10 @@
           },
           "cambios": {
             "$ref": "#/components/schemas/CambiosSync"
+          },
+          "rutaCambiada": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -14841,6 +14924,8 @@
           "nombre",
           "almacenId",
           "almacenCodigo",
+          "canalId",
+          "canalNombre",
           "clientes",
           "activo"
         ],
@@ -14861,6 +14946,13 @@
             "format": "uuid"
           },
           "almacenCodigo": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canalNombre": {
             "type": "string"
           },
           "vendedorId": {

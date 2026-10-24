@@ -47,7 +47,7 @@ public enum DestinoSobrante
     Reproceso,
 }
 
-public sealed record RutaInfo(Guid Id, string Codigo, string Nombre, Guid AlmacenId, Guid? VendedorId, Guid? VehiculoId,
+public sealed record RutaInfo(Guid Id, string Codigo, string Nombre, Guid AlmacenId, Guid CanalId, Guid? VendedorId, Guid? VehiculoId,
     bool Activo, long VersionSync);
 
 /// <param name="Activo">Falso = la app debe quitarlo (eliminado del alcance).</param>
@@ -93,8 +93,11 @@ public sealed record ResumenLogistica(DateOnly Fecha, int LiquidacionesAbiertasH
 /// <summary>Lo que Sincronización y el tablero usan de Logística.</summary>
 public interface ILogisticaService
 {
-    /// <summary>Ruta activa asignada al vendedor (alcance del dispositivo).</summary>
-    Task<RutaInfo?> RutaDeVendedorAsync(Guid usuarioId, CancellationToken ct);
+    /// <summary>
+    /// RN-SYN-09: ruta del chofer en la fecha operativa: la de su carga (no cancelada) de esa fecha; si no tiene, la de una
+    /// carga del día anterior que siga <c>EnRuta</c>; si tampoco, la ruta activa donde es chofer predeterminado.
+    /// </summary>
+    Task<RutaInfo?> RutaDeChoferAsync(Guid usuarioId, DateOnly fecha, CancellationToken ct);
 
     Task<RutaInfo?> ObtenerRutaAsync(Guid id, CancellationToken ct);
 
@@ -127,7 +130,8 @@ public interface ILogisticaService
 /// </summary>
 public interface IEstadoSincronizacionRuta
 {
-    Task<int> OperacionesPendientesAsync(Guid rutaId, CancellationToken ct);
+    /// <summary>Pendientes de los dispositivos del chofer de la ruta en esa fecha (RN-LOG-13).</summary>
+    Task<int> OperacionesPendientesAsync(Guid rutaId, DateOnly fecha, CancellationToken ct);
 }
 
 public static class ErroresLogistica
@@ -148,4 +152,9 @@ public static class ErroresLogistica
     public const string AlmacenNoQuedoEnCero = "LOG-014";
     public const string ProductoInvalido = "LOG-015";
     public const string ClienteInvalido = "LOG-016";
+    public const string ChoferInvalido = "LOG-017";
+    public const string ChoferEnOtraRuta = "LOG-018";
+    public const string ClienteOtroCanal = "LOG-025";
+    public const string ChoferDistintoJornada = "LOG-026";
+    public const string CanalInvalido = "LOG-027";
 }

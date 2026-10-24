@@ -11,6 +11,7 @@ import type { GuardarRutaRequestVehiculoId } from './guardarRutaRequestVehiculoI
 export interface GuardarRutaRequest {
   codigo: string;
   nombre: string;
+  canalId: string;
   vendedorId?: GuardarRutaRequestVendedorId;
   vehiculoId?: GuardarRutaRequestVehiculoId;
   activo: boolean;

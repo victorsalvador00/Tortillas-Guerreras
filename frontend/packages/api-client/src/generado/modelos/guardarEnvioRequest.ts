@@ -11,6 +11,8 @@ import type { GuardarEnvioRequestAlmacenOrigenId } from './guardarEnvioRequestAl
 import type { GuardarEnvioRequestNotas } from './guardarEnvioRequestNotas';
 import type { EnvioPartidaRequest } from './envioPartidaRequest';
 import type { GuardarEnvioRequestPedidoIds } from './guardarEnvioRequestPedidoIds';
+import type { GuardarEnvioRequestChoferId } from './guardarEnvioRequestChoferId';
+import type { GuardarEnvioRequestVehiculoId } from './guardarEnvioRequestVehiculoId';
 
 export interface GuardarEnvioRequest {
   rutaId: string;
@@ -20,4 +22,6 @@ export interface GuardarEnvioRequest {
   notas?: GuardarEnvioRequestNotas;
   partidas: EnvioPartidaRequest[];
   pedidoIds?: GuardarEnvioRequestPedidoIds;
+  choferId?: GuardarEnvioRequestChoferId;
+  vehiculoId?: GuardarEnvioRequestVehiculoId;
 }

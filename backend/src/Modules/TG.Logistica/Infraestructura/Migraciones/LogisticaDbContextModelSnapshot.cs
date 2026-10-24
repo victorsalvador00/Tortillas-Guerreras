@@ -45,6 +45,10 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("almacen_origen_id");
 
+                    b.Property<Guid?>("ChoferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chofer_id");
+
                     b.Property<DateTimeOffset>("CreadoEn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
@@ -88,6 +92,10 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("text")
                         .HasColumnName("tipo");
 
+                    b.Property<Guid?>("VehiculoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vehiculo_id");
+
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -104,6 +112,9 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.HasIndex("Folio")
                         .IsUnique()
                         .HasDatabaseName("ux_envios_folio");
+
+                    b.HasIndex("ChoferId", "FechaOperativa")
+                        .HasDatabaseName("ix_envios_chofer_fecha");
 
                     b.HasIndex("RutaId", "FechaOperativa")
                         .HasDatabaseName("ix_envios_ruta_fecha");
@@ -178,6 +189,10 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.Property<Guid?>("CerradaPor")
                         .HasColumnType("uuid")
                         .HasColumnName("cerrada_por");
+
+                    b.Property<Guid?>("ChoferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chofer_id");
 
                     b.Property<DateTimeOffset>("CreadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -497,6 +512,10 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("almacen_id");
 
+                    b.Property<Guid>("CanalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("canal_id");
+
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasColumnType("text")
@@ -539,6 +558,9 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.HasIndex("Codigo")
                         .IsUnique()
                         .HasDatabaseName("ux_rutas_codigo");
+
+                    b.HasIndex("VendedorId")
+                        .HasDatabaseName("ix_rutas_vendedor");
 
                     b.HasIndex("VersionSync")
                         .HasDatabaseName("ix_rutas_version_sync");

@@ -8,7 +8,10 @@ using TG.Ventas.Publico;
 
 namespace TG.Logistica.Infraestructura;
 
-/// <summary>Semilla demo: 3 vehículos y las rutas R01–R03 con su vendedor, almacén, genérico y 5 clientes cada una.</summary>
+/// <summary>
+/// Semilla demo: 3 vehículos y las rutas R01 (Detalle), R02 (Autoservicio) y R03 (Institucional) con su chofer, almacén,
+/// genérico y hasta 5 clientes de su canal (RN-LOG-31).
+/// </summary>
 internal sealed class InicializadorLogistica : InicializadorModulo<LogisticaDbContext>
 {
     public override int Orden => 70;
@@ -39,24 +42,25 @@ internal sealed class InicializadorLogistica : InicializadorModulo<LogisticaDbCo
         var ventas = servicios.GetRequiredService<IVentasService>();
         var rutasHandler = servicios.GetRequiredService<RutasHandler>();
         var clientes = await ventas.ListarClientesAsync(incluirGenericos: false, ct);
+        var canales = (await ventas.ListarCanalesAsync(ct)).ToDictionary(c => c.Clave, c => c.Id);
 
         var definiciones = new[]
         {
-            ("R01", "Ruta Centro", "vendedor1"),
-            ("R02", "Ruta Norte", "vendedor2"),
-            ("R03", "Ruta Sur", "vendedor3"),
+            ("R01", "Ruta Centro", "vendedor1", ClavesCanal.Detalle),
+            ("R02", "Ruta Norte", "vendedor2", ClavesCanal.Autoservicio),
+            ("R03", "Ruta Sur", "vendedor3", ClavesCanal.Institucional),
         };
         for (var i = 0; i < definiciones.Length; i++)
         {
-            var (codigo, nombre, usuario) = definiciones[i];
+            var (codigo, nombre, usuario, canal) = definiciones[i];
             var vendedor = await seguridad.UsuarioPorNombreAsync(usuario, ct);
-            var ruta = await rutasHandler.CrearAsync(new GuardarRutaRequest(codigo, nombre, vendedor, vehiculos[i].Id, true), ct);
+            var ruta = await rutasHandler.CrearAsync(new GuardarRutaRequest(codigo, nombre, canales[canal], vendedor, vehiculos[i].Id, true), ct);
             if (!ruta.EsExito)
             {
                 throw new InvalidOperationException($"No se pudo crear la ruta semilla {codigo}: {ruta.Error!.Mensaje}");
             }
 
-            var asignados = clientes.Skip(i * 5).Take(5).Select((c, j) => new ClienteRutaRequest(c.Id, (short)(j + 1),
+            var asignados = clientes.Where(c => c.CanalClave == canal).Take(5).Select((c, j) => new ClienteRutaRequest(c.Id, (short)(j + 1),
                 j % 2 == 0 ? [1, 3, 5] : [2, 4, 6])).ToList();
             if (ruta.Valor.ClienteGenericoId is { } generico)
             {

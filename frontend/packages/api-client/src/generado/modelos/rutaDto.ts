@@ -17,6 +17,8 @@ export interface RutaDto {
   nombre: string;
   almacenId: string;
   almacenCodigo: string;
+  canalId: string;
+  canalNombre: string;
   vendedorId?: RutaDtoVendedorId;
   vendedorNombre?: RutaDtoVendedorNombre;
   vehiculoId?: RutaDtoVehiculoId;

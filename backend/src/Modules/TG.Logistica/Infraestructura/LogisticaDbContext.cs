@@ -32,6 +32,7 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.ToTable("rutas");
             e.HasIndex(r => r.Codigo).IsUnique().HasDatabaseName("ux_rutas_codigo");
             e.HasIndex(r => r.VersionSync).HasDatabaseName("ix_rutas_version_sync");
+            e.HasIndex(r => r.VendedorId).HasDatabaseName("ix_rutas_vendedor");
             e.ConcurrenciaXmin();
         });
 
@@ -47,6 +48,7 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.ToTable("envios");
             e.HasIndex(x => x.Folio).IsUnique().HasDatabaseName("ux_envios_folio");
             e.HasIndex(x => new { x.RutaId, x.FechaOperativa }).HasDatabaseName("ix_envios_ruta_fecha");
+            e.HasIndex(x => new { x.ChoferId, x.FechaOperativa }).HasDatabaseName("ix_envios_chofer_fecha");
             e.Property(x => x.Tipo).ComoTexto("envios");
             e.Property(x => x.Estado).ComoTexto("envios");
             e.HasMany(x => x.Partidas).WithOne().HasForeignKey(p => p.EnvioId).OnDelete(DeleteBehavior.Cascade);

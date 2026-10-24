@@ -9,8 +9,31 @@ namespace TG.Logistica.Aplicacion;
 
 internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos retornos) : ILogisticaService
 {
-    public async Task<RutaInfo?> RutaDeVendedorAsync(Guid usuarioId, CancellationToken ct) =>
-        AInfo(await db.Rutas.AsNoTracking().Where(r => r.VendedorId == usuarioId && r.Activo).OrderBy(r => r.Codigo).FirstOrDefaultAsync(ct));
+    public async Task<RutaInfo?> RutaDeChoferAsync(Guid usuarioId, DateOnly fecha, CancellationToken ct)
+    {
+        var rutaId = await RutaDeCargaAsync(db, usuarioId, fecha, ct);
+        var ruta = rutaId is { } id
+            ? await db.Rutas.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct)
+            : await db.Rutas.AsNoTracking().Where(r => r.VendedorId == usuarioId && r.Activo).OrderBy(r => r.Codigo).FirstOrDefaultAsync(ct);
+        return AInfo(ruta);
+    }
+
+    /// <summary>RN-SYN-09: la carga del chofer en la fecha (o la de ayer que sigue en ruta) define su ruta.</summary>
+    internal static async Task<Guid?> RutaDeCargaAsync(LogisticaDbContext db, Guid choferId, DateOnly fecha, CancellationToken ct)
+    {
+        var ayer = fecha.AddDays(-1);
+        var cargas = await db.Envios.AsNoTracking()
+            .Where(e => e.ChoferId == choferId && e.Estado != EstadoEnvio.Cancelado
+                && (e.FechaOperativa == fecha || (e.FechaOperativa == ayer && e.Estado == EstadoEnvio.EnRuta)))
+            .Select(e => new { e.RutaId, e.FechaOperativa, e.Estado, e.CreadoEn })
+            .ToListAsync(ct);
+        return cargas
+            .OrderBy(e => e.FechaOperativa == fecha ? 0 : 1)
+            .ThenBy(e => e.Estado is EstadoEnvio.Preparado or EstadoEnvio.EnRuta ? 0 : 1)
+            .ThenByDescending(e => e.CreadoEn)
+            .Select(e => (Guid?)e.RutaId)
+            .FirstOrDefault();
+    }
 
     public async Task<RutaInfo?> ObtenerRutaAsync(Guid id, CancellationToken ct) =>
         AInfo(await db.Rutas.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct));
@@ -62,24 +85,37 @@ internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos r
     }
 
     private static RutaInfo? AInfo(Ruta? r) =>
-        r is null ? null : new RutaInfo(r.Id, r.Codigo, r.Nombre, r.AlmacenId, r.VendedorId, r.VehiculoId, r.Activo, r.VersionSync);
+        r is null ? null : new RutaInfo(r.Id, r.Codigo, r.Nombre, r.AlmacenId, r.CanalId, r.VendedorId, r.VehiculoId, r.Activo, r.VersionSync);
 }
 
 /// <summary>
 /// RN-LOG-09 por defecto: suma de operaciones pendientes que reportaron en su último contacto los dispositivos del
-/// vendedor de la ruta. El módulo de Sincronización puede registrar otra implementación.
+/// chofer de la ruta en esa fecha (el de sus cargas, RN-LOG-13; si no hubo cargas, el predeterminado). El módulo de
+/// Sincronización puede registrar otra implementación.
 /// </summary>
 internal sealed class EstadoSincronizacionRutaPredeterminado(LogisticaDbContext db, ISeguridadService seguridad) : IEstadoSincronizacionRuta
 {
-    public async Task<int> OperacionesPendientesAsync(Guid rutaId, CancellationToken ct)
+    public async Task<int> OperacionesPendientesAsync(Guid rutaId, DateOnly fecha, CancellationToken ct)
     {
-        var vendedor = await db.Rutas.AsNoTracking().Where(r => r.Id == rutaId).Select(r => r.VendedorId).FirstOrDefaultAsync(ct);
-        if (vendedor is null)
+        var choferes = await db.Envios.AsNoTracking()
+            .Where(e => e.RutaId == rutaId && e.FechaOperativa == fecha && e.Estado != EstadoEnvio.Cancelado && e.ChoferId != null)
+            .Select(e => e.ChoferId!.Value).Distinct().ToListAsync(ct);
+        if (choferes.Count == 0)
         {
-            return 0;
+            var predeterminado = await db.Rutas.AsNoTracking().Where(r => r.Id == rutaId).Select(r => r.VendedorId).FirstOrDefaultAsync(ct);
+            if (predeterminado is { } v)
+            {
+                choferes.Add(v);
+            }
         }
 
-        var dispositivos = await seguridad.DispositivosDeUsuarioAsync(vendedor.Value, ct);
-        return dispositivos.Where(d => d.Activo).Sum(d => d.OperacionesPendientes);
+        var total = 0;
+        foreach (var chofer in choferes)
+        {
+            var dispositivos = await seguridad.DispositivosDeUsuarioAsync(chofer, ct);
+            total += dispositivos.Where(d => d.Activo).Sum(d => d.OperacionesPendientes);
+        }
+
+        return total;
     }
 }

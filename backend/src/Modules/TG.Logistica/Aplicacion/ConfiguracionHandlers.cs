@@ -89,6 +89,8 @@ public sealed record RutaDto(
     string Nombre,
     Guid AlmacenId,
     string AlmacenCodigo,
+    Guid CanalId,
+    string CanalNombre,
     Guid? VendedorId,
     string? VendedorNombre,
     Guid? VehiculoId,
@@ -97,7 +99,8 @@ public sealed record RutaDto(
     int Clientes,
     bool Activo);
 
-public sealed record GuardarRutaRequest(string Codigo, string Nombre, Guid? VendedorId, Guid? VehiculoId, bool Activo);
+/// <param name="VendedorId">Chofer predeterminado (RN-LOG-12).</param>
+public sealed record GuardarRutaRequest(string Codigo, string Nombre, Guid CanalId, Guid? VendedorId, Guid? VehiculoId, bool Activo);
 
 public sealed partial class GuardarRutaValidator : AbstractValidator<GuardarRutaRequest>
 {
@@ -107,6 +110,7 @@ public sealed partial class GuardarRutaValidator : AbstractValidator<GuardarRuta
         RuleFor(x => x.Codigo).NotEmpty().MaximumLength(8).Must(c => CodigoRegex().IsMatch(c?.Trim() ?? string.Empty))
             .WithMessage("El código lleva de 1 a 8 letras o números, sin espacios (R01).");
         RuleFor(x => x.Nombre).NotEmpty().WithMessage("Captura el nombre de la ruta.");
+        RuleFor(x => x.CanalId).NotEmpty().WithMessage("Elige el canal de la ruta.");
     }
 
     [GeneratedRegex("^[A-Za-z0-9]{1,8}$")]
@@ -184,6 +188,7 @@ public sealed class RutasHandler(
             {
                 Codigo = codigo,
                 Nombre = r.Nombre.Trim(),
+                CanalId = r.CanalId,
                 VendedorId = r.VendedorId,
                 VehiculoId = r.VehiculoId,
                 Activo = r.Activo,
@@ -195,7 +200,7 @@ public sealed class RutasHandler(
             }
 
             ruta.AlmacenId = almacen.Valor.Id;
-            var generico = await ventas.CrearClienteGenericoAsync(codigo, c);
+            var generico = await ventas.CrearClienteGenericoAsync(codigo, r.CanalId, c);
             if (!generico.EsExito)
             {
                 return Result<Guid>.Falla(generico.Error!);
@@ -233,12 +238,32 @@ public sealed class RutasHandler(
             return validacion.Error!;
         }
 
-        ruta.Nombre = r.Nombre.Trim();
-        ruta.VendedorId = r.VendedorId;
-        ruta.VehiculoId = r.VehiculoId;
-        ruta.Activo = r.Activo;
-        await db.SaveChangesAsync(ct);
-        return await ObtenerAsync(id, ct);
+        if (r.CanalId != ruta.CanalId)
+        {
+            // RN-LOG-31: los clientes activos (salvo el genérico, que sigue a la ruta) deben ser del canal nuevo.
+            var asignados = await db.RutasClientes.AsNoTracking().Where(rc => rc.RutaId == id && rc.Activo).Select(rc => rc.ClienteId)
+                .ToListAsync(ct);
+            var clientes = await ventas.ObtenerClientesAsync(asignados, ct);
+            var ajeno = clientes.Values.FirstOrDefault(c => !c.EsGenerico && c.Activo && c.CanalId != r.CanalId);
+            if (ajeno is not null)
+            {
+                return Error.Campo(ErroresLogistica.ClienteOtroCanal, "canalId",
+                    $"{ajeno.Nombre} es de otro canal; quítalo de la ruta o cámbialo de canal antes de cambiar el canal de la ruta.");
+            }
+        }
+
+        var resultado = await unitOfWork.EjecutarAsync(async c =>
+        {
+            ruta.Nombre = r.Nombre.Trim();
+            ruta.CanalId = r.CanalId;
+            ruta.VendedorId = r.VendedorId;
+            ruta.VehiculoId = r.VehiculoId;
+            ruta.Activo = r.Activo;
+            await db.SaveChangesAsync(c);
+            var generico = await ventas.CrearClienteGenericoAsync(ruta.Codigo, ruta.CanalId, c);
+            return generico.EsExito ? Result.Exito() : Result.Falla(generico.Error!);
+        }, ct);
+        return resultado.EsExito ? await ObtenerAsync(id, ct) : resultado.Error!;
     }
 
     public async Task<Result<IReadOnlyList<ClienteRutaDto>>> ClientesAsync(Guid rutaId, CancellationToken ct)
@@ -281,6 +306,14 @@ public sealed class RutasHandler(
             return Error.Campo(ErroresLogistica.ClienteInvalido, "clientes", $"{genericoAjeno.Nombre} es el genérico de otra ruta.");
         }
 
+        // RN-LOG-31. El genérico propio sigue el canal de la ruta (lo alinea Ventas al guardar la ruta).
+        var otroCanal = r.Clientes.Select(c => clientes[c.ClienteId]).FirstOrDefault(c => !c.EsGenerico && c.CanalId != ruta.CanalId);
+        if (otroCanal is not null)
+        {
+            return Error.Campo(ErroresLogistica.ClienteOtroCanal, "clientes",
+                $"{otroCanal.Nombre} es del canal {otroCanal.CanalClave}; la ruta solo admite clientes de su canal.");
+        }
+
         var actuales = await db.RutasClientes.Where(rc => rc.RutaId == rutaId).ToListAsync(ct);
         var generico = await ventas.ClienteGenericoDeRutaAsync(ruta.Codigo, ct);
         foreach (var actual in actuales)
@@ -320,6 +353,11 @@ public sealed class RutasHandler(
 
     private async Task<Result> ValidarAsignacionAsync(GuardarRutaRequest r, CancellationToken ct)
     {
+        if ((await ventas.ListarCanalesAsync(ct)).All(c => c.Id != r.CanalId || !c.Activo))
+        {
+            return Error.Campo(ErroresLogistica.CanalInvalido, "canalId", "El canal no existe o está inactivo.");
+        }
+
         if (r.VendedorId is { } vendedor && !await seguridad.UsuarioTieneRolAsync(vendedor, RolVendedor, ct))
         {
             return Error.Campo(ErroresLogistica.VendedorInvalido, "vendedorId", "El usuario no existe o no tiene el rol Vendedor.");
@@ -337,6 +375,7 @@ public sealed class RutasHandler(
     {
         var vendedores = await seguridad.NombresUsuariosAsync(rutas.Where(r => r.VendedorId != null).Select(r => r.VendedorId!.Value), ct);
         var almacenes = (await inventario.ListarAlmacenesAsync(ct)).ToDictionary(a => a.Id, a => a.Codigo);
+        var canales = (await ventas.ListarCanalesAsync(ct)).ToDictionary(c => c.Id, c => c.Nombre);
         var vehiculos = await db.Vehiculos.AsNoTracking().ToDictionaryAsync(v => v.Id, v => v.Placas, ct);
         var ids = rutas.Select(r => r.Id).ToList();
         var conteo = await db.RutasClientes.AsNoTracking().Where(rc => ids.Contains(rc.RutaId) && rc.Activo)
@@ -346,7 +385,7 @@ public sealed class RutasHandler(
         {
             var generico = await ventas.ClienteGenericoDeRutaAsync(r.Codigo, ct);
             resultado.Add(new RutaDto(r.Id, r.Codigo, r.Nombre, r.AlmacenId, almacenes.GetValueOrDefault(r.AlmacenId) ?? "?",
-                r.VendedorId, r.VendedorId is { } v ? vendedores.GetValueOrDefault(v) : null, r.VehiculoId,
+                r.CanalId, canales.GetValueOrDefault(r.CanalId) ?? "?", r.VendedorId, r.VendedorId is { } v ? vendedores.GetValueOrDefault(v) : null, r.VehiculoId,
                 r.VehiculoId is { } h ? vehiculos.GetValueOrDefault(h) : null, generico?.Id, conteo.GetValueOrDefault(r.Id), r.Activo));
         }
 

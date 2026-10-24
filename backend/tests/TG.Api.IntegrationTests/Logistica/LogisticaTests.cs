@@ -12,7 +12,8 @@ namespace TG.Api.IntegrationTests.Logistica;
 
 public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
 {
-    private sealed record RutaPrueba(Guid Id, string Codigo, Guid AlmacenId, string AlmacenCodigo, Guid? ClienteGenericoId, int Clientes);
+    private sealed record RutaPrueba(Guid Id, string Codigo, Guid AlmacenId, string AlmacenCodigo, Guid CanalId, string CanalNombre,
+        Guid? ClienteGenericoId, int Clientes);
 
     private sealed record ClienteRutaPrueba(Guid ClienteId, string Codigo, short OrdenVisita, bool EsGenerico);
 
@@ -33,12 +34,16 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     // ───────────── Ayudas ─────────────
 
+    /// <summary>Ruta de Detalle; sin vendedor indicado, con un chofer nuevo (RN-LOG-13: uno por ruta y día).</summary>
     private async Task<RutaPrueba> CrearRutaAsync(Guid? vendedorId = null)
     {
         var admin = await api.ClienteAsync();
         var codigo = "T" + Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
-        return await admin.PostOkAsync<RutaPrueba>("/api/v1/logistica/rutas",
-            new { codigo, nombre = $"Ruta de prueba {codigo}", vendedorId, activo = true });
+        return await admin.PostOkAsync<RutaPrueba>("/api/v1/logistica/rutas", new
+        {
+            codigo, nombre = $"Ruta de prueba {codigo}", canalId = await admin.CanalAsync("DET"),
+            vendedorId = vendedorId ?? await admin.CrearChoferAsync(), activo = true,
+        });
     }
 
     private async Task<Guid> UsuarioAsync(string usuario)
@@ -88,12 +93,14 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
     {
         var admin = await api.ClienteAsync();
         var rutas = await admin.GetOkAsync<List<RutaPrueba>>("/api/v1/logistica/rutas");
-        foreach (var codigo in new[] { "R01", "R02", "R03" })
+        // Genérico + hasta 5 clientes del canal de la ruta (la semilla tiene 4 de Autoservicio).
+        foreach (var (codigo, canal, clientes) in new[] { ("R01", "Detalle", 6), ("R02", "Autoservicio", 5), ("R03", "Institucional", 6) })
         {
             var ruta = rutas.Single(r => r.Codigo == codigo);
             ruta.AlmacenCodigo.ShouldBe(codigo);
+            ruta.CanalNombre.ShouldBe(canal);
             ruta.ClienteGenericoId.ShouldNotBeNull();
-            ruta.Clientes.ShouldBe(6);
+            ruta.Clientes.ShouldBe(clientes);
         }
     }
 
@@ -115,8 +122,11 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
         var clientes = await admin.GetOkAsync<List<ClienteRutaPrueba>>($"/api/v1/logistica/rutas/{ruta.Id}/clientes");
         clientes.Single().EsGenerico.ShouldBeTrue();
 
-        var noVendedor = await admin.PostJsonAsync("/api/v1/logistica/rutas",
-            new { codigo = "X" + Guid.NewGuid().ToString("N")[..5], nombre = "X", vendedorId = await UsuarioAsync("almacen"), activo = true });
+        var noVendedor = await admin.PostJsonAsync("/api/v1/logistica/rutas", new
+        {
+            codigo = "X" + Guid.NewGuid().ToString("N")[..5], nombre = "X", canalId = await admin.CanalAsync("DET"),
+            vendedorId = await UsuarioAsync("almacen"), activo = true,
+        });
         await noVendedor.DebeFallarAsync(HttpStatusCode.BadRequest, ErroresLogistica.VendedorInvalido);
     }
 
@@ -125,7 +135,8 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
     {
         var admin = await api.ClienteAsync();
         var ruta = await CrearRutaAsync();
-        var ventasClientes = await api.ConScopeAsync(sp => sp.GetRequiredService<IVentasService>().ListarClientesAsync(false, CancellationToken.None));
+        var ventasClientes = (await api.ConScopeAsync(sp => sp.GetRequiredService<IVentasService>().ListarClientesAsync(false, CancellationToken.None)))
+            .Where(c => c.CanalClave == "DET").ToList();
         var a = ventasClientes[0].Id;
         var b = ventasClientes[1].Id;
         await admin.PutOkAsync<List<ClienteRutaPrueba>>($"/api/v1/logistica/rutas/{ruta.Id}/clientes",
@@ -436,14 +447,14 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task ServicioPublico_RutaDeVendedorYEnviosParaLaApp()
+    public async Task ServicioPublico_RutaDeChoferYEnviosParaLaApp()
     {
         var hoy = await HoyAsync();
         var (ruta, envios) = await api.ConScopeAsync(async sp =>
         {
             var logistica = sp.GetRequiredService<ILogisticaService>();
             var vendedor = await sp.GetRequiredService<ISeguridadService>().UsuarioPorNombreAsync("vendedor1", CancellationToken.None);
-            var r = await logistica.RutaDeVendedorAsync(vendedor!.Value, CancellationToken.None);
+            RutaInfo? r = await logistica.RutaDeChoferAsync(vendedor!.Value, hoy, CancellationToken.None);
             return (r, await logistica.EnviosDeRutaAsync(r!.Id, 0, hoy, CancellationToken.None));
         });
         ruta!.Codigo.ShouldBe("R01");

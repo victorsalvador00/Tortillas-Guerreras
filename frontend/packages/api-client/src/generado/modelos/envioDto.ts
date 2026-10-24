@@ -5,6 +5,10 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { EnvioDtoChoferId } from './envioDtoChoferId';
+import type { EnvioDtoChoferNombre } from './envioDtoChoferNombre';
+import type { EnvioDtoVehiculoId } from './envioDtoVehiculoId';
+import type { EnvioDtoVehiculoPlacas } from './envioDtoVehiculoPlacas';
 import type { TipoEnvio } from './tipoEnvio';
 import type { EstadoEnvio } from './estadoEnvio';
 import type { EnvioDtoDespachadoEn } from './envioDtoDespachadoEn';
@@ -18,6 +22,10 @@ export interface EnvioDto {
   fechaOperativa: string;
   rutaId: string;
   rutaCodigo: string;
+  choferId?: EnvioDtoChoferId;
+  choferNombre?: EnvioDtoChoferNombre;
+  vehiculoId?: EnvioDtoVehiculoId;
+  vehiculoPlacas?: EnvioDtoVehiculoPlacas;
   tipo: TipoEnvio;
   almacenOrigenId: string;
   almacenOrigen: string;

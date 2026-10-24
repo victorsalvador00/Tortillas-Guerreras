@@ -153,7 +153,8 @@ producto y efectivo.
 ### Errores nuevos
 `LOG-017` chofer inválido, `LOG-018` chofer con carga en otra ruta, `LOG-019` cambio sin cliente, `LOG-025` cliente de otro canal,
 `LOG-020` saldo de pendiente excedido, `LOG-021` transición de liquidación inválida, `LOG-022` cantidad a cobro
-mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas.
+mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas,
+`LOG-026` la jornada (ruta y fecha) ya tiene otro chofer, `LOG-027` canal inexistente o inactivo.
 
 ## Endpoints (`/api/v1/logistica`)
 | Método | Ruta | Permiso |
@@ -211,5 +212,18 @@ migración de permisos da `logistica.liquidar_producto` a Almacén y `logistica.
   almacén quede en cero; en el caso normal coincide con `sobrante_contado − sobrante_esperado`. Sobrante a merma usa el
   motivo indicado (o `OTRO`); a reproceso, `REPROCESO`. Se exige efectivo entregado y conteo de toda partida con
   esperado ≠ 0. Una incidencia `DiferenciaLiquidacion` por diferencias de producto y otra por diferencia de efectivo.
-- RN-LOG-09: `IEstadoSincronizacionRuta` (por defecto, suma de `operaciones_pendientes` de los dispositivos activos del
-  vendedor). Forzar requiere `logistica.forzar_cierre` y `{ "forzar": true }`; queda `cerrada_forzada = true`.
+- RN-LOG-09: `IEstadoSincronizacionRuta.OperacionesPendientesAsync(rutaId, fecha)` (por defecto, suma de
+  `operaciones_pendientes` de los dispositivos activos del chofer de las cargas de esa ruta y fecha; sin cargas, del chofer
+  predeterminado). Forzar requiere `logistica.forzar_cierre` y `{ "forzar": true }`; queda `cerrada_forzada = true`.
+- **(v0.2, T-8.4) Canal, chofer y vehículo.**
+  - `rutas.vendedor_id`/`vehiculo_id` son el chofer y vehículo **predeterminados**: se proponen si la carga no trae
+    `choferId`/`vehiculoId` (al editar, se conservan los que ya tiene). El chofer se valida contra los usuarios activos
+    con rol Vendedor (`LOG-017`) y el vehículo debe estar activo (`LOG-001`). Se revalida al despachar.
+  - RN-LOG-13: guardar una carga con otro chofer arrastra a las demás cargas `Preparado` de la misma ruta y fecha; si ya
+    hay una carga `EnRuta`/`Liquidado` o una liquidación con otro chofer se rechaza (`LOG-026`). `LOG-018` se aplica solo
+    si `logistica.chofer_una_ruta_por_dia = true` `[SUP-24]`. La liquidación toma el chofer de la carga que la abre.
+  - `envios.chofer_id` y `liquidaciones.chofer_id` son nulos solo en datos de v0.1 cuya ruta no tenía vendedor; las
+    cargas nuevas siempre lo llevan.
+  - RN-LOG-31: el genérico de la ruta no cuenta para la validación de canal; al guardar la ruta, Ventas lo alinea al
+    canal (y a una lista de ese canal si la suya es de otro). Migración `V02RutasChofer`: canal más común entre los
+    clientes activos no genéricos de la ruta (si no hay, `DET`).
