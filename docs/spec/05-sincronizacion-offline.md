@@ -34,8 +34,8 @@ Devuelve cambios con `version_sync > desde` de las colecciones del alcance del d
 | saldos_clientes | saldo de crédito por cliente `[SUP-08]` |
 | motivos_merma | `aplica_ruta` o `aplica_retorno` |
 | parametros | claves `gps.*`, `ruta.*` |
-| **(v0.2)** precios_cliente | precios especiales de los clientes de la ruta |
-| **(v0.2)** productos_exclusivos | registros que afectan a clientes o grupos de la ruta (la app oculta el producto a los demás) |
+| **(v0.2)** preciosCliente | precios especiales de los clientes de la ruta; los desactivados llegan con `activo = false` (la app los borra); un cliente recién asignado baja completo |
+| **(v0.2)** productosExclusivos | **todos** los registros activos, también de clientes ajenos a la ruta (sin ellos la app no puede ocultar el producto a los demás); los desactivados van en `eliminados.productosExclusivos` |
 | **(v0.2)** cambios_pendientes | `Pendiente` de clientes de la ruta |
 | **(v0.2)** consumos_clientes | `IVentasService.ConsumosPromedioAsync` con las últimas `ruta.consumo_promedio_visitas` (8) ventas/entregas por cliente y producto (RN-APP-09); completo, no incremental |
 | **(v0.2)** canales | `formato_liquidacion`, `pedido_por` del canal de la ruta |

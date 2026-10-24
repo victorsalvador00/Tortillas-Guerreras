@@ -576,7 +576,7 @@ se llena siempre en ventas de la app (RN-VEN-12, RN-LOG-23).
 
 **incidencias**: `id`, `tipo` (`ExistenciaNegativaRuta`, `GpsFueraDeRango`, `GpsImpreciso`,
 `SinGps`, `PrecioDistinto`, `UbicacionPorAprobar`, `DiferenciaLiquidacion`, `CreditoExcedido` (RN-VEN-04),
-`TotalDistinto` (RN-VEN-02)), `entidad_tipo`, `entidad_id`, `detalle jsonb`, `estado` (`Abierta`, `Revisada`),
+`TotalDistinto` (RN-VEN-02), `ProductoExclusivo` (RN-VEN-14, [SUP-28])), `entidad_tipo`, `entidad_id`, `detalle jsonb`, `estado` (`Abierta`, `Revisada`),
 `revisada_por`, `revisada_en`, `notas_revision null`.
 
 ---

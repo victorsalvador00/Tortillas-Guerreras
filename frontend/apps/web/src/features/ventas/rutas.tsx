@@ -2,6 +2,7 @@ import type { AnyRoute } from '@tanstack/react-router';
 import { pantalla } from '@/app/rutas-base';
 import { ClienteFormulario, Clientes } from './Clientes';
 import { Cobros, Incidencias } from './CobrosIncidencias';
+import { GruposClientes } from './GruposPrecios';
 import { ListaPrecioDetalle, ListasPrecio } from './ListasPrecio';
 import { PedidoDetalle, PedidoFormulario, Pedidos } from './Pedidos';
 import { NuevaVenta, VentaDetalle, Ventas } from './Ventas';
@@ -13,6 +14,7 @@ export function rutasVentas(): AnyRoute[] {
     pantalla('/ventas/clientes/nuevo', ClienteFormulario, 'ventas.clientes'),
     pantalla('/ventas/clientes/$id', ClienteFormulario, ['ventas.clientes', 'ventas.supervisar']),
     pantalla('/ventas/listas-precio', ListasPrecio, 'ventas.configurar'),
+    pantalla('/ventas/grupos-clientes', GruposClientes, 'ventas.configurar'),
     pantalla('/ventas/listas-precio/$id', ListaPrecioDetalle, 'ventas.configurar'),
     pantalla('/ventas/pedidos', Pedidos, 'ventas.pedidos'),
     pantalla('/ventas/pedidos/nuevo', PedidoFormulario, 'ventas.pedidos'),

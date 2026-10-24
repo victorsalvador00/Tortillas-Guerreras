@@ -15,6 +15,8 @@ import type { SaldoClienteSync } from './saldoClienteSync';
 import type { MotivoMermaSync } from './motivoMermaSync';
 import type { ParametroSync } from './parametroSync';
 import type { CambiosSyncEliminados } from './cambiosSyncEliminados';
+import type { CambiosSyncPreciosCliente } from './cambiosSyncPreciosCliente';
+import type { CambiosSyncProductosExclusivos } from './cambiosSyncProductosExclusivos';
 
 export interface CambiosSync {
   productos: ProductoSync[];
@@ -27,4 +29,6 @@ export interface CambiosSync {
   motivosMerma: MotivoMermaSync[];
   parametros: ParametroSync[];
   eliminados: CambiosSyncEliminados;
+  preciosCliente?: CambiosSyncPreciosCliente;
+  productosExclusivos?: CambiosSyncProductosExclusivos;
 }

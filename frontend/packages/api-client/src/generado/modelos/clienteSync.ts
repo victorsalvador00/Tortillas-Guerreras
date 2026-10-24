@@ -12,6 +12,7 @@ import type { ClienteSyncTelefono } from './clienteSyncTelefono';
 import type { ClienteSyncDireccion } from './clienteSyncDireccion';
 import type { ClienteSyncLatitud } from './clienteSyncLatitud';
 import type { ClienteSyncLongitud } from './clienteSyncLongitud';
+import type { ClienteSyncGrupoClienteId } from './clienteSyncGrupoClienteId';
 
 export interface ClienteSync {
   id: string;
@@ -33,4 +34,5 @@ export interface ClienteSync {
   esGenerico: boolean;
   activo: boolean;
   versionSync: number;
+  grupoClienteId?: ClienteSyncGrupoClienteId;
 }

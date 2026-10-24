@@ -8,6 +8,7 @@ import {
   useCrearCliente,
   useListarCanales,
   useListarClientes,
+  useListarGruposClientes,
   useListarListasPrecio,
   useObtenerCliente,
   useObtenerSaldoCliente,
@@ -25,6 +26,7 @@ import {
   Datos,
   DialogoConfirmacion,
   EtiquetaEstado,
+  Pestanas,
   Selector,
   TablaDatos,
   Tarjeta,
@@ -38,6 +40,8 @@ import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
 import { MapaLeaflet, type MarcadorMapa } from '@/componentes/MapaLeaflet';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
+import { HistorialDocumento } from '@/componentes/historial';
+import { PreciosEspecialesCliente } from './GruposPrecios';
 
 const CONDICIONES = [
   { valor: 'Contado', etiqueta: 'Contado' },
@@ -211,7 +215,8 @@ const esquema = z
     codigo: textoOpcional,
     nombre: z.string().trim().min(1, 'Captura el nombre comercial.'),
     canalId: z.string().min(1, 'Elige el canal.'),
-    listaPrecioId: z.string().min(1, 'Elige la lista de precios.'),
+    listaPrecioId: z.string(),
+    grupoClienteId: z.string(),
     condicionPago: z.enum(['Contado', 'Credito']),
     diasCredito: z.coerce.number().int().min(0, 'No puede ser negativo.'),
     limiteCredito: numeroOpcional,
@@ -234,6 +239,8 @@ const esquema = z
   })
   .superRefine((d, ctx) => {
     const error = (path: string, message: string) => ctx.addIssue({ code: 'custom', path: [path], message });
+    // RN-VEN-12: con grupo, la lista puede quedar vacía y se hereda la del grupo.
+    if (!d.listaPrecioId && !d.grupoClienteId) error('listaPrecioId', 'Elige la lista de precios.');
     if (d.rfc && !rfc.safeParse(d.rfc).success) error('rfc', 'El RFC no tiene un formato válido.');
     if (d.codigoPostalFiscal && !codigoPostal.safeParse(d.codigoPostalFiscal).success) error('codigoPostalFiscal', 'El código postal tiene 5 dígitos.');
     if (d.codigoPostal && !codigoPostal.safeParse(d.codigoPostal).success) error('codigoPostal', 'El código postal tiene 5 dígitos.');
@@ -259,6 +266,7 @@ function aFormulario(c?: ClienteDto): Entrada {
     nombre: c?.nombre ?? '',
     canalId: c?.canalId ?? '',
     listaPrecioId: c?.listaPrecioId ?? '',
+    grupoClienteId: c?.grupoClienteId ?? '',
     condicionPago: c?.condicionPago ?? 'Contado',
     diasCredito: c?.diasCredito ?? 0,
     limiteCredito: c?.limiteCredito ?? '',
@@ -288,7 +296,8 @@ function aSolicitud(d: Datos): GuardarClienteRequest {
     codigo: vacioANulo(d.codigo),
     nombre: d.nombre,
     canalId: d.canalId,
-    listaPrecioId: d.listaPrecioId,
+    listaPrecioId: d.listaPrecioId || null,
+    grupoClienteId: d.grupoClienteId || null,
     condicionPago: d.condicionPago,
     diasCredito: d.condicionPago === 'Credito' ? d.diasCredito : 0,
     limiteCredito: d.condicionPago === 'Credito' ? d.limiteCredito : null,
@@ -317,11 +326,12 @@ export function ClienteFormulario() {
   const consulta = useObtenerCliente(id ?? '', { query: { enabled: !nuevo } });
   const canales = useListarCanales();
   const listas = useListarListasPrecio();
+  const grupos = useListarGruposClientes();
   return (
     <Pagina ancho="medio">
       {/* Las listas nativas necesitan sus opciones antes de recibir el valor inicial. */}
       <EstadoConsulta
-        cargando={(!nuevo && consulta.isLoading) || canales.isLoading || listas.isLoading}
+        cargando={(!nuevo && consulta.isLoading) || canales.isLoading || listas.isLoading || grupos.isLoading}
         error={consulta.error ?? canales.error ?? listas.error}
       >
         {/* La llave cambia al aprobar la ubicación para recargar las coordenadas del formulario. */}
@@ -341,12 +351,14 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
   const supervisa = tienePermiso('ventas.supervisar');
   const { data: canales } = useListarCanales();
   const { data: listas } = useListarListasPrecio();
+  const { data: grupos } = useListarGruposClientes();
   const crear = useCrearCliente();
   const actualizar = useActualizarCliente();
   const aprobar = useAprobarUbicacionCliente();
   const saldo = useObtenerSaldoCliente(cliente?.id ?? '', { query: { enabled: cliente?.condicionPago === 'Credito' } });
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [confirmarUbicacion, setConfirmarUbicacion] = useState(false);
+  const [pestana, setPestana] = useState('ficha');
 
   const {
     register,
@@ -403,13 +415,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
     }
   });
 
-  return (
-    <>
-      <EncabezadoPagina
-        titulo={cliente ? cliente.nombre : 'Nuevo cliente'}
-        subtitulo={cliente ? `${cliente.codigo} · ${cliente.canal}${cliente.esGenerico ? ' · Público en general' : ''}` : 'El código se asigna solo si lo dejas vacío.'}
-        migas={[{ etiqueta: 'Ventas' }, { etiqueta: 'Clientes', a: '/ventas/clientes' }, { etiqueta: cliente ? cliente.codigo : 'Nuevo' }]}
-      />
+  const formulario = (
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {errorGeneral && <Aviso tipo="error">{errorGeneral}</Aviso>}
         {cliente?.condicionPago === 'Credito' && saldo.data && (
@@ -441,6 +447,17 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
                 })}
               />
               <Selector
+                etiqueta="Grupo (opcional)"
+                vacio="Sin grupo"
+                opciones={(grupos ?? []).filter((g) => g.activo || g.id === cliente?.grupoClienteId).map((g) => ({ valor: g.id, etiqueta: `${g.clave} · ${g.nombre}` }))}
+                {...register('grupoClienteId', {
+                  onChange: (e) => {
+                    const grupo = grupos?.find((g) => g.id === e.target.value);
+                    if (grupo?.listaPrecioId) setValue('listaPrecioId', grupo.listaPrecioId);
+                  },
+                })}
+              />
+              <Selector
                 etiqueta="Lista de precios"
                 vacio="Elige la lista"
                 opciones={(listas ?? []).map((l) => ({ valor: l.id, etiqueta: l.nombre }))}
@@ -453,7 +470,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
               </div>
             </div>
           </Tarjeta>
-
+  
           <Tarjeta titulo="Condiciones de pago" subtitulo="Crédito con límite y cobranza en ruta [SUP-08].">
             <div className="grid gap-4 sm:grid-cols-3">
               <Selector etiqueta="Condición" opciones={CONDICIONES} {...register('condicionPago')} />
@@ -477,7 +494,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
               />
             </div>
           </Tarjeta>
-
+  
           <Tarjeta titulo="Datos fiscales (CFDI 4.0)" subtitulo="Obligatorios si el cliente requiere factura.">
             <Casilla etiqueta="Requiere factura" className="mb-3" {...register('requiereFactura')} />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -501,7 +518,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
               <Campo etiqueta="Correo para facturas" type="email" error={errors.emailFacturacion?.message} {...register('emailFacturacion')} />
             </div>
           </Tarjeta>
-
+  
           <Tarjeta titulo="Dirección">
             <div className="grid gap-4 sm:grid-cols-2">
               <Campo etiqueta="Calle y número" className="sm:col-span-2" {...register('calle')} />
@@ -512,7 +529,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
             </div>
           </Tarjeta>
         </fieldset>
-
+  
         <Tarjeta
           titulo="Ubicación"
           subtitulo={editable ? 'Haz clic en el mapa para fijar la ubicación o captura las coordenadas.' : undefined}
@@ -552,7 +569,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
             </p>
           )}
         </Tarjeta>
-
+  
         {editable && (
           <BarraAccion resumen={cliente ? 'Los cambios bajan a la app de ruta en la siguiente sincronización.' : undefined}>
             <Boton variante="texto" onClick={() => navegar({ to: '/ventas/clientes' })}>
@@ -564,6 +581,28 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
           </BarraAccion>
         )}
       </form>
+  );
+
+  return (
+    <>
+      <EncabezadoPagina
+        titulo={cliente ? cliente.nombre : 'Nuevo cliente'}
+        subtitulo={cliente ? `${cliente.codigo} · ${cliente.canal}${cliente.esGenerico ? ' · Público en general' : ''}` : 'El código se asigna solo si lo dejas vacío.'}
+        migas={[{ etiqueta: 'Ventas' }, { etiqueta: 'Clientes', a: '/ventas/clientes' }, { etiqueta: cliente ? cliente.codigo : 'Nuevo' }]}
+      />
+      {cliente ? (
+        <Pestanas
+          valor={pestana}
+          onCambiar={setPestana}
+          pestanas={[
+            { valor: 'ficha', etiqueta: 'Ficha', contenido: formulario },
+            { valor: 'precios', etiqueta: 'Precios especiales', contenido: <PreciosEspecialesCliente clienteId={cliente.id} /> },
+            { valor: 'historial', etiqueta: 'Historial', contenido: <HistorialDocumento tabla="clientes" documentoId={cliente.id} /> },
+          ]}
+        />
+      ) : (
+        formulario
+      )}
 
       {cliente && hayPropuesta && (
         <DialogoConfirmacion

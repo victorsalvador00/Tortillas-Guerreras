@@ -31,14 +31,17 @@ import type {
   CancelarVentaRequest,
   ClienteDto,
   CobroRegistrado,
+  GrupoClienteDto,
   GuardarCanalRequest,
   GuardarClienteRequest,
+  GuardarGrupoClienteRequest,
   GuardarListaPrecioRequest,
   GuardarPedidoRequest,
   HttpValidationProblemDetails,
   ListaPrecioDto,
   ListarClientesParams,
   ListarCobrosParams,
+  ListarGruposClientesParams,
   ListarIncidenciasParams,
   ListarPedidosParams,
   ListarVentasParams,
@@ -49,6 +52,10 @@ import type {
   PaginadoOfVentaDto,
   PartidasListaRequest,
   PedidoDto,
+  PrecioClienteDto,
+  PreciosClienteRequest,
+  ProductoExclusivoDto,
+  ProductosExclusivosRequest,
   RegistrarCobroRequest,
   RegistrarVentaWebRequest,
   RevisarIncidenciaRequest,
@@ -1047,6 +1054,497 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getAprobarUbicacionClienteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listarPreciosCliente = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<PrecioClienteDto[]>(
+      {url: `/api/v1/ventas/clientes/${id}/precios`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarPreciosClienteQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/ventas/clientes/${id}/precios`
+    ] as const;
+    }
+
+    
+export const getListarPreciosClienteQueryOptions = <TData = Awaited<ReturnType<typeof listarPreciosCliente>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarPreciosClienteQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarPreciosCliente>>> = ({ signal }) => listarPreciosCliente(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarPreciosClienteQueryResult = NonNullable<Awaited<ReturnType<typeof listarPreciosCliente>>>
+export type ListarPreciosClienteQueryError = ErrorType<unknown>
+
+
+export function useListarPreciosCliente<TData = Awaited<ReturnType<typeof listarPreciosCliente>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarPreciosCliente>>,
+          TError,
+          Awaited<ReturnType<typeof listarPreciosCliente>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarPreciosCliente<TData = Awaited<ReturnType<typeof listarPreciosCliente>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarPreciosCliente>>,
+          TError,
+          Awaited<ReturnType<typeof listarPreciosCliente>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarPreciosCliente<TData = Awaited<ReturnType<typeof listarPreciosCliente>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarPreciosCliente<TData = Awaited<ReturnType<typeof listarPreciosCliente>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPreciosCliente>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarPreciosClienteQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const guardarPreciosCliente = (
+    id: string,
+    preciosClienteRequest: BodyType<PreciosClienteRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<PrecioClienteDto[]>(
+      {url: `/api/v1/ventas/clientes/${id}/precios`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: preciosClienteRequest
+    },
+      options);
+    }
+  
+
+
+export const getGuardarPreciosClienteMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarPreciosCliente>>, TError,{id: string;data: BodyType<PreciosClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof guardarPreciosCliente>>, TError,{id: string;data: BodyType<PreciosClienteRequest>}, TContext> => {
+
+const mutationKey = ['guardarPreciosCliente'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof guardarPreciosCliente>>, {id: string;data: BodyType<PreciosClienteRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  guardarPreciosCliente(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GuardarPreciosClienteMutationResult = NonNullable<Awaited<ReturnType<typeof guardarPreciosCliente>>>
+    export type GuardarPreciosClienteMutationBody = BodyType<PreciosClienteRequest>
+    export type GuardarPreciosClienteMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useGuardarPreciosCliente = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarPreciosCliente>>, TError,{id: string;data: BodyType<PreciosClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof guardarPreciosCliente>>,
+        TError,
+        {id: string;data: BodyType<PreciosClienteRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getGuardarPreciosClienteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listarGruposClientes = (
+    params?: ListarGruposClientesParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<GrupoClienteDto[]>(
+      {url: `/api/v1/ventas/grupos-clientes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarGruposClientesQueryKey = (params?: ListarGruposClientesParams,) => {
+    return [
+    `/api/v1/ventas/grupos-clientes`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListarGruposClientesQueryOptions = <TData = Awaited<ReturnType<typeof listarGruposClientes>>, TError = ErrorType<unknown>>(params?: ListarGruposClientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarGruposClientesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarGruposClientes>>> = ({ signal }) => listarGruposClientes(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarGruposClientesQueryResult = NonNullable<Awaited<ReturnType<typeof listarGruposClientes>>>
+export type ListarGruposClientesQueryError = ErrorType<unknown>
+
+
+export function useListarGruposClientes<TData = Awaited<ReturnType<typeof listarGruposClientes>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListarGruposClientesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarGruposClientes>>,
+          TError,
+          Awaited<ReturnType<typeof listarGruposClientes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarGruposClientes<TData = Awaited<ReturnType<typeof listarGruposClientes>>, TError = ErrorType<unknown>>(
+ params?: ListarGruposClientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarGruposClientes>>,
+          TError,
+          Awaited<ReturnType<typeof listarGruposClientes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarGruposClientes<TData = Awaited<ReturnType<typeof listarGruposClientes>>, TError = ErrorType<unknown>>(
+ params?: ListarGruposClientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarGruposClientes<TData = Awaited<ReturnType<typeof listarGruposClientes>>, TError = ErrorType<unknown>>(
+ params?: ListarGruposClientesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGruposClientes>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarGruposClientesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const crearGrupoCliente = (
+    guardarGrupoClienteRequest: BodyType<GuardarGrupoClienteRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<GrupoClienteDto>(
+      {url: `/api/v1/ventas/grupos-clientes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: guardarGrupoClienteRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCrearGrupoClienteMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearGrupoCliente>>, TError,{data: BodyType<GuardarGrupoClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof crearGrupoCliente>>, TError,{data: BodyType<GuardarGrupoClienteRequest>}, TContext> => {
+
+const mutationKey = ['crearGrupoCliente'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof crearGrupoCliente>>, {data: BodyType<GuardarGrupoClienteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  crearGrupoCliente(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CrearGrupoClienteMutationResult = NonNullable<Awaited<ReturnType<typeof crearGrupoCliente>>>
+    export type CrearGrupoClienteMutationBody = BodyType<GuardarGrupoClienteRequest>
+    export type CrearGrupoClienteMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useCrearGrupoCliente = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearGrupoCliente>>, TError,{data: BodyType<GuardarGrupoClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof crearGrupoCliente>>,
+        TError,
+        {data: BodyType<GuardarGrupoClienteRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCrearGrupoClienteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const actualizarGrupoCliente = (
+    id: string,
+    guardarGrupoClienteRequest: BodyType<GuardarGrupoClienteRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<GrupoClienteDto>(
+      {url: `/api/v1/ventas/grupos-clientes/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: guardarGrupoClienteRequest
+    },
+      options);
+    }
+  
+
+
+export const getActualizarGrupoClienteMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarGrupoCliente>>, TError,{id: string;data: BodyType<GuardarGrupoClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof actualizarGrupoCliente>>, TError,{id: string;data: BodyType<GuardarGrupoClienteRequest>}, TContext> => {
+
+const mutationKey = ['actualizarGrupoCliente'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof actualizarGrupoCliente>>, {id: string;data: BodyType<GuardarGrupoClienteRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  actualizarGrupoCliente(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActualizarGrupoClienteMutationResult = NonNullable<Awaited<ReturnType<typeof actualizarGrupoCliente>>>
+    export type ActualizarGrupoClienteMutationBody = BodyType<GuardarGrupoClienteRequest>
+    export type ActualizarGrupoClienteMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useActualizarGrupoCliente = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarGrupoCliente>>, TError,{id: string;data: BodyType<GuardarGrupoClienteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof actualizarGrupoCliente>>,
+        TError,
+        {id: string;data: BodyType<GuardarGrupoClienteRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getActualizarGrupoClienteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listarProductoExclusivos = (
+    productoId: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<ProductoExclusivoDto[]>(
+      {url: `/api/v1/ventas/productos/${productoId}/exclusivos`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarProductoExclusivosQueryKey = (productoId?: string,) => {
+    return [
+    `/api/v1/ventas/productos/${productoId}/exclusivos`
+    ] as const;
+    }
+
+    
+export const getListarProductoExclusivosQueryOptions = <TData = Awaited<ReturnType<typeof listarProductoExclusivos>>, TError = ErrorType<unknown>>(productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarProductoExclusivosQueryKey(productoId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarProductoExclusivos>>> = ({ signal }) => listarProductoExclusivos(productoId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(productoId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarProductoExclusivosQueryResult = NonNullable<Awaited<ReturnType<typeof listarProductoExclusivos>>>
+export type ListarProductoExclusivosQueryError = ErrorType<unknown>
+
+
+export function useListarProductoExclusivos<TData = Awaited<ReturnType<typeof listarProductoExclusivos>>, TError = ErrorType<unknown>>(
+ productoId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProductoExclusivos>>,
+          TError,
+          Awaited<ReturnType<typeof listarProductoExclusivos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProductoExclusivos<TData = Awaited<ReturnType<typeof listarProductoExclusivos>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProductoExclusivos>>,
+          TError,
+          Awaited<ReturnType<typeof listarProductoExclusivos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProductoExclusivos<TData = Awaited<ReturnType<typeof listarProductoExclusivos>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarProductoExclusivos<TData = Awaited<ReturnType<typeof listarProductoExclusivos>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductoExclusivos>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarProductoExclusivosQueryOptions(productoId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const guardarProductoExclusivos = (
+    productoId: string,
+    productosExclusivosRequest: BodyType<ProductosExclusivosRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<ProductoExclusivoDto[]>(
+      {url: `/api/v1/ventas/productos/${productoId}/exclusivos`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: productosExclusivosRequest
+    },
+      options);
+    }
+  
+
+
+export const getGuardarProductoExclusivosMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarProductoExclusivos>>, TError,{productoId: string;data: BodyType<ProductosExclusivosRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof guardarProductoExclusivos>>, TError,{productoId: string;data: BodyType<ProductosExclusivosRequest>}, TContext> => {
+
+const mutationKey = ['guardarProductoExclusivos'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof guardarProductoExclusivos>>, {productoId: string;data: BodyType<ProductosExclusivosRequest>}> = (props) => {
+          const {productoId,data} = props ?? {};
+
+          return  guardarProductoExclusivos(productoId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GuardarProductoExclusivosMutationResult = NonNullable<Awaited<ReturnType<typeof guardarProductoExclusivos>>>
+    export type GuardarProductoExclusivosMutationBody = BodyType<ProductosExclusivosRequest>
+    export type GuardarProductoExclusivosMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useGuardarProductoExclusivos = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarProductoExclusivos>>, TError,{productoId: string;data: BodyType<ProductosExclusivosRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof guardarProductoExclusivos>>,
+        TError,
+        {productoId: string;data: BodyType<ProductosExclusivosRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getGuardarProductoExclusivosMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

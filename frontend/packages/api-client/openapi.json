@@ -4278,6 +4278,299 @@
         }
       }
     },
+    "/api/v1/ventas/clientes/{id}/precios": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarPreciosCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrecioClienteDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "guardarPreciosCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreciosClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrecioClienteDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/grupos-clientes": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarGruposClientes",
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrupoClienteDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "crearGrupoCliente",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarGrupoClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrupoClienteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/grupos-clientes/{id}": {
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "actualizarGrupoCliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarGrupoClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrupoClienteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ventas/productos/{productoId}/exclusivos": {
+      "get": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "listarProductoExclusivos",
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductoExclusivoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ventas"
+        ],
+        "operationId": "guardarProductoExclusivos",
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductosExclusivosRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductoExclusivoDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ventas/pedidos": {
       "get": {
         "tags": [
@@ -7516,6 +7809,24 @@
                 "format": "uuid"
               }
             }
+          },
+          "preciosCliente": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PrecioClienteSync"
+            }
+          },
+          "productosExclusivos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ProductoExclusivoSync"
+            }
           }
         }
       },
@@ -7851,6 +8162,19 @@
           },
           "activo": {
             "type": "boolean"
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "grupo": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8047,6 +8371,13 @@
           "versionSync": {
             "type": "integer",
             "format": "int64"
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -9758,6 +10089,57 @@
           "Simplificado"
         ]
       },
+      "GrupoClienteDto": {
+        "required": [
+          "id",
+          "clave",
+          "nombre",
+          "canalId",
+          "canal",
+          "clientes",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "listaPrecioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "listaPrecio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "GuardarAlmacenRequest": {
         "required": [
           "codigo",
@@ -9823,7 +10205,6 @@
         "required": [
           "nombre",
           "canalId",
-          "listaPrecioId",
           "condicionPago",
           "diasCredito",
           "requiereFactura",
@@ -9845,7 +10226,10 @@
             "format": "uuid"
           },
           "listaPrecioId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "condicionPago": {
@@ -9953,6 +10337,13 @@
           },
           "activo": {
             "type": "boolean"
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -10055,6 +10446,37 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "GuardarGrupoClienteRequest": {
+        "required": [
+          "clave",
+          "nombre",
+          "canalId",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listaPrecioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "activo": {
+            "type": "boolean"
           }
         }
       },
@@ -13333,6 +13755,120 @@
           "ios"
         ]
       },
+      "PrecioClienteDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad",
+          "precioUnitario",
+          "vigenteDesde"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "vigenteDesde": {
+            "type": "string",
+            "format": "date"
+          },
+          "precioLista": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "PrecioClienteRequest": {
+        "required": [
+          "productoId",
+          "unidadId",
+          "precioUnitario",
+          "vigenteDesde"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "vigenteDesde": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "PrecioClienteSync": {
+        "required": [
+          "clienteId",
+          "productoId",
+          "unidadId",
+          "precioUnitario",
+          "vigenteDesde",
+          "activo",
+          "versionSync"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "precioUnitario": {
+            "type": "number",
+            "format": "double"
+          },
+          "vigenteDesde": {
+            "type": "string",
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "versionSync": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PrecioProveedorDto": {
         "required": [
           "productoId",
@@ -13377,6 +13913,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HistorialPrecioDto"
+            }
+          }
+        }
+      },
+      "PreciosClienteRequest": {
+        "required": [
+          "precios"
+        ],
+        "type": "object",
+        "properties": {
+          "precios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrecioClienteRequest"
             }
           }
         }
@@ -13634,6 +14184,113 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConversionDto"
+            }
+          }
+        }
+      },
+      "ProductoExclusivoDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cliente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "grupo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ProductoExclusivoRequest": {
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ProductoExclusivoSync": {
+        "required": [
+          "id",
+          "productoId",
+          "versionSync"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "grupoClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "versionSync": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ProductosExclusivosRequest": {
+        "required": [
+          "exclusivos"
+        ],
+        "type": "object",
+        "properties": {
+          "exclusivos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductoExclusivoRequest"
             }
           }
         }
@@ -15445,7 +16102,8 @@
           "UbicacionPorAprobar",
           "DiferenciaLiquidacion",
           "CreditoExcedido",
-          "TotalDistinto"
+          "TotalDistinto",
+          "ProductoExclusivo"
         ]
       },
       "TipoLinea": {

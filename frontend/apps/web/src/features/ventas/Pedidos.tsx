@@ -11,6 +11,7 @@ import {
   useListarPedidos,
   useObtenerCliente,
   useObtenerListaPrecio,
+  useListarPreciosCliente,
   useObtenerPedido,
   type ClienteDto,
   type EstadoPedido,
@@ -40,7 +41,7 @@ import { HistorialDocumento } from '@/componentes/historial';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { EditorPartidasVenta, ResumenTotales } from './EditorPartidasVenta';
-import { calcularLineas, nuevaLinea, type LineaVenta } from './partidas';
+import { calcularLineas, combinarPrecios, nuevaLinea, type LineaVenta } from './partidas';
 import { SelectorCliente, SelectorRuta, useRutas } from './selectores';
 
 const ESTADOS: EstadoPedido[] = ['Capturado', 'Confirmado', 'Asignado', 'Entregado', 'EntregadoParcial', 'Cancelado'];
@@ -184,7 +185,9 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
   const [enviando, setEnviando] = useState(false);
   const cliente = useObtenerCliente(clienteId, { query: { enabled: !!clienteId } });
   const lista = useObtenerListaPrecio(cliente.data?.listaPrecioId ?? '', { query: { enabled: !!cliente.data } });
-  const calculo = calcularLineas(lineas, lista.data?.partidas);
+  const especiales = useListarPreciosCliente(clienteId, { query: { enabled: !!clienteId } });
+  const precios = combinarPrecios(lista.data?.partidas, especiales.data, fechaOperativa());
+  const calculo = calcularLineas(lineas, precios);
 
   const guardar = async () => {
     setError(null);
@@ -248,7 +251,7 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
           {!clienteId ? (
             <p className="m-0 text-sm text-muted">Elige el cliente para usar su lista de precios.</p>
           ) : (
-            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={lista.data?.partidas} />
+            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={precios} />
           )}
         </Tarjeta>
         <BarraAccion resumen={<span>Total <strong>{formatoMoneda(calculo.totales.total / 100)}</strong></span>}>

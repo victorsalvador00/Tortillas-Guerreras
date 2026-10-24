@@ -237,6 +237,10 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("text")
                         .HasColumnName("estado");
 
+                    b.Property<Guid?>("GrupoClienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grupo_cliente_id");
+
                     b.Property<decimal?>("Latitud")
                         .HasPrecision(9, 6)
                         .HasColumnType("numeric(9,6)")
@@ -326,6 +330,9 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.HasIndex("Codigo")
                         .IsUnique()
                         .HasDatabaseName("ux_clientes_codigo");
+
+                    b.HasIndex("GrupoClienteId")
+                        .HasDatabaseName("ix_clientes_grupo_cliente_id");
 
                     b.HasIndex("ListaPrecioId")
                         .HasDatabaseName("ix_clientes_lista_precio_id");
@@ -447,6 +454,73 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.ToTable("cobros_aplicaciones", "ventas");
                 });
 
+            modelBuilder.Entity("TG.Ventas.Dominio.GrupoCliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTimeOffset?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<Guid?>("ActualizadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actualizado_por");
+
+                    b.Property<Guid>("CanalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("canal_id");
+
+                    b.Property<string>("Clave")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("clave");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<Guid?>("ListaPrecioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lista_precio_id");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nombre");
+
+                    b.Property<long>("VersionSync")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version_sync");
+
+                    b.HasKey("Id")
+                        .HasName("pk_grupos_clientes");
+
+                    b.HasIndex("CanalId")
+                        .HasDatabaseName("ix_grupos_clientes_canal_id");
+
+                    b.HasIndex("Clave")
+                        .IsUnique()
+                        .HasDatabaseName("ux_grupos_clientes_clave");
+
+                    b.HasIndex("ListaPrecioId")
+                        .HasDatabaseName("ix_grupos_clientes_lista_precio_id");
+
+                    b.HasIndex("VersionSync")
+                        .HasDatabaseName("ix_grupos_clientes_version_sync");
+
+                    b.ToTable("grupos_clientes", "ventas");
+                });
+
             modelBuilder.Entity("TG.Ventas.Dominio.Incidencia", b =>
                 {
                     b.Property<Guid>("Id")
@@ -517,7 +591,7 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         {
                             t.HasCheckConstraint("ck_incidencias_estado", "estado IN ('Abierta', 'Revisada')");
 
-                            t.HasCheckConstraint("ck_incidencias_tipo", "tipo IN ('ExistenciaNegativaRuta', 'GpsFueraDeRango', 'GpsImpreciso', 'SinGps', 'PrecioDistinto', 'UbicacionPorAprobar', 'DiferenciaLiquidacion', 'CreditoExcedido', 'TotalDistinto')");
+                            t.HasCheckConstraint("ck_incidencias_tipo", "tipo IN ('ExistenciaNegativaRuta', 'GpsFueraDeRango', 'GpsImpreciso', 'SinGps', 'PrecioDistinto', 'UbicacionPorAprobar', 'DiferenciaLiquidacion', 'CreditoExcedido', 'TotalDistinto', 'ProductoExclusivo')");
                         });
                 });
 
@@ -781,6 +855,96 @@ namespace TG.Ventas.Infraestructura.Migraciones
                     b.ToTable("pedidos_partidas", "ventas");
                 });
 
+            modelBuilder.Entity("TG.Ventas.Dominio.PrecioCliente", b =>
+                {
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
+
+                    b.Property<Guid>("ProductoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("producto_id");
+
+                    b.Property<Guid>("UnidadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("unidad_id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("precio_unitario");
+
+                    b.Property<long>("VersionSync")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version_sync");
+
+                    b.Property<DateOnly>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.HasKey("ClienteId", "ProductoId", "UnidadId")
+                        .HasName("pk_precios_cliente");
+
+                    b.HasIndex("VersionSync")
+                        .HasDatabaseName("ix_precios_cliente_version_sync");
+
+                    b.ToTable("precios_cliente", "ventas");
+                });
+
+            modelBuilder.Entity("TG.Ventas.Dominio.ProductoExclusivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<Guid?>("ClienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
+
+                    b.Property<Guid?>("GrupoClienteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grupo_cliente_id");
+
+                    b.Property<Guid>("ProductoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("producto_id");
+
+                    b.Property<long>("VersionSync")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version_sync");
+
+                    b.HasKey("Id")
+                        .HasName("pk_productos_exclusivos");
+
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_productos_exclusivos_cliente_id");
+
+                    b.HasIndex("GrupoClienteId")
+                        .HasDatabaseName("ix_productos_exclusivos_grupo_cliente_id");
+
+                    b.HasIndex("VersionSync")
+                        .HasDatabaseName("ix_productos_exclusivos_version_sync");
+
+                    b.HasIndex("ProductoId", "ClienteId", "GrupoClienteId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_productos_exclusivos");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProductoId", "ClienteId", "GrupoClienteId"), false);
+
+                    b.ToTable("productos_exclusivos", "ventas", t =>
+                        {
+                            t.HasCheckConstraint("ck_productos_exclusivos_cliente_o_grupo", "(cliente_id IS NULL) <> (grupo_cliente_id IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("TG.Ventas.Dominio.Venta", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1021,6 +1185,11 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("pedido_partida_id");
 
+                    b.Property<decimal?>("PrecioReferencia")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("precio_referencia");
+
                     b.Property<decimal>("PrecioUnitario")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
@@ -1066,6 +1235,12 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .IsRequired()
                         .HasConstraintName("fk_clientes_canales_canal_id");
 
+                    b.HasOne("TG.Ventas.Dominio.GrupoCliente", null)
+                        .WithMany()
+                        .HasForeignKey("GrupoClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_clientes_grupos_clientes_grupo_cliente_id");
+
                     b.HasOne("TG.Ventas.Dominio.ListaPrecio", null)
                         .WithMany()
                         .HasForeignKey("ListaPrecioId")
@@ -1082,6 +1257,22 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_cobros_aplicaciones_cobros_cobro_id");
+                });
+
+            modelBuilder.Entity("TG.Ventas.Dominio.GrupoCliente", b =>
+                {
+                    b.HasOne("TG.Ventas.Dominio.Canal", null)
+                        .WithMany()
+                        .HasForeignKey("CanalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grupos_clientes_canales_canal_id");
+
+                    b.HasOne("TG.Ventas.Dominio.ListaPrecio", null)
+                        .WithMany()
+                        .HasForeignKey("ListaPrecioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_grupos_clientes_listas_precio_lista_precio_id");
                 });
 
             modelBuilder.Entity("TG.Ventas.Dominio.ListaPrecioPartida", b =>
@@ -1112,6 +1303,31 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_pedidos_partidas_pedidos_pedido_id");
+                });
+
+            modelBuilder.Entity("TG.Ventas.Dominio.PrecioCliente", b =>
+                {
+                    b.HasOne("TG.Ventas.Dominio.Cliente", null)
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_precios_cliente_clientes_cliente_id");
+                });
+
+            modelBuilder.Entity("TG.Ventas.Dominio.ProductoExclusivo", b =>
+                {
+                    b.HasOne("TG.Ventas.Dominio.Cliente", null)
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_productos_exclusivos_clientes_cliente_id");
+
+                    b.HasOne("TG.Ventas.Dominio.GrupoCliente", null)
+                        .WithMany()
+                        .HasForeignKey("GrupoClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_productos_exclusivos_grupos_clientes_grupo_cliente_id");
                 });
 
             modelBuilder.Entity("TG.Ventas.Dominio.Venta", b =>

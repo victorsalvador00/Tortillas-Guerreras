@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { GuardarClienteRequestCodigo } from './guardarClienteRequestCodigo';
+import type { GuardarClienteRequestListaPrecioId } from './guardarClienteRequestListaPrecioId';
 import type { CondicionPago } from './condicionPago';
 import type { GuardarClienteRequestLimiteCredito } from './guardarClienteRequestLimiteCredito';
 import type { GuardarClienteRequestRfc } from './guardarClienteRequestRfc';
@@ -22,12 +23,13 @@ import type { GuardarClienteRequestEstado } from './guardarClienteRequestEstado'
 import type { GuardarClienteRequestCodigoPostal } from './guardarClienteRequestCodigoPostal';
 import type { GuardarClienteRequestLatitud } from './guardarClienteRequestLatitud';
 import type { GuardarClienteRequestLongitud } from './guardarClienteRequestLongitud';
+import type { GuardarClienteRequestGrupoClienteId } from './guardarClienteRequestGrupoClienteId';
 
 export interface GuardarClienteRequest {
   codigo?: GuardarClienteRequestCodigo;
   nombre: string;
   canalId: string;
-  listaPrecioId: string;
+  listaPrecioId?: GuardarClienteRequestListaPrecioId;
   condicionPago: CondicionPago;
   diasCredito: number;
   limiteCredito?: GuardarClienteRequestLimiteCredito;
@@ -47,4 +49,5 @@ export interface GuardarClienteRequest {
   latitud?: GuardarClienteRequestLatitud;
   longitud?: GuardarClienteRequestLongitud;
   activo: boolean;
+  grupoClienteId?: GuardarClienteRequestGrupoClienteId;
 }

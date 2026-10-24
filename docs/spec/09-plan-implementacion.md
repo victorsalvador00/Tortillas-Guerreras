@@ -129,7 +129,7 @@ regenerado (definición de terminado).
   `RutaDeVendedorAsync`; `IEstadoSincronizacionRuta` usa los dispositivos del chofer de la carga); `rutaCambiada` en el
   pull. Web: rutas y nueva carga. *Lee:* `logistica.md` (RN-LOG-12, 13), 05 (RN-SYN-09). *Acepta:* RN-LOG-12, 13,
   RN-LOG-31, RN-SYN-09 y el criterio de cambio de ruta de 06.
-- [ ] **T-8.5 Grupos de clientes, precios especiales y productos exclusivos** *(ajusta T-4.1, T-4.4)*. Tablas,
+- [x] **T-8.5 Grupos de clientes, precios especiales y productos exclusivos** *(ajusta T-4.1, T-4.4)*. Tablas,
   endpoints, pantallas; precio especial en `RegistrarVenta`, pedidos y venta web; `ventas_partidas.precio_referencia`;
   bajada a la app
   (`precios_cliente`, `productos_exclusivos`). *Lee:* `ventas.md` (RN-VEN-01, 11 a 14). *Acepta:* RN-VEN-01, 11 a 14

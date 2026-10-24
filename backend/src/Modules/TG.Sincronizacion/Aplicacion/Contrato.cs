@@ -14,7 +14,14 @@ public sealed record ProductoSync(Guid Id, string Sku, string Nombre, string Tip
 public sealed record ClienteSync(Guid Id, string Codigo, string Nombre, string CanalClave, Guid ListaPrecioId,
     string CondicionPago, int DiasCredito, decimal? LimiteCredito, bool RequiereFactura, string? Rfc, string? RazonSocial,
     string? Telefono, string? Direccion, decimal? Latitud, decimal? Longitud, bool UbicacionAprobada, bool EsGenerico,
+    bool Activo, long VersionSync, Guid? GrupoClienteId = null);
+
+/// <summary>RN-VEN-12: gana sobre la lista desde <c>VigenteDesde</c>. <c>Activo = false</c>: la app lo borra.</summary>
+public sealed record PrecioClienteSync(Guid ClienteId, Guid ProductoId, Guid UnidadId, decimal PrecioUnitario, DateOnly VigenteDesde,
     bool Activo, long VersionSync);
+
+/// <summary>RN-VEN-14: el producto solo se ofrece al cliente o a los clientes del grupo. Los inactivos van en eliminados.</summary>
+public sealed record ProductoExclusivoSync(Guid Id, Guid ProductoId, Guid? ClienteId, Guid? GrupoClienteId, long VersionSync);
 
 public sealed record RutaClienteSync(Guid RutaId, Guid ClienteId, int OrdenVisita, IReadOnlyList<int> DiasVisita, bool Activo,
     long VersionSync);
@@ -50,7 +57,9 @@ public sealed record CambiosSync(
     IReadOnlyList<SaldoClienteSync> SaldosClientes,
     IReadOnlyList<MotivoMermaSync> MotivosMerma,
     IReadOnlyList<ParametroSync> Parametros,
-    IReadOnlyDictionary<string, IReadOnlyList<Guid>> Eliminados);
+    IReadOnlyDictionary<string, IReadOnlyList<Guid>> Eliminados,
+    IReadOnlyList<PrecioClienteSync>? PreciosCliente = null,
+    IReadOnlyList<ProductoExclusivoSync>? ProductosExclusivos = null);
 
 public sealed record RutaSync(Guid Id, string Codigo, string Nombre, Guid AlmacenId);
 

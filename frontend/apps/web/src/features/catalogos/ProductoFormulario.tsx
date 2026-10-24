@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { HistorialDocumento } from '@/componentes/historial';
+import { ExclusividadProducto } from '@/features/ventas/GruposPrecios';
 import { TIPOS_PRODUCTO } from './Productos';
 
 /** RN-CAT-04: banderas propuestas por tipo (editables). */
@@ -422,6 +423,7 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
           onCambiar={setPestana}
           pestanas={[
             { valor: 'ficha', etiqueta: 'Ficha', contenido: formulario },
+            ...(producto.esVendible ? [{ valor: 'exclusividad', etiqueta: 'Exclusividad', contenido: <ExclusividadProducto productoId={producto.id} /> }] : []),
             { valor: 'historial', etiqueta: 'Historial', contenido: <HistorialDocumento tabla="productos" documentoId={producto.id} /> },
           ]}
         />

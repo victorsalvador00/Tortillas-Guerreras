@@ -23,6 +23,8 @@ import type { ClienteDtoLatitud } from './clienteDtoLatitud';
 import type { ClienteDtoLongitud } from './clienteDtoLongitud';
 import type { ClienteDtoLatitudPropuesta } from './clienteDtoLatitudPropuesta';
 import type { ClienteDtoLongitudPropuesta } from './clienteDtoLongitudPropuesta';
+import type { ClienteDtoGrupoClienteId } from './clienteDtoGrupoClienteId';
+import type { ClienteDtoGrupo } from './clienteDtoGrupo';
 
 export interface ClienteDto {
   id: string;
@@ -55,4 +57,6 @@ export interface ClienteDto {
   longitudPropuesta?: ClienteDtoLongitudPropuesta;
   esGenerico: boolean;
   activo: boolean;
+  grupoClienteId?: ClienteDtoGrupoClienteId;
+  grupo?: ClienteDtoGrupo;
 }

@@ -99,4 +99,5 @@ export const ETIQUETAS_INCIDENCIA: Record<string, string> = {
   DiferenciaLiquidacion: 'Diferencia en liquidación',
   CreditoExcedido: 'Crédito excedido',
   TotalDistinto: 'Total distinto',
+  ProductoExclusivo: 'Producto exclusivo de otro cliente',
 };

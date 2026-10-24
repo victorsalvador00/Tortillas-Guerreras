@@ -54,6 +54,8 @@ export interface ClienteSync {
   esGenerico: boolean;
   activo: boolean;
   versionSync: number;
+  /** Grupo del cliente (RN-VEN-14). */
+  grupoClienteId: string | null;
 }
 
 export interface RutaClienteSync {
@@ -119,6 +121,26 @@ export interface PedidoSync {
   partidas: PedidoPartidaSync[];
 }
 
+/** RN-VEN-12: gana sobre la lista desde `vigenteDesde`. `activo = false`: la app lo borra. */
+export interface PrecioClienteSync {
+  clienteId: string;
+  productoId: string;
+  unidadId: string;
+  precioUnitario: number;
+  vigenteDesde: string;
+  activo: boolean;
+  versionSync: number;
+}
+
+/** RN-VEN-14: el producto solo se ofrece al cliente o a los clientes del grupo; llegan todos, también de otras rutas. */
+export interface ProductoExclusivoSync {
+  id: string;
+  productoId: string;
+  clienteId: string | null;
+  grupoClienteId: string | null;
+  versionSync: number;
+}
+
 export interface SaldoClienteSync {
   clienteId: string;
   saldo: number;
@@ -151,8 +173,10 @@ export interface CambiosSync {
   saldosClientes: SaldoClienteSync[];
   motivosMerma: MotivoMermaSync[];
   parametros: ParametroSync[];
+  preciosCliente: PrecioClienteSync[];
+  productosExclusivos: ProductoExclusivoSync[];
   /** Ids que la app debe borrar por colección (inactivos o fuera de alcance). `rutasClientes` usa el `clienteId`. */
-  eliminados: Partial<Record<'productos' | 'clientes' | 'rutasClientes' | 'envios' | 'pedidos' | 'motivosMerma', string[]>>;
+  eliminados: Partial<Record<'productos' | 'clientes' | 'rutasClientes' | 'envios' | 'pedidos' | 'motivosMerma' | 'productosExclusivos', string[]>>;
 }
 
 export interface RespuestaPull {

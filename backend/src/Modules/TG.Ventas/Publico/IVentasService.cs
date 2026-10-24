@@ -93,6 +93,9 @@ public enum TipoIncidencia
 
     /// <summary>El total de la app difiere del recalculado por el servidor en más de $0.05 (RN-VEN-02).</summary>
     TotalDistinto,
+
+    /// <summary>Venta de la app de un producto exclusivo de otro cliente o grupo (RN-VEN-14) [SUP-28].</summary>
+    ProductoExclusivo,
 }
 
 public enum EstadoIncidencia
@@ -190,6 +193,7 @@ public sealed record ClienteInfo(
     string Nombre,
     Guid CanalId,
     string CanalClave,
+    Guid? GrupoClienteId,
     Guid ListaPrecioId,
     CondicionPago CondicionPago,
     int DiasCredito,
@@ -351,8 +355,23 @@ public interface IIncidenciasService
 }
 
 /// <summary>Consultas para la bajada (pull) de la app: cambios con <c>version_sync &gt; desde</c>.</summary>
+/// <param name="Activo">Falso = la app lo borra.</param>
+public sealed record PrecioClienteInfo(Guid ClienteId, Guid ProductoId, Guid UnidadId, decimal PrecioUnitario, DateOnly VigenteDesde,
+    bool Activo, long VersionSync);
+
+public sealed record ProductoExclusivoInfo(Guid Id, Guid ProductoId, Guid? ClienteId, Guid? GrupoClienteId, bool Activo, long VersionSync);
+
 public interface IConsultasSyncVentas
 {
+    /// <summary>RN-VEN-12: precios especiales (activos e inactivos) de los clientes, cambiados después de <paramref name="desde"/>.</summary>
+    Task<IReadOnlyList<PrecioClienteInfo>> PreciosClientesAsync(IReadOnlyCollection<Guid> clienteIds, long desde, CancellationToken ct);
+
+    /// <summary>
+    /// RN-VEN-14: todos los registros de exclusividad cambiados después de <paramref name="desde"/>; la app necesita también
+    /// los de clientes ajenos a la ruta para ocultar el producto a los demás.
+    /// </summary>
+    Task<IReadOnlyList<ProductoExclusivoInfo>> ProductosExclusivosAsync(long desde, CancellationToken ct);
+
     Task<IReadOnlyList<ClienteInfo>> ClientesAsync(IReadOnlyCollection<Guid> ids, long desde, CancellationToken ct);
 
     Task<IReadOnlyList<ListaPrecioInfo>> ListasPrecioAsync(IReadOnlyCollection<Guid> listaIds, long desde, CancellationToken ct);
@@ -387,4 +406,5 @@ public static class ErroresVentas
     public const string NoEncontrado = "VEN-016";
     public const string VentaCancelada = "VEN-017";
     public const string PedidoOtraCarga = "VEN-018";
+    public const string ProductoExclusivo = "VEN-019";
 }

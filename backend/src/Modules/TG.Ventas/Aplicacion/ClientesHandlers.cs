@@ -232,13 +232,16 @@ public sealed record ClienteDto(
     decimal? LatitudPropuesta,
     decimal? LongitudPropuesta,
     bool EsGenerico,
-    bool Activo);
+    bool Activo,
+    Guid? GrupoClienteId,
+    string? Grupo);
 
+/// <param name="ListaPrecioId">Opcional si el cliente es de un grupo con lista: la hereda (RN-VEN-12).</param>
 public sealed record GuardarClienteRequest(
     string? Codigo,
     string Nombre,
     Guid CanalId,
-    Guid ListaPrecioId,
+    Guid? ListaPrecioId,
     CondicionPago CondicionPago,
     int DiasCredito,
     decimal? LimiteCredito,
@@ -257,7 +260,8 @@ public sealed record GuardarClienteRequest(
     string? CodigoPostal,
     decimal? Latitud,
     decimal? Longitud,
-    bool Activo);
+    bool Activo,
+    Guid? GrupoClienteId = null);
 
 public sealed partial class GuardarClienteValidator : AbstractValidator<GuardarClienteRequest>
 {
@@ -265,7 +269,7 @@ public sealed partial class GuardarClienteValidator : AbstractValidator<GuardarC
     {
         RuleFor(x => x.Nombre).NotEmpty().WithMessage("Captura el nombre del cliente.");
         RuleFor(x => x.CanalId).NotEmpty().WithMessage("Elige el canal.");
-        RuleFor(x => x.ListaPrecioId).NotEmpty().WithMessage("Elige la lista de precios.");
+        RuleFor(x => x.ListaPrecioId).NotEmpty().When(x => x.GrupoClienteId is null).WithMessage("Elige la lista de precios.");
         RuleFor(x => x.DiasCredito).GreaterThanOrEqualTo(0);
         RuleFor(x => x.LimiteCredito).GreaterThanOrEqualTo(0).When(x => x.LimiteCredito is not null);
         RuleFor(x => x.Rfc).Must(r => RfcRegex().IsMatch(r!.Trim().ToUpperInvariant()))
@@ -322,8 +326,8 @@ public sealed class ClientesHandler(VentasDbContext db, IGeneradorFolios folios,
         }
 
         var paginado = await consulta.OrderBy(c => c.Nombre).PaginarAsync(pagina, tamano, ct);
-        var (canales, listas) = await NombresAsync(ct);
-        return paginado.Map(c => ADto(c, canales, listas));
+        var (canales, listas, grupos) = await NombresAsync(ct);
+        return paginado.Map(c => ADto(c, canales, listas, grupos));
     }
 
     public async Task<Result<ClienteDto>> ObtenerAsync(Guid id, CancellationToken ct)
@@ -334,13 +338,30 @@ public sealed class ClientesHandler(VentasDbContext db, IGeneradorFolios folios,
             return Error.NoEncontrado(ErroresVentas.ClienteNoEncontrado, "El cliente no existe.");
         }
 
-        var (canales, listas) = await NombresAsync(ct);
-        return ADto(cliente, canales, listas);
+        var (canales, listas, grupos) = await NombresAsync(ct);
+        return ADto(cliente, canales, listas, grupos);
     }
 
     public async Task<Result<ClienteDto>> GuardarAsync(Guid? id, GuardarClienteRequest r, CancellationToken ct)
     {
-        if (!await db.Canales.AnyAsync(c => c.Id == r.CanalId, ct) || !await db.ListasPrecio.AnyAsync(l => l.Id == r.ListaPrecioId, ct))
+        GrupoCliente? grupo = null;
+        if (r.GrupoClienteId is { } grupoId)
+        {
+            grupo = await db.GruposClientes.AsNoTracking().FirstOrDefaultAsync(g => g.Id == grupoId, ct);
+            if (grupo is null)
+            {
+                return Error.Campo(ErroresVentas.NoEncontrado, "grupoClienteId", "El grupo no existe.");
+            }
+        }
+
+        // RN-VEN-12: sin lista indicada, la del grupo.
+        var listaId = r.ListaPrecioId is { } l && l != Guid.Empty ? l : grupo?.ListaPrecioId;
+        if (listaId is null)
+        {
+            return Error.Campo(ErroresVentas.NoEncontrado, "listaPrecioId", "Elige la lista de precios; el grupo no tiene una.");
+        }
+
+        if (!await db.Canales.AnyAsync(c => c.Id == r.CanalId, ct) || !await db.ListasPrecio.AnyAsync(x => x.Id == listaId, ct))
         {
             return Error.Validacion(ErroresVentas.NoEncontrado, "El canal o la lista de precios no existen.");
         }
@@ -382,7 +403,8 @@ public sealed class ClientesHandler(VentasDbContext db, IGeneradorFolios folios,
         static string? Limpio(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
         cliente.Nombre = r.Nombre.Trim();
         cliente.CanalId = r.CanalId;
-        cliente.ListaPrecioId = r.ListaPrecioId;
+        cliente.GrupoClienteId = r.GrupoClienteId;
+        cliente.ListaPrecioId = listaId.Value;
         cliente.CondicionPago = r.CondicionPago;
         cliente.DiasCredito = r.CondicionPago == CondicionPago.Credito ? r.DiasCredito : 0;
         cliente.LimiteCredito = r.CondicionPago == CondicionPago.Credito ? r.LimiteCredito : null;
@@ -460,14 +482,18 @@ public sealed class ClientesHandler(VentasDbContext db, IGeneradorFolios folios,
         return new SaldoClienteDto(id, saldo, cliente.LimiteCredito, cliente.LimiteCredito is { } l ? l - saldo : null);
     }
 
-    private async Task<(Dictionary<Guid, string> Canales, Dictionary<Guid, string> Listas)> NombresAsync(CancellationToken ct) =>
+    private async Task<(Dictionary<Guid, string> Canales, Dictionary<Guid, string> Listas, Dictionary<Guid, string> Grupos)> NombresAsync(
+        CancellationToken ct) =>
         (await db.Canales.AsNoTracking().ToDictionaryAsync(c => c.Id, c => c.Nombre, ct),
-            await db.ListasPrecio.AsNoTracking().ToDictionaryAsync(l => l.Id, l => l.Nombre, ct));
+            await db.ListasPrecio.AsNoTracking().ToDictionaryAsync(l => l.Id, l => l.Nombre, ct),
+            await db.GruposClientes.AsNoTracking().ToDictionaryAsync(g => g.Id, g => g.Nombre, ct));
 
-    private static ClienteDto ADto(Cliente c, Dictionary<Guid, string> canales, Dictionary<Guid, string> listas) => new(
+    private static ClienteDto ADto(Cliente c, Dictionary<Guid, string> canales, Dictionary<Guid, string> listas,
+        Dictionary<Guid, string> grupos) => new(
         c.Id, c.Codigo, c.Nombre, c.CanalId, canales.GetValueOrDefault(c.CanalId) ?? "?", c.ListaPrecioId,
         listas.GetValueOrDefault(c.ListaPrecioId) ?? "?", c.CondicionPago, c.DiasCredito, c.LimiteCredito, c.RequiereFactura,
         c.Rfc, c.RazonSocial, c.RegimenFiscal, c.CodigoPostalFiscal, c.UsoCfdi, c.EmailFacturacion, c.Telefono, c.Calle,
         c.Colonia, c.Municipio, c.Estado, c.CodigoPostal, c.Latitud, c.Longitud, c.UbicacionAprobada, c.LatitudPropuesta,
-        c.LongitudPropuesta, c.EsGenerico, c.Activo);
+        c.LongitudPropuesta, c.EsGenerico, c.Activo, c.GrupoClienteId,
+        c.GrupoClienteId is { } g ? grupos.GetValueOrDefault(g) : null);
 }

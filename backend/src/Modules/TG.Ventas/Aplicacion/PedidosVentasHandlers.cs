@@ -145,6 +145,14 @@ public sealed class PedidosHandler(
         }
 
         var productos = await catalogos.ObtenerProductosAsync(r.Partidas.Select(p => p.ProductoId), ct);
+        var ajenos = await db.ExclusivosAjenosAsync(cliente, r.Partidas.Select(p => p.ProductoId), ct);
+        if (ajenos.Count > 0)
+        {
+            var nombre = productos.GetValueOrDefault(ajenos.First())?.Nombre ?? "El producto";
+            return Error.Validacion(ErroresVentas.ProductoExclusivo, $"{nombre} es exclusivo de otros clientes; no se pide para {cliente.Nombre}.");
+        }
+
+        var hoy = fechaOperativa.Hoy();
         foreach (var p in r.Partidas)
         {
             if (!productos.TryGetValue(p.ProductoId, out var producto) || !producto.EsVendible || !producto.Activo)
@@ -158,9 +166,7 @@ public sealed class PedidosHandler(
                 return conversion.Error!;
             }
 
-            var precio = await db.ListasPrecioPartidas.AsNoTracking()
-                .Where(x => x.ListaPrecioId == cliente.ListaPrecioId && x.ProductoId == p.ProductoId && x.UnidadId == p.UnidadId)
-                .Select(x => (decimal?)x.PrecioUnitario).FirstOrDefaultAsync(ct);
+            var precio = await db.VigenteAsync(cliente, p.ProductoId, p.UnidadId, hoy, ct);
             if (precio is null)
             {
                 return Error.Validacion(ErroresVentas.SinPrecio, $"{producto.Nombre} no tiene precio en la lista del cliente.");
@@ -185,8 +191,42 @@ public sealed class PedidosHandler(
         return await ObtenerAsync(pedido.Id, ct);
     }
 
-    public Task<Result<PedidoDto>> ConfirmarAsync(Guid id, CancellationToken ct) =>
-        CambiarAsync(id, [EstadoPedido.Capturado], p => p.Estado = EstadoPedido.Confirmado, ct);
+    /// <summary>RN-VEN-13: al confirmar, el pedido toma los precios vigentes del cliente y desde ahí quedan fijos.</summary>
+    public async Task<Result<PedidoDto>> ConfirmarAsync(Guid id, CancellationToken ct)
+    {
+        var pedido = await db.Pedidos.Include(p => p.Partidas).FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (pedido is null)
+        {
+            return Error.NoEncontrado(ErroresVentas.PedidoNoEncontrado, "El pedido no existe.");
+        }
+
+        if (pedido.Estado != EstadoPedido.Capturado)
+        {
+            return Error.Conflicto(ErroresVentas.EstadoPedido, $"La acción no aplica a un pedido {pedido.Estado}.");
+        }
+
+        var cliente = await db.Clientes.AsNoTracking().FirstAsync(c => c.Id == pedido.ClienteId, ct);
+        var hoy = fechaOperativa.Hoy();
+        foreach (var partida in pedido.Partidas)
+        {
+            var precio = await db.VigenteAsync(cliente, partida.ProductoId, partida.UnidadId, hoy, ct);
+            if (precio is null)
+            {
+                return Error.Validacion(ErroresVentas.SinPrecio, "Un producto del pedido ya no tiene precio para el cliente.");
+            }
+
+            if (precio != partida.PrecioUnitario)
+            {
+                partida.PrecioUnitario = precio.Value;
+                partida.Importe = CalculoImportes.Partida(partida.Cantidad, partida.PrecioUnitario, partida.TasaIva, partida.TasaIeps).Importe;
+            }
+        }
+
+        Totales(pedido);
+        pedido.Estado = EstadoPedido.Confirmado;
+        await db.SaveChangesAsync(ct);
+        return await ObtenerAsync(id, ct);
+    }
 
     public Task<Result<PedidoDto>> CancelarAsync(Guid id, CancellationToken ct) =>
         CambiarAsync(id, [EstadoPedido.Capturado, EstadoPedido.Confirmado, EstadoPedido.Asignado], p => p.Estado = EstadoPedido.Cancelado, ct);

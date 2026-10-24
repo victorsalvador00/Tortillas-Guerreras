@@ -91,7 +91,7 @@ public sealed class PullHandler(
             var actual = r.Valor.Ruta;
             return new RespuestaPull(0, false, reloj.GetUtcNow(),
                 actual is null ? null : new RutaSync(actual.Id, actual.Codigo, actual.Nombre, actual.AlmacenId),
-                new CambiosSync([], [], [], [], [], [], [], [], [], new Dictionary<string, IReadOnlyList<Guid>>()), true);
+                new CambiosSync([], [], [], [], [], [], [], [], [], new Dictionary<string, IReadOnlyList<Guid>>(), [], []), true);
         }
 
         var maximo = cursor;
@@ -155,6 +155,21 @@ public sealed class PullHandler(
         var envios = new List<EnvioSync>();
         var pedidos = new List<PedidoSync>();
         var saldos = new List<SaldoClienteSync>();
+        var preciosCliente = new List<PrecioClienteSync>();
+
+        // RN-VEN-14: todos los registros (también de clientes fuera de la ruta) para ocultar el producto a los demás.
+        var exclusivos = new List<ProductoExclusivoSync>();
+        foreach (var x in await ventas.ProductosExclusivosAsync(cursor, ct))
+        {
+            Version(x.VersionSync);
+            if (!x.Activo)
+            {
+                Eliminar("productosExclusivos", x.Id);
+                continue;
+            }
+
+            exclusivos.Add(new ProductoExclusivoSync(x.Id, x.ProductoId, x.ClienteId, x.GrupoClienteId, x.VersionSync));
+        }
 
         if (ruta is not null)
         {
@@ -188,7 +203,7 @@ public sealed class PullHandler(
 
                 clientes.Add(new ClienteSync(c.Id, c.Codigo, c.Nombre, c.CanalClave, c.ListaPrecioId, c.CondicionPago.ToString(),
                     c.DiasCredito, c.LimiteCredito, c.RequiereFactura, c.Rfc, c.RazonSocial, c.Telefono, c.Direccion, c.Latitud,
-                    c.Longitud, c.UbicacionAprobada, c.EsGenerico, c.Activo, c.VersionSync));
+                    c.Longitud, c.UbicacionAprobada, c.EsGenerico, c.Activo, c.VersionSync, c.GrupoClienteId));
             }
 
             var listas = todos.Select(c => c.ListaPrecioId).Distinct().ToList();
@@ -200,6 +215,17 @@ public sealed class PullHandler(
             {
                 Version(p.VersionSync);
                 precios.Add(new PrecioSync(p.ListaPrecioId, p.ProductoId, p.UnidadId, p.PrecioUnitario, p.VersionSync));
+            }
+
+            // RN-VEN-12: precios especiales; los de un cliente recién asignado bajan completos.
+            var especiales = (await ventas.PreciosClientesAsync(activos, cursor, ct))
+                .Concat(nuevos.Count > 0 ? await ventas.PreciosClientesAsync(nuevos, 0, ct) : [])
+                .DistinctBy(p => (p.ClienteId, p.ProductoId, p.UnidadId));
+            foreach (var p in especiales)
+            {
+                Version(p.VersionSync);
+                preciosCliente.Add(new PrecioClienteSync(p.ClienteId, p.ProductoId, p.UnidadId, p.PrecioUnitario, p.VigenteDesde,
+                    p.Activo, p.VersionSync));
             }
 
             foreach (var e in await logistica.EnviosDeRutaAsync(ruta.Id, cursor, fechaOperativa.Hoy(), ct))
@@ -233,7 +259,7 @@ public sealed class PullHandler(
         }
 
         var cambios = new CambiosSync(productos, clientes, rutasClientes, precios, envios, pedidos, saldos, motivos, parametros,
-            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value));
+            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value), preciosCliente, exclusivos);
         return new RespuestaPull(maximo, false, reloj.GetUtcNow(),
             ruta is null ? null : new RutaSync(ruta.Id, ruta.Codigo, ruta.Nombre, ruta.AlmacenId), cambios, rutaCambiada);
     }

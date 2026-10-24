@@ -107,7 +107,7 @@ function pagina(cursor: number, hayMas: boolean, productos = 0): RespuestaPull {
         id: `p${cursor}-${i}`, sku: 'X', nombre: 'X', tipo: 'Terminado', unidadBaseId: 'u', unidadBaseClave: 'KG',
         unidadBaseDecimales: 3, manejaLote: true, tasaIva: 0, tasaIeps: null, activo: true, versionSync: cursor, conversiones: [],
       })),
-      clientes: [], rutasClientes: [], precios: [], envios: [], pedidos: [], saldosClientes: [], motivosMerma: [], parametros: [],
+      clientes: [], rutasClientes: [], precios: [], envios: [], pedidos: [], saldosClientes: [], motivosMerma: [], parametros: [], preciosCliente: [], productosExclusivos: [],
       eliminados: {},
     },
   };

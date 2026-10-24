@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcularLineas, nuevaLinea, precioDeLista, unidadesVenta, type LineaVenta } from './partidas';
+import { calcularLineas, combinarPrecios, nuevaLinea, precioDeLista, unidadesVenta, type LineaVenta } from './partidas';
 
 const tortilla: NonNullable<LineaVenta['producto']> = {
   id: 'tortilla',
@@ -59,5 +59,22 @@ describe('partidas de venta (RN-VEN-01 / RN-VEN-02)', () => {
     const sinCantidad = calcularLineas([{ ...nuevaLinea(), producto: tortilla, unidadId: 'kg', cantidad: '' }], precios);
     expect(sinCantidad.completas).toBe(false);
     expect(calcularLineas([], precios).completas).toBe(false);
+  });
+});
+
+describe('combinarPrecios', () => {
+  const lista = [
+    { productoId: 'a', unidadId: 'u', precioUnitario: 10 },
+    { productoId: 'b', unidadId: 'u', precioUnitario: 5 },
+  ];
+
+  it('RN-VEN-12: el precio especial vigente gana sobre la lista; el futuro se ignora', () => {
+    const especiales = [
+      { productoId: 'a', unidadId: 'u', precioUnitario: 8, vigenteDesde: '2026-10-01' },
+      { productoId: 'b', unidadId: 'u', precioUnitario: 4, vigenteDesde: '2026-11-01' },
+    ];
+    const precios = combinarPrecios(lista, especiales, '2026-10-24');
+    expect(precioDeLista(precios, 'a', 'u')).toBe(8);
+    expect(precioDeLista(precios, 'b', 'u')).toBe(5);
   });
 });

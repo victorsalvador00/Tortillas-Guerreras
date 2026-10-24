@@ -46,6 +46,21 @@ export function precioDeLista(
   return precios?.find((p) => p.productoId === productoId && p.unidadId === unidadId)?.precioUnitario ?? null;
 }
 
+type PrecioPartida = Pick<ListaPrecioPartidaDto, 'productoId' | 'unidadId' | 'precioUnitario'>;
+
+/** RN-VEN-12: los precios especiales vigentes en `fecha` reemplazan a los de la lista (misma regla que el servidor). */
+export function combinarPrecios(
+  lista: PrecioPartida[] | undefined,
+  especiales: (PrecioPartida & { vigenteDesde: string })[] | undefined,
+  fecha: string,
+): PrecioPartida[] | undefined {
+  if (!lista && !especiales) return undefined;
+  const vigentes = (especiales ?? []).filter((e) => e.vigenteDesde <= fecha);
+  const clave = (p: PrecioPartida) => `${p.productoId}|${p.unidadId}`;
+  const reemplazados = new Set(vigentes.map(clave));
+  return [...vigentes, ...(lista ?? []).filter((p) => !reemplazados.has(clave(p)))];
+}
+
 /**
  * Importes por partida y totales del documento en centavos (RN-VEN-02, mismo cálculo que el servidor). Las partidas
  * incompletas o sin precio no suman.

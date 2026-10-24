@@ -20,4 +20,5 @@ export const TipoIncidencia = {
   DiferenciaLiquidacion: 'DiferenciaLiquidacion',
   CreditoExcedido: 'CreditoExcedido',
   TotalDistinto: 'TotalDistinto',
+  ProductoExclusivo: 'ProductoExclusivo',
 } as const;

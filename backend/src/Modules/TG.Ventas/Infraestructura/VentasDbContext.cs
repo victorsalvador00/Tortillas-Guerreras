@@ -12,6 +12,9 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
     public DbSet<ListaPrecio> ListasPrecio => Set<ListaPrecio>();
     public DbSet<ListaPrecioPartida> ListasPrecioPartidas => Set<ListaPrecioPartida>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
+    public DbSet<GrupoCliente> GruposClientes => Set<GrupoCliente>();
+    public DbSet<PrecioCliente> PreciosClientes => Set<PrecioCliente>();
+    public DbSet<ProductoExclusivo> ProductosExclusivos => Set<ProductoExclusivo>();
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<Venta> Ventas => Set<Venta>();
     public DbSet<VentaPartida> VentasPartidas => Set<VentaPartida>();
@@ -45,9 +48,39 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
             e.HasIndex(p => p.VersionSync).HasDatabaseName("ix_listas_precio_partidas_version_sync");
         });
 
+        builder.Entity<GrupoCliente>(e =>
+        {
+            e.ToTable("grupos_clientes");
+            e.HasIndex(g => g.Clave).IsUnique().HasDatabaseName("ux_grupos_clientes_clave");
+            e.HasIndex(g => g.VersionSync).HasDatabaseName("ix_grupos_clientes_version_sync");
+            e.HasOne<Canal>().WithMany().HasForeignKey(g => g.CanalId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<ListaPrecio>().WithMany().HasForeignKey(g => g.ListaPrecioId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<PrecioCliente>(e =>
+        {
+            e.ToTable("precios_cliente");
+            e.HasKey(p => new { p.ClienteId, p.ProductoId, p.UnidadId });
+            e.Property(p => p.PrecioUnitario).Precio();
+            e.HasIndex(p => p.VersionSync).HasDatabaseName("ix_precios_cliente_version_sync");
+            e.HasOne<Cliente>().WithMany().HasForeignKey(p => p.ClienteId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductoExclusivo>(e =>
+        {
+            e.ToTable("productos_exclusivos", t => t.HasCheckConstraint("ck_productos_exclusivos_cliente_o_grupo",
+                "(cliente_id IS NULL) <> (grupo_cliente_id IS NULL)"));
+            e.HasIndex(p => new { p.ProductoId, p.ClienteId, p.GrupoClienteId }).IsUnique().AreNullsDistinct(false)
+                .HasDatabaseName("ux_productos_exclusivos");
+            e.HasIndex(p => p.VersionSync).HasDatabaseName("ix_productos_exclusivos_version_sync");
+            e.HasOne<Cliente>().WithMany().HasForeignKey(p => p.ClienteId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<GrupoCliente>().WithMany().HasForeignKey(p => p.GrupoClienteId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<Cliente>(e =>
         {
             e.ToTable("clientes");
+            e.HasOne<GrupoCliente>().WithMany().HasForeignKey(c => c.GrupoClienteId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(c => c.Codigo).IsUnique().HasDatabaseName("ux_clientes_codigo");
             e.HasIndex(c => c.RutaGenerico).IsUnique().HasFilter("ruta_generico IS NOT NULL").HasDatabaseName("ux_clientes_ruta_generico");
             e.HasIndex(c => c.VersionSync).HasDatabaseName("ix_clientes_version_sync");
@@ -124,6 +157,7 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
             e.Property(p => p.Cantidad).Cantidad();
             e.Property(p => p.CantidadBase).Cantidad();
             e.Property(p => p.PrecioUnitario).Precio();
+            e.Property(p => p.PrecioReferencia).Precio();
             e.Property(p => p.TasaIva).Tasa();
             e.Property(p => p.TasaIeps).Tasa();
             e.Property(p => p.Importe).Importe();

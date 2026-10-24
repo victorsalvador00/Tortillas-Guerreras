@@ -49,6 +49,29 @@ internal static class VentasEndpoints
         clientes.MapPost("/{id:guid}/aprobar-ubicacion", async (Guid id, AprobarUbicacionRequest r, ClientesHandler h, CancellationToken ct) =>
             (await h.AprobarUbicacionAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Supervisar).WithName("aprobarUbicacionCliente");
 
+        clientes.MapGet("/{id:guid}/precios", async (Guid id, PreciosClienteHandler h, CancellationToken ct) =>
+            (await h.ListarAsync(id, ct)).AHttp()).RequireAuthorization().WithName("listarPreciosCliente");
+        clientes.MapPut("/{id:guid}/precios", async (Guid id, PreciosClienteRequest r, PreciosClienteHandler h, CancellationToken ct) =>
+            (await h.ReemplazarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<PreciosClienteRequest>()
+            .WithName("guardarPreciosCliente");
+
+        var grupos = grupo.MapGroup("/grupos-clientes");
+        grupos.MapGet("/", (bool? activo, GruposClientesHandler h, CancellationToken ct) => h.ListarAsync(activo, ct))
+            .RequireAuthorization().WithName("listarGruposClientes");
+        grupos.MapPost("/", async (GuardarGrupoClienteRequest r, GruposClientesHandler h, CancellationToken ct) =>
+            (await h.GuardarAsync(null, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<GuardarGrupoClienteRequest>()
+            .WithName("crearGrupoCliente");
+        grupos.MapPut("/{id:guid}", async (Guid id, GuardarGrupoClienteRequest r, GruposClientesHandler h, CancellationToken ct) =>
+            (await h.GuardarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<GuardarGrupoClienteRequest>()
+            .WithName("actualizarGrupoCliente");
+
+        var exclusivos = grupo.MapGroup("/productos/{productoId:guid}/exclusivos");
+        exclusivos.MapGet("/", async (Guid productoId, ProductosExclusivosHandler h, CancellationToken ct) =>
+            (await h.ListarAsync(productoId, ct)).AHttp()).RequireAuthorization().WithName("listarProductoExclusivos");
+        exclusivos.MapPut("/", async (Guid productoId, ProductosExclusivosRequest r, ProductosExclusivosHandler h, CancellationToken ct) =>
+            (await h.ReemplazarAsync(productoId, r, ct)).AHttp()).RequireAuthorization(P.Configurar).Validar<ProductosExclusivosRequest>()
+            .WithName("guardarProductoExclusivos");
+
         var pedidos = grupo.MapGroup("/pedidos").RequireAuthorization(P.Pedidos);
         pedidos.MapGet("/", (EstadoPedido? estado, Guid? clienteId, Guid? rutaId, DateOnly? desde, DateOnly? hasta, Guid? envioId,
                 bool? sinCarga, int? pagina, int? tamano, PedidosHandler h, CancellationToken ct) =>

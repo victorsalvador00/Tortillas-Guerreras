@@ -67,6 +67,7 @@ export const MENU: SeccionMenu[] = [
       { etiqueta: 'Incidencias', ruta: '/ventas/incidencias', icono: 'warning', permiso: 'ventas.supervisar' },
       { etiqueta: 'Clientes', ruta: '/ventas/clientes', icono: 'groups', permiso: 'ventas.clientes' },
       { etiqueta: 'Listas de precio', ruta: '/ventas/listas-precio', icono: 'sell', permiso: 'ventas.configurar' },
+      { etiqueta: 'Grupos de clientes', ruta: '/ventas/grupos-clientes', icono: 'workspaces', permiso: 'ventas.configurar' },
     ],
   },
   {

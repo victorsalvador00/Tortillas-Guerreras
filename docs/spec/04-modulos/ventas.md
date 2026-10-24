@@ -51,6 +51,8 @@ Clientes, precios, pedidos y ventas (en ruta desde la app o desde la web).
   pedidos `Capturado` se recalculan al confirmar.
 - **RN-VEN-14** Si un producto tiene registros activos en `productos_exclusivos`, solo puede venderse o pedirse a
   los clientes listados o a los de los grupos listados (`VEN-019`). Sin registros = disponible para todos.
+  Una venta de la app con un producto exclusivo ajeno ya se entregó: se aplica con incidencia `ProductoExclusivo`
+  [SUP-28].
 - **RN-VEN-15** Pedidos con `fecha_entrega` ≥ fecha operativa de captura; se aceptan fechas futuras sin límite
   (entregas de fin de semana, pedidos "para el lunes"); fecha anterior: `VEN-021`. El consolidado, el estimado y las cargas sugeridas usan
   `fecha_entrega`, nunca `fecha`.
@@ -100,10 +102,16 @@ duplicado (RN-VEN-16), `VEN-021` fecha de entrega anterior a la fecha operativa 
 **(v0.2)**
 | Método | Ruta | Permiso |
 |---|---|---|
-| GET/POST/PUT | `/grupos-clientes` | `ventas.configurar` |
-| GET/PUT | `/clientes/{id}/precios` (precios especiales) | `ventas.configurar` |
-| GET/PUT | `/productos/{id}/exclusivos` | `ventas.configurar` |
+| GET/POST/PUT | `/grupos-clientes` | `ventas.configurar` (GET: cualquier usuario autenticado, lo usa el formulario de clientes) |
+| GET/PUT | `/clientes/{id}/precios` (precios especiales; el PUT reemplaza el conjunto y desactiva los que faltan) | `ventas.configurar` (GET: autenticado) |
+| GET/PUT | `/productos/{id}/exclusivos` (el PUT reemplaza el conjunto) | `ventas.configurar` (GET: autenticado) |
 | GET | `/pedidos?origen=App&estado=Capturado` (bandeja "Por validar") | `ventas.pedidos` |
+
+**Notas de implementación (T-8.5).** El precio vigente (especial o lista) se resuelve en un solo lugar
+(`Precios.VigenteAsync`) y lo usan `RegistrarVenta` (web y app), la entrega de pedidos (referencia) y los pedidos
+(captura y confirmación). En la app, la incidencia `PrecioDistinto` compara contra el vigente, no contra la lista.
+La entrega de un pedido conserva el precio del pedido y guarda como `precio_referencia` el vigente de ese día.
+`GuardarClienteRequest.listaPrecioId` es opcional si se indica `grupoClienteId` con lista.
 
 Las ventas, entregas, retornos y cobros desde la app entran por `sync` (ver
 `05-sincronizacion-offline.md`), que invoca los mismos handlers.

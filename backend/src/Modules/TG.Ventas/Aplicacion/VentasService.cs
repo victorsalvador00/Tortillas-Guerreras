@@ -44,7 +44,7 @@ public sealed class VentasService(
         GpsLectura? Gps);
 
     internal sealed record PartidaPreparada(Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal Factor, decimal Base,
-        decimal Precio, decimal TasaIva, decimal? TasaIeps, Guid? PedidoPartidaId);
+        decimal Precio, decimal TasaIva, decimal? TasaIeps, Guid? PedidoPartidaId, decimal? PrecioReferencia);
 
     internal sealed record IncidenciaPendiente(TipoIncidencia Tipo, object? Detalle);
 
@@ -90,6 +90,20 @@ public sealed class VentasService(
         List<IncidenciaPendiente> incidencias, CancellationToken ct)
     {
         var productos = await catalogos.ObtenerProductosAsync(c.Partidas.Select(p => p.ProductoId), ct);
+
+        // RN-VEN-14: en web se rechaza; la venta de la app ya se entregó y se aplica con incidencia [SUP-28].
+        var ajenos = await db.ExclusivosAjenosAsync(cliente, c.Partidas.Select(p => p.ProductoId), ct);
+        if (ajenos.Count > 0)
+        {
+            if (c.Origen != OrigenVenta.App)
+            {
+                var nombre = productos.GetValueOrDefault(ajenos.First())?.Nombre ?? "El producto";
+                return Error.Validacion(ErroresVentas.ProductoExclusivo, $"{nombre} es exclusivo de otros clientes; no se vende a {cliente.Nombre}.");
+            }
+
+            incidencias.Add(new IncidenciaPendiente(TipoIncidencia.ProductoExclusivo, new { productoIds = ajenos }));
+        }
+
         var resultado = new List<PartidaPreparada>();
         foreach (var p in c.Partidas)
         {
@@ -104,27 +118,24 @@ public sealed class VentasService(
                 return conversion.Error!;
             }
 
-            // RN-VEN-01: precio de la lista del cliente para el producto y la unidad.
-            var lista = await db.ListasPrecioPartidas.AsNoTracking()
-                .Where(x => x.ListaPrecioId == cliente.ListaPrecioId && x.ProductoId == p.ProductoId && x.UnidadId == p.UnidadId)
-                .Select(x => (decimal?)x.PrecioUnitario)
-                .FirstOrDefaultAsync(ct);
+            // RN-VEN-01/12: precio especial vigente del cliente o, si no tiene, el de su lista.
+            var vigente = await db.VigenteAsync(cliente, p.ProductoId, p.UnidadId, c.FechaOperativa, ct);
             decimal precio;
             if (c.Origen == OrigenVenta.App && p.PrecioUnitario is { } precioApp)
             {
                 precio = precioApp;
-                if (lista != precioApp)
+                if (vigente != precioApp)
                 {
                     incidencias.Add(new IncidenciaPendiente(TipoIncidencia.PrecioDistinto, new
                     {
                         productoId = p.ProductoId,
                         unidadId = p.UnidadId,
                         precioApp,
-                        precioLista = lista,
+                        precioLista = vigente,
                     }));
                 }
             }
-            else if (lista is { } precioLista)
+            else if (vigente is { } precioLista)
             {
                 precio = precioLista;
             }
@@ -135,7 +146,7 @@ public sealed class VentasService(
             }
 
             resultado.Add(new PartidaPreparada(p.ProductoId, p.UnidadId, p.Cantidad, conversion.Valor.FactorABase,
-                conversion.Valor.Base, precio, producto.TasaIva, producto.TasaIeps, null));
+                conversion.Valor.Base, precio, producto.TasaIva, producto.TasaIeps, null, vigente));
         }
 
         return resultado;
@@ -179,6 +190,7 @@ public sealed class VentasService(
             {
                 VentaId = venta.Id, PedidoPartidaId = p.PedidoPartidaId, ProductoId = p.ProductoId, UnidadId = p.UnidadId,
                 FactorABase = p.Factor, Cantidad = p.Cantidad, CantidadBase = p.Base, PrecioUnitario = p.Precio,
+                PrecioReferencia = p.PrecioReferencia,
                 TasaIva = p.TasaIva, TasaIeps = p.TasaIeps, Importe = importe, Ieps = ieps, Iva = iva,
             });
         }
@@ -371,8 +383,10 @@ public sealed class VentasService(
                     return Error.Validacion(ErroresVentas.EntregaExcedida, "La entrega excede lo pendiente del pedido.");
                 }
 
+                // El pedido conserva su precio (RN-VEN-13); la referencia es el vigente del cliente ese día.
+                var referencia = await db.VigenteAsync(cliente, partida.ProductoId, partida.UnidadId, c.FechaOperativa, t);
                 partidas.Add(new PartidaPreparada(partida.ProductoId, partida.UnidadId, entrega.Cantidad, partida.FactorABase,
-                    conversion.Valor.Base, partida.PrecioUnitario, partida.TasaIva, partida.TasaIeps, partida.Id));
+                    conversion.Valor.Base, partida.PrecioUnitario, partida.TasaIva, partida.TasaIeps, partida.Id, referencia));
             }
 
             var condicion = cliente.CondicionPago;
@@ -659,7 +673,7 @@ public sealed class VentasService(
     }
 
     internal static ClienteInfo AInfo(Cliente c, IReadOnlyDictionary<Guid, string> canales) => new(
-        c.Id, c.Codigo, c.Nombre, c.CanalId, canales.GetValueOrDefault(c.CanalId) ?? string.Empty, c.ListaPrecioId,
+        c.Id, c.Codigo, c.Nombre, c.CanalId, canales.GetValueOrDefault(c.CanalId) ?? string.Empty, c.GrupoClienteId, c.ListaPrecioId,
         c.CondicionPago, c.DiasCredito, c.LimiteCredito, c.RequiereFactura, c.Rfc, c.RazonSocial, c.RegimenFiscal,
         c.CodigoPostalFiscal, c.UsoCfdi, c.EmailFacturacion, c.Telefono, c.Direccion, c.Latitud, c.Longitud,
         c.UbicacionAprobada, c.EsGenerico, c.Activo, c.VersionSync);
@@ -823,6 +837,20 @@ public sealed class IncidenciasService(VentasDbContext db) : IIncidenciasService
 
 public sealed class ConsultasSyncVentas(VentasDbContext db) : IConsultasSyncVentas
 {
+    public async Task<IReadOnlyList<PrecioClienteInfo>> PreciosClientesAsync(IReadOnlyCollection<Guid> clienteIds, long desde,
+        CancellationToken ct) =>
+        clienteIds.Count == 0
+            ? []
+            : await db.PreciosClientes.AsNoTracking().Where(p => clienteIds.Contains(p.ClienteId) && p.VersionSync > desde)
+                .OrderBy(p => p.VersionSync)
+                .Select(p => new PrecioClienteInfo(p.ClienteId, p.ProductoId, p.UnidadId, p.PrecioUnitario, p.VigenteDesde, p.Activo, p.VersionSync))
+                .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<ProductoExclusivoInfo>> ProductosExclusivosAsync(long desde, CancellationToken ct) =>
+        await db.ProductosExclusivos.AsNoTracking().Where(p => p.VersionSync > desde).OrderBy(p => p.VersionSync)
+            .Select(p => new ProductoExclusivoInfo(p.Id, p.ProductoId, p.ClienteId, p.GrupoClienteId, p.Activo, p.VersionSync))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<ClienteInfo>> ClientesAsync(IReadOnlyCollection<Guid> ids, long desde, CancellationToken ct)
     {
         var canales = await db.Canales.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Clave, ct);

@@ -6,6 +6,7 @@ import {
   useListarVentas,
   useObtenerCliente,
   useObtenerListaPrecio,
+  useListarPreciosCliente,
   useObtenerVenta,
   useRegistrarVenta,
   type ClienteDto,
@@ -39,7 +40,7 @@ import { MapaLeaflet, type MarcadorMapa } from '@/componentes/MapaLeaflet';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { EditorPartidasVenta, ResumenTotales } from './EditorPartidasVenta';
-import { calcularLineas, nuevaLinea, type LineaVenta } from './partidas';
+import { calcularLineas, combinarPrecios, nuevaLinea, type LineaVenta } from './partidas';
 import { ETIQUETAS_FORMA_PAGO, ETIQUETAS_INCIDENCIA, SelectorCliente, SelectorRuta, useRutas } from './selectores';
 
 const centavos = (pesos: number) => Math.round(pesos * 100);
@@ -343,7 +344,9 @@ export function NuevaVenta() {
   const [lineas, setLineas] = useState<LineaVenta[]>([nuevaLinea()]);
   const [error, setError] = useState<string | null>(null);
   const lista = useObtenerListaPrecio(cliente?.listaPrecioId ?? '', { query: { enabled: !!cliente } });
-  const calculo = calcularLineas(lineas, lista.data?.partidas);
+  const especiales = useListarPreciosCliente(cliente?.id ?? '', { query: { enabled: !!cliente } });
+  const precios = combinarPrecios(lista.data?.partidas, especiales.data, fecha);
+  const calculo = calcularLineas(lineas, precios);
   const rutas = useRutas();
 
   const guardar = async () => {
@@ -425,7 +428,7 @@ export function NuevaVenta() {
           {!cliente ? (
             <p className="m-0 text-sm text-muted">Elige el cliente para usar su lista de precios.</p>
           ) : (
-            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={lista.data?.partidas} />
+            <EditorPartidasVenta lineas={lineas} onCambiar={setLineas} precios={precios} />
           )}
         </Tarjeta>
         <BarraAccion resumen={<span>Total <strong>{formatoMoneda(calculo.totales.total / 100)}</strong></span>}>

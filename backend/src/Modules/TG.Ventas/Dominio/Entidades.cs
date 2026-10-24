@@ -42,12 +42,53 @@ public sealed class ListaPrecioPartida : IVersionSync
     public long VersionSync { get; set; }
 }
 
+/// <summary>Corporativo (Walmart, Chedraui, SANBORNS…): agrupa clientes para exclusividades y lista heredada.</summary>
+[Bitacora]
+public sealed class GrupoCliente : EntidadAuditable, IVersionSync
+{
+    public string Clave { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public Guid CanalId { get; set; }
+
+    /// <summary>Lista que hereda un cliente nuevo del grupo si no se indica otra (RN-VEN-12).</summary>
+    public Guid? ListaPrecioId { get; set; }
+
+    public bool Activo { get; set; } = true;
+    public long VersionSync { get; set; }
+}
+
+/// <summary>RN-VEN-12: precio especial <b>sin impuestos</b> que gana sobre la lista desde <c>VigenteDesde</c>.</summary>
+[Bitacora(Documento = nameof(ClienteId))]
+public sealed class PrecioCliente : IVersionSync
+{
+    public Guid ClienteId { get; set; }
+    public Guid ProductoId { get; set; }
+    public Guid UnidadId { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public DateOnly VigenteDesde { get; set; }
+    public bool Activo { get; set; } = true;
+    public long VersionSync { get; set; }
+}
+
+/// <summary>RN-VEN-14: el producto solo se vende al cliente o a los clientes del grupo (uno de los dos).</summary>
+[Bitacora(Documento = nameof(ProductoId))]
+public sealed class ProductoExclusivo : IVersionSync
+{
+    public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();
+    public Guid ProductoId { get; set; }
+    public Guid? ClienteId { get; set; }
+    public Guid? GrupoClienteId { get; set; }
+    public bool Activo { get; set; } = true;
+    public long VersionSync { get; set; }
+}
+
 [Bitacora]
 public sealed class Cliente : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Codigo { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public Guid CanalId { get; set; }
+    public Guid? GrupoClienteId { get; set; }
     public Guid ListaPrecioId { get; set; }
     public CondicionPago CondicionPago { get; set; }
     public int DiasCredito { get; set; }
@@ -174,6 +215,10 @@ public sealed class VentaPartida
     public string Lote { get; set; } = string.Empty;
 
     public decimal PrecioUnitario { get; set; }
+
+    /// <summary>RN-VEN-12: precio vigente del cliente (especial o lista) al aplicar la venta; nulo si no tenía.</summary>
+    public decimal? PrecioReferencia { get; set; }
+
     public decimal TasaIva { get; set; }
     public decimal? TasaIeps { get; set; }
     public decimal Importe { get; set; }
