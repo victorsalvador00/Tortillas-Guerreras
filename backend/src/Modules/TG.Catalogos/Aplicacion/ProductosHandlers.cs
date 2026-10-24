@@ -16,12 +16,15 @@ public sealed record ConversionDto(
     bool UsoCompra,
     bool UsoVenta,
     bool UsoProduccion,
-    bool PredeterminadaVenta);
+    bool PredeterminadaVenta,
+    bool UsoTraslado,
+    bool PredeterminadaTraslado);
 
 public sealed record ProductoDto(
     Guid Id,
     string Sku,
     string Nombre,
+    string? NombreCorto,
     string? Descripcion,
     TipoProducto Tipo,
     Guid UnidadBaseId,
@@ -37,6 +40,8 @@ public sealed record ProductoDto(
     decimal? TasaIeps,
     string? CodigoBarras,
     decimal? StockMinimo,
+    bool AplicaProductoACobro,
+    int? DiasToleranciaDevolucion,
     bool Activo,
     IReadOnlyList<ConversionDto> Conversiones);
 
@@ -46,7 +51,9 @@ public sealed record ConversionRequest(
     bool UsoCompra,
     bool UsoVenta,
     bool UsoProduccion,
-    bool PredeterminadaVenta);
+    bool PredeterminadaVenta,
+    bool UsoTraslado = false,
+    bool PredeterminadaTraslado = false);
 
 public sealed record GuardarProductoRequest(
     string Sku,
@@ -65,7 +72,10 @@ public sealed record GuardarProductoRequest(
     decimal? TasaIeps,
     string? CodigoBarras,
     decimal? StockMinimo,
-    IReadOnlyList<ConversionRequest>? Conversiones);
+    IReadOnlyList<ConversionRequest>? Conversiones,
+    string? NombreCorto = null,
+    bool AplicaProductoACobro = false,
+    int? DiasToleranciaDevolucion = null);
 
 public sealed class GuardarProductoValidator : AbstractValidator<GuardarProductoRequest>
 {
@@ -80,11 +90,23 @@ public sealed class GuardarProductoValidator : AbstractValidator<GuardarProducto
         RuleFor(x => x.VidaUtilDias).GreaterThan(0).When(x => x.VidaUtilDias is not null)
             .WithMessage("La vida útil debe ser mayor que cero.");
         RuleFor(x => x.StockMinimo).GreaterThanOrEqualTo(0).When(x => x.StockMinimo is not null);
+        // RN-CAT-08.
+        RuleFor(x => x.NombreCorto).MaximumLength(15).WithErrorCode("CAT-012")
+            .WithMessage("El nombre corto admite máximo 15 caracteres.");
+        // RN-CAT-10.
+        RuleFor(x => x.DiasToleranciaDevolucion).GreaterThan(0).When(x => x.DiasToleranciaDevolucion is not null)
+            .WithMessage("Los días de tolerancia deben ser mayores que cero.");
+        RuleFor(x => x.DiasToleranciaDevolucion).Null().When(x => !x.AplicaProductoACobro)
+            .WithMessage("Los días de tolerancia solo aplican a productos a cobro.");
         RuleForEach(x => x.Conversiones).ChildRules(c =>
             c.RuleFor(x => x.FactorABase).GreaterThan(0).WithMessage("El factor debe ser mayor que cero."));
         RuleFor(x => x.Conversiones)
             .Must(c => c is null || c.Count(x => x.PredeterminadaVenta) <= 1)
             .WithMessage("Solo una unidad puede ser la predeterminada de venta.")
+            .Must(c => c is null || c.Count(x => x.PredeterminadaTraslado) <= 1)
+            .WithMessage("Solo una unidad puede ser la predeterminada de traslado.")
+            .Must(c => c is null || c.All(x => !x.PredeterminadaTraslado || x.UsoTraslado))
+            .WithMessage("La unidad predeterminada de traslado debe tener uso de traslado.")
             .Must(c => c is null || c.Select(x => x.UnidadId).Distinct().Count() == c.Count)
             .WithMessage("Hay unidades repetidas en las conversiones.");
         RuleFor(x => x).Must(x => x.Conversiones is null || x.Conversiones.All(c => c.UnidadId != x.UnidadBaseId))
@@ -144,12 +166,12 @@ public sealed class ConsultasProductosHandler(CatalogosDbContext db)
         db.Productos.AsNoTracking().Include(p => p.UnidadBase).Include(p => p.Conversiones).ThenInclude(c => c.Unidad);
 
     internal static ProductoDto ADto(Producto p) => new(
-        p.Id, p.Sku, p.Nombre, p.Descripcion, p.Tipo, p.UnidadBaseId, p.UnidadBase?.Clave ?? string.Empty, p.EsComprable,
+        p.Id, p.Sku, p.Nombre, p.NombreCorto, p.Descripcion, p.Tipo, p.UnidadBaseId, p.UnidadBase?.Clave ?? string.Empty, p.EsComprable,
         p.EsProducible, p.EsVendible, p.ManejaLote, p.VidaUtilDias, p.ClaveProdServSat, p.ObjetoImpuestoSat, p.TasaIva,
-        p.TasaIeps, p.CodigoBarras, p.StockMinimo, p.Activo,
+        p.TasaIeps, p.CodigoBarras, p.StockMinimo, p.AplicaProductoACobro, p.DiasToleranciaDevolucion, p.Activo,
         p.Conversiones.OrderBy(c => c.FactorABase).Select(c => new ConversionDto(c.UnidadId, c.Unidad?.Clave ?? string.Empty,
             c.Unidad?.Nombre ?? string.Empty, c.FactorABase, c.UsoCompra, c.UsoVenta, c.UsoProduccion,
-            c.PredeterminadaVenta)).ToList());
+            c.PredeterminadaVenta, c.UsoTraslado, c.PredeterminadaTraslado)).ToList());
 }
 
 /// <summary>Alta y edición de productos con sus conversiones (RN-CAT-01 a 04).</summary>
@@ -164,7 +186,7 @@ public sealed class GuardarProductoHandler(CatalogosDbContext db, IConsultaInven
             return ErroresCatalogos.SkuDuplicado;
         }
 
-        var validacion = await ValidarUnidadesAsync(request, ct);
+        var validacion = await ValidarAsync(null, request, ct);
         if (!validacion.EsExito)
         {
             return validacion.Error!;
@@ -199,7 +221,7 @@ public sealed class GuardarProductoHandler(CatalogosDbContext db, IConsultaInven
             return cambiaSku ? ErroresCatalogos.SkuConMovimientos : ErroresCatalogos.UnidadBaseConMovimientos;
         }
 
-        var validacion = await ValidarUnidadesAsync(request, ct);
+        var validacion = await ValidarAsync(id, request, ct);
         if (!validacion.EsExito)
         {
             return validacion.Error!;
@@ -212,18 +234,48 @@ public sealed class GuardarProductoHandler(CatalogosDbContext db, IConsultaInven
         return await consultas.ObtenerAsync(producto.Id, ct);
     }
 
-    private async Task<Result> ValidarUnidadesAsync(GuardarProductoRequest request, CancellationToken ct)
+    private async Task<Result> ValidarAsync(Guid? id, GuardarProductoRequest request, CancellationToken ct)
     {
         var ids = (request.Conversiones ?? []).Select(c => c.UnidadId).Append(request.UnidadBaseId).Distinct().ToList();
-        var existentes = await db.Unidades.CountAsync(u => ids.Contains(u.Id), ct);
-        return existentes == ids.Count ? Result.Exito() : ErroresCatalogos.UnidadNoEncontrada;
+        var unidades = await db.Unidades.Where(u => ids.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.Clave, ct);
+        if (unidades.Count != ids.Count)
+        {
+            return ErroresCatalogos.UnidadNoEncontrada;
+        }
+
+        // RN-CAT-08: único entre productos activos.
+        var nombreCorto = NormalizarNombreCorto(request.NombreCorto);
+        if (nombreCorto is not null
+            && await db.Productos.AnyAsync(p => p.Activo && p.NombreCorto == nombreCorto && p.Id != id, ct))
+        {
+            return ErroresCatalogos.NombreCortoDuplicado;
+        }
+
+        // RN-CAT-09: la caja contiene un número entero de unidades de venta.
+        var conversiones = request.Conversiones ?? [];
+        var traslado = conversiones.FirstOrDefault(c => c.PredeterminadaTraslado);
+        if (traslado is not null)
+        {
+            var factorVenta = conversiones.FirstOrDefault(c => c.PredeterminadaVenta)?.FactorABase ?? 1m;
+            var paquetesPorCaja = traslado.FactorABase / factorVenta;
+            if (paquetesPorCaja < 1 || paquetesPorCaja != decimal.Truncate(paquetesPorCaja))
+            {
+                return ErroresCatalogos.TrasladoNoEntero(unidades[traslado.UnidadId]);
+            }
+        }
+
+        return Result.Exito();
     }
+
+    private static string? NormalizarNombreCorto(string? nombreCorto) =>
+        string.IsNullOrWhiteSpace(nombreCorto) ? null : nombreCorto.Trim().ToUpperInvariant();
 
     private static void Aplicar(Producto p, GuardarProductoRequest r, string sku)
     {
         var banderas = Producto.BanderasPorTipo(r.Tipo);
         p.Sku = sku;
         p.Nombre = r.Nombre.Trim();
+        p.NombreCorto = NormalizarNombreCorto(r.NombreCorto);
         p.Descripcion = string.IsNullOrWhiteSpace(r.Descripcion) ? null : r.Descripcion.Trim();
         p.Tipo = r.Tipo;
         p.UnidadBaseId = r.UnidadBaseId;
@@ -238,6 +290,8 @@ public sealed class GuardarProductoHandler(CatalogosDbContext db, IConsultaInven
         p.TasaIeps = r.TasaIeps is 0 ? null : r.TasaIeps;
         p.CodigoBarras = string.IsNullOrWhiteSpace(r.CodigoBarras) ? null : r.CodigoBarras.Trim();
         p.StockMinimo = r.StockMinimo;
+        p.AplicaProductoACobro = r.AplicaProductoACobro;
+        p.DiasToleranciaDevolucion = r.AplicaProductoACobro ? r.DiasToleranciaDevolucion : null;
 
         var nuevas = r.Conversiones ?? [];
         p.Conversiones.RemoveAll(c => nuevas.All(n => n.UnidadId != c.UnidadId));
@@ -255,6 +309,8 @@ public sealed class GuardarProductoHandler(CatalogosDbContext db, IConsultaInven
             c.UsoVenta = n.UsoVenta;
             c.UsoProduccion = n.UsoProduccion;
             c.PredeterminadaVenta = n.PredeterminadaVenta;
+            c.UsoTraslado = n.UsoTraslado;
+            c.PredeterminadaTraslado = n.PredeterminadaTraslado;
         }
     }
 }
@@ -288,6 +344,13 @@ public sealed class ActivacionProductoHandler(CatalogosDbContext db, IConsultaIn
         if (producto is null)
         {
             return ErroresCatalogos.ProductoNoEncontrado;
+        }
+
+        // RN-CAT-08: al reactivar, el nombre corto no debe chocar con otro activo.
+        if (producto.NombreCorto is not null
+            && await db.Productos.AnyAsync(p => p.Activo && p.NombreCorto == producto.NombreCorto && p.Id != id, ct))
+        {
+            return ErroresCatalogos.NombreCortoDuplicado;
         }
 
         producto.Activo = true;

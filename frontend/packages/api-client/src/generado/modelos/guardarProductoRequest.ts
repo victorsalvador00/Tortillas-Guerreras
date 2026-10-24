@@ -18,6 +18,8 @@ import type { GuardarProductoRequestTasaIeps } from './guardarProductoRequestTas
 import type { GuardarProductoRequestCodigoBarras } from './guardarProductoRequestCodigoBarras';
 import type { GuardarProductoRequestStockMinimo } from './guardarProductoRequestStockMinimo';
 import type { GuardarProductoRequestConversiones } from './guardarProductoRequestConversiones';
+import type { GuardarProductoRequestNombreCorto } from './guardarProductoRequestNombreCorto';
+import type { GuardarProductoRequestDiasToleranciaDevolucion } from './guardarProductoRequestDiasToleranciaDevolucion';
 
 export interface GuardarProductoRequest {
   sku: string;
@@ -37,4 +39,7 @@ export interface GuardarProductoRequest {
   codigoBarras?: GuardarProductoRequestCodigoBarras;
   stockMinimo?: GuardarProductoRequestStockMinimo;
   conversiones?: GuardarProductoRequestConversiones;
+  nombreCorto?: GuardarProductoRequestNombreCorto;
+  aplicaProductoACobro?: boolean;
+  diasToleranciaDevolucion?: GuardarProductoRequestDiasToleranciaDevolucion;
 }

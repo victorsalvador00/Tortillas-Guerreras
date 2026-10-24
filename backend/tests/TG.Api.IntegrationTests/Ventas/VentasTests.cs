@@ -35,7 +35,7 @@ public sealed class VentasTests(ApiFixture api) : IClassFixture<ApiFixture>
         var admin = await api.ClienteAsync();
         var producto = await admin.CrearProductoAsync(tipo: "Reventa", unidad: "PZA", tasaIva: tasaIva, tasaIeps: tasaIeps);
         var canales = await admin.GetOkAsync<List<IdCodigoCanal>>("/api/v1/ventas/canales");
-        var canal = canales.Single(c => c.Clave == "TRAD").Id;
+        var canal = canales.Single(c => c.Clave == "DET").Id;
         var lista = await admin.PostOkAsync<IdRespuesta>("/api/v1/ventas/listas-precio",
             new { nombre = DatosPrueba.Unico("LISTA"), canalId = canal, vigenteDesde = "2026-01-01", activo = true });
         if (conPrecio)

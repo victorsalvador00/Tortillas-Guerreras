@@ -10,7 +10,7 @@ const tortilla: NonNullable<LineaVenta['producto']> = {
   tasaIva: 0,
   tasaIeps: null,
   conversiones: [
-    { unidadId: 'paq', unidadClave: 'PAQ', unidadNombre: 'Paquete', factorABase: 1, usoCompra: false, usoVenta: true, usoProduccion: false, predeterminadaVenta: true },
+    { unidadId: 'paq', unidadClave: 'PAQ', unidadNombre: 'Paquete', factorABase: 1, usoCompra: false, usoVenta: true, usoProduccion: false, predeterminadaVenta: true, usoTraslado: false, predeterminadaTraslado: false },
   ],
 };
 

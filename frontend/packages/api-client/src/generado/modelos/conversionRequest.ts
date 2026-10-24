@@ -13,4 +13,6 @@ export interface ConversionRequest {
   usoVenta: boolean;
   usoProduccion: boolean;
   predeterminadaVenta: boolean;
+  usoTraslado?: boolean;
+  predeterminadaTraslado?: boolean;
 }

@@ -41,6 +41,10 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("actualizado_por");
 
+                    b.Property<bool>("AplicaProductoACobro")
+                        .HasColumnType("boolean")
+                        .HasColumnName("aplica_producto_a_cobro");
+
                     b.Property<string>("Clave")
                         .IsRequired()
                         .HasColumnType("text")
@@ -54,10 +58,24 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("creado_por");
 
+                    b.Property<string>("FormatoLiquidacion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("formato_liquidacion");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("nombre");
+
+                    b.Property<short>("Orden")
+                        .HasColumnType("smallint")
+                        .HasColumnName("orden");
+
+                    b.Property<string>("PedidoPor")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("pedido_por");
 
                     b.Property<bool>("RequiereFacturaDefault")
                         .HasColumnType("boolean")
@@ -70,7 +88,12 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         .IsUnique()
                         .HasDatabaseName("ux_canales_clave");
 
-                    b.ToTable("canales", "ventas");
+                    b.ToTable("canales", "ventas", t =>
+                        {
+                            t.HasCheckConstraint("ck_canales_formato_liquidacion", "formato_liquidacion IN ('Completo', 'Simplificado')");
+
+                            t.HasCheckConstraint("ck_canales_pedido_por", "pedido_por IN ('Cliente', 'Ruta')");
+                        });
                 });
 
             modelBuilder.Entity("TG.Ventas.Dominio.Cliente", b =>

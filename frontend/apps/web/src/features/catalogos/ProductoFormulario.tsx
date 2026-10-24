@@ -37,6 +37,8 @@ const decimalOpcional = z.preprocess((v) => (v === '' || v == null ? null : Numb
 const esquema = z.object({
   sku: z.string().trim().min(1, 'Captura el SKU.').max(40),
   nombre: z.string().trim().min(1, 'Captura el nombre.'),
+  // RN-CAT-08.
+  nombreCorto: z.string().trim().max(15, 'Máximo 15 caracteres.').optional(),
   descripcion: z.string().optional(),
   tipo: z.enum(['MateriaPrima', 'Empaque', 'Semiterminado', 'Terminado', 'Reventa']),
   unidadBaseId: z.string().min(1, 'Elige la unidad base.'),
@@ -51,6 +53,8 @@ const esquema = z.object({
   iepsPct: z.coerce.number().min(0).max(100),
   codigoBarras: z.string().optional(),
   stockMinimo: decimalOpcional,
+  aplicaProductoACobro: z.boolean(),
+  diasToleranciaDevolucion: enteroOpcional,
   conversiones: z
     .array(
       z.object({
@@ -60,9 +64,12 @@ const esquema = z.object({
         usoVenta: z.boolean(),
         usoProduccion: z.boolean(),
         predeterminadaVenta: z.boolean(),
+        usoTraslado: z.boolean(),
+        predeterminadaTraslado: z.boolean(),
       }),
     )
-    .refine((c) => c.filter((x) => x.predeterminadaVenta).length <= 1, 'Solo una unidad puede ser la predeterminada de venta.'),
+    .refine((c) => c.filter((x) => x.predeterminadaVenta).length <= 1, 'Solo una unidad puede ser la predeterminada de venta.')
+    .refine((c) => c.filter((x) => x.predeterminadaTraslado).length <= 1, 'Solo una unidad puede ser la predeterminada de traslado.'),
 });
 
 type Entrada = z.input<typeof esquema>;
@@ -72,6 +79,7 @@ function aFormulario(p?: ProductoDto): Entrada {
   return {
     sku: p?.sku ?? '',
     nombre: p?.nombre ?? '',
+    nombreCorto: p?.nombreCorto ?? '',
     descripcion: p?.descripcion ?? '',
     tipo: p?.tipo ?? 'MateriaPrima',
     unidadBaseId: p?.unidadBaseId ?? '',
@@ -86,6 +94,8 @@ function aFormulario(p?: ProductoDto): Entrada {
     iepsPct: p?.tasaIeps ? Math.round(p.tasaIeps * 10000) / 100 : 0,
     codigoBarras: p?.codigoBarras ?? '',
     stockMinimo: p?.stockMinimo ?? '',
+    aplicaProductoACobro: p?.aplicaProductoACobro ?? false,
+    diasToleranciaDevolucion: p?.diasToleranciaDevolucion ?? '',
     conversiones:
       p?.conversiones.map((c) => ({
         unidadId: c.unidadId,
@@ -94,6 +104,8 @@ function aFormulario(p?: ProductoDto): Entrada {
         usoVenta: c.usoVenta,
         usoProduccion: c.usoProduccion,
         predeterminadaVenta: c.predeterminadaVenta,
+        usoTraslado: c.usoTraslado,
+        predeterminadaTraslado: c.predeterminadaTraslado,
       })) ?? [],
   };
 }
@@ -102,6 +114,7 @@ function aSolicitud(d: Datos): GuardarProductoRequest {
   return {
     sku: d.sku,
     nombre: d.nombre,
+    nombreCorto: d.nombreCorto || null,
     descripcion: d.descripcion || null,
     tipo: d.tipo,
     unidadBaseId: d.unidadBaseId,
@@ -116,6 +129,9 @@ function aSolicitud(d: Datos): GuardarProductoRequest {
     tasaIeps: d.iepsPct ? d.iepsPct / 100 : null,
     codigoBarras: d.codigoBarras || null,
     stockMinimo: d.stockMinimo,
+    aplicaProductoACobro: d.aplicaProductoACobro,
+    // RN-CAT-10: la tolerancia solo se captura en productos a cobro.
+    diasToleranciaDevolucion: d.aplicaProductoACobro ? d.diasToleranciaDevolucion : null,
     conversiones: d.conversiones,
   };
 }
@@ -160,6 +176,7 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
   const conversiones = useFieldArray({ control, name: 'conversiones' });
   const tipo = watch('tipo');
   const unidadBaseId = watch('unidadBaseId');
+  const aplicaProductoACobro = watch('aplicaProductoACobro');
 
   // RN-CAT-04: al cambiar el tipo en un producto nuevo se proponen las banderas.
   useEffect(() => {
@@ -212,6 +229,13 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <Campo etiqueta="SKU" error={errors.sku?.message} ayuda="No se puede cambiar si el producto ya tiene movimientos." {...register('sku')} />
               <Campo etiqueta="Nombre" error={errors.nombre?.message} {...register('nombre')} />
+              <Campo
+                etiqueta="Nombre corto (opcional)"
+                maxLength={15}
+                ayuda="Máximo 15 caracteres (T-800, HNA). Encabezados de cuadrículas, app y liquidación; vacío = SKU."
+                error={errors.nombreCorto?.message}
+                {...register('nombreCorto')}
+              />
               <Selector etiqueta="Tipo" opciones={TIPOS_PRODUCTO} error={errors.tipo?.message} {...register('tipo')} />
               <Selector
                 etiqueta="Unidad base (inventario)"
@@ -242,7 +266,16 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
                   tamano="chico"
                   icono="add"
                   onClick={() =>
-                    conversiones.append({ unidadId: '', factorABase: 1, usoCompra: true, usoVenta: false, usoProduccion: false, predeterminadaVenta: false })
+                    conversiones.append({
+                      unidadId: '',
+                      factorABase: 1,
+                      usoCompra: true,
+                      usoVenta: false,
+                      usoProduccion: false,
+                      predeterminadaVenta: false,
+                      usoTraslado: false,
+                      predeterminadaTraslado: false,
+                    })
                   }
                 >
                   Agregar unidad
@@ -274,6 +307,7 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
                     <Casilla etiqueta="Compra" {...register(`conversiones.${i}.usoCompra`)} />
                     <Casilla etiqueta="Venta" {...register(`conversiones.${i}.usoVenta`)} />
                     <Casilla etiqueta="Producción" {...register(`conversiones.${i}.usoProduccion`)} />
+                    <Casilla etiqueta="Traslado" {...register(`conversiones.${i}.usoTraslado`)} />
                     <Controller
                       control={control}
                       name={`conversiones.${i}.predeterminadaVenta`}
@@ -284,6 +318,24 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
                           onChange={(e) => {
                             if (e.target.checked) {
                               conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaVenta`, false));
+                            }
+                            field.onChange(e.target.checked);
+                          }}
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name={`conversiones.${i}.predeterminadaTraslado`}
+                      render={({ field }) => (
+                        <Casilla
+                          etiqueta="Predeterminada de traslado"
+                          descripcion="Surtido y cargas en cajas + paquetes."
+                          checked={!!field.value}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              conversiones.fields.forEach((_, j) => j !== i && setValue(`conversiones.${j}.predeterminadaTraslado`, false));
+                              setValue(`conversiones.${i}.usoTraslado`, true);
                             }
                             field.onChange(e.target.checked);
                           }}
@@ -326,6 +378,26 @@ function FormularioProducto({ producto }: { producto?: ProductoDto }) {
                 {...register('stockMinimo')}
               />
             </div>
+          </Tarjeta>
+
+          <Tarjeta titulo="Devoluciones de ruta">
+            <Casilla
+              etiqueta="Producto a cobro"
+              descripcion="La devolución con lote más antiguo que la tolerancia se carga al chofer."
+              {...register('aplicaProductoACobro')}
+            />
+            {aplicaProductoACobro && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <Campo
+                  etiqueta="Tolerancia de devolución (días)"
+                  type="number"
+                  inputMode="numeric"
+                  ayuda="Antigüedad máxima del lote devuelto sin cargo. Vacío = la del parámetro general."
+                  error={errors.diasToleranciaDevolucion?.message}
+                  {...register('diasToleranciaDevolucion')}
+                />
+              </div>
+            )}
           </Tarjeta>
         </fieldset>
         {editable && (

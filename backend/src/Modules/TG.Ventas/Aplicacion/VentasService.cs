@@ -580,7 +580,8 @@ public sealed class VentasService(
             return await InfoAsync(existente, ct);
         }
 
-        var canal = await db.Canales.AsNoTracking().OrderBy(x => x.Clave == "TRAD" ? 0 : 1).FirstOrDefaultAsync(ct);
+        // El canal de la ruta llega en T-8.4 (RN-LOG-31); mientras, el genérico es de Detalle.
+        var canal = await db.Canales.AsNoTracking().OrderBy(x => x.Clave == ClavesCanal.Detalle ? 0 : 1).FirstOrDefaultAsync(ct);
         var lista = canal is null
             ? null
             : await db.ListasPrecio.AsNoTracking().Where(l => l.Activo)

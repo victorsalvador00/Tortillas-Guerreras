@@ -5,6 +5,7 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { ProductoDtoNombreCorto } from './productoDtoNombreCorto';
 import type { ProductoDtoDescripcion } from './productoDtoDescripcion';
 import type { TipoProducto } from './tipoProducto';
 import type { ProductoDtoVidaUtilDias } from './productoDtoVidaUtilDias';
@@ -12,12 +13,14 @@ import type { ProductoDtoClaveProdServSat } from './productoDtoClaveProdServSat'
 import type { ProductoDtoTasaIeps } from './productoDtoTasaIeps';
 import type { ProductoDtoCodigoBarras } from './productoDtoCodigoBarras';
 import type { ProductoDtoStockMinimo } from './productoDtoStockMinimo';
+import type { ProductoDtoDiasToleranciaDevolucion } from './productoDtoDiasToleranciaDevolucion';
 import type { ConversionDto } from './conversionDto';
 
 export interface ProductoDto {
   id: string;
   sku: string;
   nombre: string;
+  nombreCorto?: ProductoDtoNombreCorto;
   descripcion?: ProductoDtoDescripcion;
   tipo: TipoProducto;
   unidadBaseId: string;
@@ -33,6 +36,8 @@ export interface ProductoDto {
   tasaIeps?: ProductoDtoTasaIeps;
   codigoBarras?: ProductoDtoCodigoBarras;
   stockMinimo?: ProductoDtoStockMinimo;
+  aplicaProductoACobro: boolean;
+  diasToleranciaDevolucion?: ProductoDtoDiasToleranciaDevolucion;
   activo: boolean;
   conversiones: ConversionDto[];
 }

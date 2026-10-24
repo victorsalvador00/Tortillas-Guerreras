@@ -141,6 +141,10 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("actualizado_por");
 
+                    b.Property<bool>("AplicaProductoACobro")
+                        .HasColumnType("boolean")
+                        .HasColumnName("aplica_producto_a_cobro");
+
                     b.Property<string>("ClaveProdServSat")
                         .HasColumnType("text")
                         .HasColumnName("clave_prod_serv_sat");
@@ -160,6 +164,10 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                     b.Property<string>("Descripcion")
                         .HasColumnType("text")
                         .HasColumnName("descripcion");
+
+                    b.Property<int?>("DiasToleranciaDevolucion")
+                        .HasColumnType("integer")
+                        .HasColumnName("dias_tolerancia_devolucion");
 
                     b.Property<bool>("EsComprable")
                         .HasColumnType("boolean")
@@ -181,6 +189,11 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("nombre");
+
+                    b.Property<string>("NombreCorto")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("nombre_corto");
 
                     b.Property<string>("ObjetoImpuestoSat")
                         .IsRequired()
@@ -233,6 +246,11 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                     b.HasKey("Id")
                         .HasName("pk_productos");
 
+                    b.HasIndex("NombreCorto")
+                        .IsUnique()
+                        .HasDatabaseName("ux_productos_nombre_corto")
+                        .HasFilter("activo AND nombre_corto IS NOT NULL");
+
                     b.HasIndex("Sku")
                         .IsUnique()
                         .HasDatabaseName("ux_productos_sku");
@@ -264,6 +282,10 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                         .HasColumnType("numeric(18,6)")
                         .HasColumnName("factor_a_base");
 
+                    b.Property<bool>("PredeterminadaTraslado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("predeterminada_traslado");
+
                     b.Property<bool>("PredeterminadaVenta")
                         .HasColumnType("boolean")
                         .HasColumnName("predeterminada_venta");
@@ -275,6 +297,10 @@ namespace TG.Catalogos.Infraestructura.Migraciones
                     b.Property<bool>("UsoProduccion")
                         .HasColumnType("boolean")
                         .HasColumnName("uso_produccion");
+
+                    b.Property<bool>("UsoTraslado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("uso_traslado");
 
                     b.Property<bool>("UsoVenta")
                         .HasColumnType("boolean")

@@ -7432,6 +7432,10 @@
           "clave",
           "nombre",
           "requiereFacturaDefault",
+          "formatoLiquidacion",
+          "aplicaProductoACobro",
+          "pedidoPor",
+          "orden",
           "activo"
         ],
         "type": "object",
@@ -7448,6 +7452,19 @@
           },
           "requiereFacturaDefault": {
             "type": "boolean"
+          },
+          "formatoLiquidacion": {
+            "$ref": "#/components/schemas/FormatoLiquidacion"
+          },
+          "aplicaProductoACobro": {
+            "type": "boolean"
+          },
+          "pedidoPor": {
+            "$ref": "#/components/schemas/PedidoPor"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int16"
           },
           "activo": {
             "type": "boolean"
@@ -8507,7 +8524,9 @@
           "usoCompra",
           "usoVenta",
           "usoProduccion",
-          "predeterminadaVenta"
+          "predeterminadaVenta",
+          "usoTraslado",
+          "predeterminadaTraslado"
         ],
         "type": "object",
         "properties": {
@@ -8535,6 +8554,12 @@
             "type": "boolean"
           },
           "predeterminadaVenta": {
+            "type": "boolean"
+          },
+          "usoTraslado": {
+            "type": "boolean"
+          },
+          "predeterminadaTraslado": {
             "type": "boolean"
           }
         }
@@ -8569,6 +8594,14 @@
           },
           "predeterminadaVenta": {
             "type": "boolean"
+          },
+          "usoTraslado": {
+            "type": "boolean",
+            "default": false
+          },
+          "predeterminadaTraslado": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -9600,6 +9633,12 @@
           "Credito"
         ]
       },
+      "FormatoLiquidacion": {
+        "enum": [
+          "Completo",
+          "Simplificado"
+        ]
+      },
       "GuardarAlmacenRequest": {
         "required": [
           "codigo",
@@ -9643,6 +9682,21 @@
           },
           "activo": {
             "type": "boolean"
+          },
+          "formatoLiquidacion": {
+            "$ref": "#/components/schemas/FormatoLiquidacion"
+          },
+          "aplicaProductoACobro": {
+            "type": "boolean",
+            "default": false
+          },
+          "pedidoPor": {
+            "$ref": "#/components/schemas/PedidoPor"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int16",
+            "default": 0
           }
         }
       },
@@ -10138,6 +10192,23 @@
             "items": {
               "$ref": "#/components/schemas/ConversionRequest"
             }
+          },
+          "nombreCorto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "aplicaProductoACobro": {
+            "type": "boolean",
+            "default": false
+          },
+          "diasToleranciaDevolucion": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -12854,6 +12925,12 @@
           }
         }
       },
+      "PedidoPor": {
+        "enum": [
+          "Cliente",
+          "Ruta"
+        ]
+      },
       "PedidoSync": {
         "required": [
           "id",
@@ -13257,6 +13334,7 @@
           "manejaLote",
           "objetoImpuestoSat",
           "tasaIva",
+          "aplicaProductoACobro",
           "activo",
           "conversiones"
         ],
@@ -13271,6 +13349,12 @@
           },
           "nombre": {
             "type": "string"
+          },
+          "nombreCorto": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "descripcion": {
             "type": [
@@ -13339,6 +13423,16 @@
               "number"
             ],
             "format": "double"
+          },
+          "aplicaProductoACobro": {
+            "type": "boolean"
+          },
+          "diasToleranciaDevolucion": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           },
           "activo": {
             "type": "boolean"

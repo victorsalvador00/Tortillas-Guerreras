@@ -9,6 +9,14 @@ public sealed class Canal : EntidadAuditable
     public string Clave { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public bool RequiereFacturaDefault { get; set; }
+    public FormatoLiquidacion FormatoLiquidacion { get; set; }
+
+    /// <summary>RN-LOG-24: en este canal la devolución fuera de tolerancia se cobra al chofer.</summary>
+    public bool AplicaProductoACobro { get; set; }
+    public PedidoPor PedidoPor { get; set; }
+
+    /// <summary>Orden de las pestañas del estimado.</summary>
+    public short Orden { get; set; }
     public bool Activo { get; set; } = true;
 }
 

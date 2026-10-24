@@ -401,7 +401,8 @@ internal sealed class ImportadorCsv(
             var request = new GuardarProductoRequest(sku, nombre, f.Opcional("descripcion"), tipo ?? TipoProducto.MateriaPrima, unidadBase,
                 b.Booleano(f, "es_comprable"), b.Booleano(f, "es_producible"), b.Booleano(f, "es_vendible"), b.Booleano(f, "maneja_lote"),
                 b.Entero(f, "vida_util_dias"), f.Opcional("clave_sat"), null, iva / 100m, ieps is null ? null : ieps / 100m,
-                f.Opcional("codigo_barras"), b.Decimal(f, "stock_minimo"), conversiones);
+                f.Opcional("codigo_barras"), b.Decimal(f, "stock_minimo"), conversiones, f.Opcional("nombre_corto"),
+                b.Booleano(f, "producto_a_cobro") ?? false);
             if (b.Errores.Count > antes || !await ValidarAsync(request, f.Numero, b, ct))
             {
                 continue;
@@ -426,7 +427,10 @@ internal sealed class ImportadorCsv(
         return new Conteo(creados, actualizados);
     }
 
-    /// <summary>Formato: <c>TON=1000:compra|PAQ=1:venta*</c> (usos compra, venta, produccion; * = predeterminada de venta).</summary>
+    /// <summary>
+    /// Formato: <c>TON=1000:compra|PAQ=1:venta*|CAJ=24:traslado</c> (usos compra, venta, produccion, traslado;
+    /// * = predeterminada de venta; la primera de traslado es la predeterminada de traslado, RN-CAT-09).
+    /// </summary>
     private static List<ConversionRequest> Conversiones(FilaCsv f, Bitacora b, Dictionary<string, Guid> unidades)
     {
         var lista = new List<ConversionRequest>();
@@ -444,9 +448,10 @@ internal sealed class ImportadorCsv(
             }
 
             var u = usos.ToLowerInvariant();
+            var traslado = u.Contains("traslado", StringComparison.Ordinal);
             lista.Add(new ConversionRequest(unidad, factor, u.Contains("compra", StringComparison.Ordinal),
                 u.Contains("venta", StringComparison.Ordinal), u.Contains("produccion", StringComparison.Ordinal) || u.Contains("producción", StringComparison.Ordinal),
-                predeterminada));
+                predeterminada, traslado, traslado && !lista.Any(c => c.PredeterminadaTraslado)));
         }
 
         return lista;
@@ -462,8 +467,8 @@ internal sealed class ImportadorCsv(
 
     private async Task<Conteo> ClientesAsync(ArchivoCsv csv, Bitacora b, CancellationToken ct)
     {
-        var canales = (await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct))
-            .ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
+        var canalesExistentes = await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct);
+        var canales = canalesExistentes.ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
         var listas = await servicios.GetRequiredService<ListasPrecioHandler>().ListarAsync(ct);
         var clientes = servicios.GetRequiredService<ClientesHandler>();
         int creados = 0, actualizados = 0;
@@ -471,11 +476,13 @@ internal sealed class ImportadorCsv(
         {
             var antes = b.Errores.Count;
             var nombre = b.Requerido(f, "nombre");
+            // TRAD es la clave anterior de DET (v0.2).
             var claveCanal = b.Requerido(f, "canal");
             Guid canal = Guid.Empty;
-            if (claveCanal.Length > 0 && !canales.TryGetValue(claveCanal, out canal))
+            if (claveCanal.Length > 0 && !canales.TryGetValue(ClavesCanal.Normalizar(claveCanal), out canal))
             {
-                b.Agregar(f.Numero, "canal", $"No existe el canal '{claveCanal}' (INST, AUTO, TRAD).");
+                b.Agregar(f.Numero, "canal",
+                    $"No existe el canal '{claveCanal}' ({string.Join(", ", canalesExistentes.Select(c => c.Clave))}).");
             }
 
             var nombreLista = f.Opcional("lista_precio");
@@ -732,16 +739,18 @@ public static class PlantillasImportacion
             new("sku", true, "Clave única"), new("nombre", true, ""),
             new("tipo", true, "MateriaPrima, Empaque, Semiterminado, Terminado o Reventa"),
             new("unidad_base", true, "Clave de unidad (KG, PZA, PAQ…)"),
-            new("conversiones", false, "UNIDAD=factor:usos separadas por |; usos compra, venta, produccion; * = predeterminada de venta"),
+            new("conversiones", false, "UNIDAD=factor:usos separadas por |; usos compra, venta, produccion, traslado; * = predeterminada de venta"),
             new("es_comprable", false, "sí/no; vacío = según el tipo"), new("es_producible", false, ""), new("es_vendible", false, ""),
             new("maneja_lote", false, ""), new("vida_util_dias", false, ""), new("iva_pct", false, "16 = 16 %"),
             new("ieps_pct", false, "8 = 8 %"), new("clave_sat", false, "Clave de producto o servicio SAT"),
             new("codigo_barras", false, ""), new("stock_minimo", false, "En unidad base"), new("descripcion", false, ""),
+            new("nombre_corto", false, "Máximo 15 caracteres (T-800, HNA…); vacío = SKU"),
+            new("producto_a_cobro", false, "sí = la devolución fuera de tolerancia se cobra al chofer"),
         ],
         "clientes" =>
         [
             new("codigo", false, "Si existe, se actualiza; vacío = se asigna"), new("nombre", true, ""),
-            new("canal", true, "INST, AUTO o TRAD"), new("lista_precio", false, "Nombre; vacío = la del canal"),
+            new("canal", true, "AUTO, DET, INST o CEDIS (TRAD = DET)"), new("lista_precio", false, "Nombre; vacío = la del canal"),
             new("condicion_pago", false, "Contado o Credito"), new("dias_credito", false, ""), new("limite_credito", false, ""),
             new("requiere_factura", false, "sí/no"), new("rfc", false, ""), new("razon_social", false, ""),
             new("regimen_fiscal", false, "Clave SAT (601, 612…)"), new("cp_fiscal", false, ""), new("uso_cfdi", false, "G03…"),
@@ -774,12 +783,12 @@ public static class PlantillasImportacion
     {
         ["productos"] =
         [
-            ["MP-MAIZ-BCO", "Maíz blanco", "MateriaPrima", "KG", "TON=1000:compra", "", "", "", "", "", "0", "", "", "", "2000", ""],
-            ["PT-TORT-KG", "Tortilla de maíz", "Terminado", "KG", "PAQ=1:venta*", "", "", "", "sí", "2", "0", "", "01010101", "", "100", ""],
+            ["MP-MAIZ-BCO", "Maíz blanco", "MateriaPrima", "KG", "TON=1000:compra", "", "", "", "", "", "0", "", "", "", "2000", "", "", ""],
+            ["PT-TORT-KG", "Tortilla de maíz", "Terminado", "KG", "PAQ=1:venta*|CAJ=24:traslado", "", "", "", "sí", "2", "0", "", "01010101", "", "100", "", "TORT", "sí"],
         ],
         ["clientes"] =
         [
-            ["", "Abarrotes Lupita", "TRAD", "", "Contado", "0", "", "no", "", "", "", "", "", "", "2291234567", "Av. Díaz Mirón 123",
+            ["", "Abarrotes Lupita", "DET", "", "Contado", "0", "", "no", "", "", "", "", "", "", "2291234567", "Av. Díaz Mirón 123",
                 "Centro", "Veracruz", "Veracruz", "91700", "19.1800", "-96.1400"],
         ],
         ["proveedores"] = [["GRANOS", "Granos del Golfo S.A. de C.V.", "Granos del Golfo", "GGO010101AB1", "Juan Pérez", "2291112233", "ventas@granos.example", "15"]],

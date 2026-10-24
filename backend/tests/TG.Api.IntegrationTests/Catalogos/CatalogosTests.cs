@@ -129,6 +129,89 @@ public sealed class CatalogosTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    [Trait("Regla", "RN-CAT-08")]
+    public async Task NombreCorto_RepetidoEntreActivos_SeRechaza_YAlDesactivarSeLibera()
+    {
+        var admin = await api.ClienteAsync();
+        var corto = DatosPrueba.Unico("NC");
+        var primero = await admin.CrearProductoAsync();
+        await admin.PutOkAsync<ProductoV02>($"/api/v1/catalogos/productos/{primero.Id}",
+            Guardar(primero, primero.Sku) with { NombreCorto = corto.ToLowerInvariant() });
+
+        var segundo = await admin.CrearProductoAsync();
+        var repetido = await admin.PutAsync($"/api/v1/catalogos/productos/{segundo.Id}",
+            Contenido(Guardar(segundo, segundo.Sku) with { NombreCorto = corto }));
+        await repetido.DebeFallarAsync(HttpStatusCode.BadRequest, "CAT-012");
+
+        await admin.PostOkAsync<ProductoV02>($"/api/v1/catalogos/productos/{primero.Id}/desactivar");
+        var libre = await admin.PutOkAsync<ProductoV02>($"/api/v1/catalogos/productos/{segundo.Id}",
+            Guardar(segundo, segundo.Sku) with { NombreCorto = corto });
+        libre.NombreCorto.ShouldBe(corto.ToUpperInvariant());
+
+        var reactivar = await admin.PostJsonAsync($"/api/v1/catalogos/productos/{primero.Id}/activar");
+        await reactivar.DebeFallarAsync(HttpStatusCode.BadRequest, "CAT-012");
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-CAT-09")]
+    public async Task Traslado_QueNoEsMultiploEnteroDeLaVenta_SeRechaza_YElDesgloseUsaLaCaja()
+    {
+        var admin = await api.ClienteAsync();
+        var paq = await admin.UnidadAsync("PAQ");
+        var caj = await admin.UnidadAsync("CAJ");
+        var producto = await admin.CrearProductoAsync(tipo: "Terminado");
+        object[] Conversiones(decimal factorCaja) =>
+        [
+            new { unidadId = paq, factorABase = 0.8m, usoVenta = true, predeterminadaVenta = true },
+            new { unidadId = caj, factorABase = factorCaja, usoTraslado = true, predeterminadaTraslado = true },
+        ];
+
+        var noEntero = await admin.PutAsync($"/api/v1/catalogos/productos/{producto.Id}",
+            Contenido(Guardar(producto, producto.Sku) with { Tipo = "Terminado", Conversiones = Conversiones(10m) }));
+        await noEntero.DebeFallarAsync(HttpStatusCode.BadRequest, "CAT-011");
+
+        var guardado = await admin.PutOkAsync<ProductoV02>($"/api/v1/catalogos/productos/{producto.Id}",
+            Guardar(producto, producto.Sku) with { Tipo = "Terminado", Conversiones = Conversiones(19.2m) });
+        guardado.Conversiones.ShouldContain(c => c.UnidadId == caj && c.PredeterminadaTraslado);
+
+        var desglose = await api.ConScopeAsync(async sp =>
+        {
+            var catalogos = sp.GetRequiredService<ICatalogosService>();
+            var info = (await catalogos.ObtenerProductoAsync(producto.Id, CancellationToken.None))!;
+            return catalogos.DesglosarCajas(info, 50 * 0.8m)!;
+        });
+        desglose.Cajas.ShouldBe(2m);
+        desglose.Paquetes.ShouldBe(2m);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-CAT-10")]
+    public async Task ProductoACobro_GuardaTolerancia_YSinElSeRechaza()
+    {
+        var admin = await api.ClienteAsync();
+        var producto = await admin.CrearProductoAsync();
+
+        var sinACobro = await admin.PutAsync($"/api/v1/catalogos/productos/{producto.Id}",
+            Contenido(Guardar(producto, producto.Sku) with { DiasToleranciaDevolucion = 11 }));
+        sinACobro.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var guardado = await admin.PutOkAsync<ProductoV02>($"/api/v1/catalogos/productos/{producto.Id}",
+            Guardar(producto, producto.Sku) with { AplicaProductoACobro = true, DiasToleranciaDevolucion = 11 });
+        guardado.AplicaProductoACobro.ShouldBeTrue();
+        guardado.DiasToleranciaDevolucion.ShouldBe(11);
+    }
+
+    [Fact]
+    public async Task Semilla_ParametrosV02_Existen()
+    {
+        var cliente = await api.ClienteAsync();
+        var parametros = await cliente.GetOkAsync<List<ParametroInfoPrueba>>("/api/v1/catalogos/parametros");
+        parametros.ShouldContain(p => p.Clave == ClavesParametro.DiasToleranciaDevolucion && p.Valor == "11");
+        parametros.ShouldContain(p => p.Clave == ClavesParametro.DiasEstimadoReferencia && p.Valor == "7");
+        parametros.ShouldContain(p => p.Clave == ClavesParametro.ConsumoPromedioVisitas && p.Valor == "8");
+    }
+
+    [Fact]
     public async Task Escritura_SinPermiso_Recibe403()
     {
         var vendedor = await api.ClienteAsync("vendedor1");
@@ -152,7 +235,14 @@ public sealed class CatalogosTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     private sealed record ParametroInfoPrueba(string Clave, string Valor);
 
-    private sealed record GuardarProducto(string Sku, string Nombre, string Tipo, Guid UnidadBaseId, decimal TasaIva);
+    private sealed record GuardarProducto(string Sku, string Nombre, string Tipo, Guid UnidadBaseId, decimal TasaIva,
+        string? NombreCorto = null, bool AplicaProductoACobro = false, int? DiasToleranciaDevolucion = null,
+        object[]? Conversiones = null);
+
+    private sealed record ConversionV02(Guid UnidadId, bool UsoTraslado, bool PredeterminadaTraslado);
+
+    private sealed record ProductoV02(Guid Id, string? NombreCorto, bool AplicaProductoACobro, int? DiasToleranciaDevolucion,
+        List<ConversionV02> Conversiones);
 
     private static GuardarProducto Guardar(ProductoPrueba p, string sku) => new(sku, p.Nombre, "MateriaPrima", p.UnidadBaseId, 0m);
 

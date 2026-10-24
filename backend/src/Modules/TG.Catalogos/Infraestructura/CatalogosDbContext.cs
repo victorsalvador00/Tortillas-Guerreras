@@ -30,6 +30,10 @@ public sealed class CatalogosDbContext(DbContextOptions<CatalogosDbContext> opti
             e.ToTable("productos");
             e.HasIndex(p => p.Sku).IsUnique().HasDatabaseName("ux_productos_sku");
             e.HasIndex(p => p.VersionSync).HasDatabaseName("ix_productos_version_sync");
+            // RN-CAT-08: nombre corto único entre productos activos.
+            e.HasIndex(p => p.NombreCorto).IsUnique().HasFilter("activo AND nombre_corto IS NOT NULL")
+                .HasDatabaseName("ux_productos_nombre_corto");
+            e.Property(p => p.NombreCorto).HasMaxLength(15);
             e.Property(p => p.Tipo).ComoTexto("productos");
             e.Property(p => p.TasaIva).Tasa();
             e.Property(p => p.TasaIeps).Tasa();

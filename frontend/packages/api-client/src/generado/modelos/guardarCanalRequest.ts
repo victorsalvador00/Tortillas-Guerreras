@@ -5,10 +5,16 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { FormatoLiquidacion } from './formatoLiquidacion';
+import type { PedidoPor } from './pedidoPor';
 
 export interface GuardarCanalRequest {
   clave: string;
   nombre: string;
   requiereFacturaDefault: boolean;
   activo: boolean;
+  formatoLiquidacion?: FormatoLiquidacion;
+  aplicaProductoACobro?: boolean;
+  pedidoPor?: PedidoPor;
+  orden?: number;
 }

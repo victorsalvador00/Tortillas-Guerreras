@@ -464,7 +464,7 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
         var ruta = await CrearRutaAsync();
         var otraRuta = await CrearRutaAsync();
         var producto = await admin.CrearProductoAsync(tipo: "Reventa", unidad: "PZA");
-        var canal = (await admin.GetOkAsync<List<CanalPrueba>>("/api/v1/ventas/canales")).Single(c => c.Clave == "TRAD").Id;
+        var canal = (await admin.GetOkAsync<List<CanalPrueba>>("/api/v1/ventas/canales")).Single(c => c.Clave == "DET").Id;
         var lista = await admin.PostOkAsync<IdPrueba>("/api/v1/ventas/listas-precio",
             new { nombre = DatosPrueba.Unico("LISTA"), canalId = canal, vigenteDesde = "2026-01-01", activo = true });
         await admin.PutOkAsync<IdPrueba>($"/api/v1/ventas/listas-precio/{lista.Id}/partidas",

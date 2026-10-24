@@ -27,8 +27,8 @@ describe('compras: cálculos de la orden', () => {
       unidadBaseId: 'kg',
       unidadBaseClave: 'KG',
       conversiones: [
-        { unidadId: 'ton', unidadClave: 'TON', unidadNombre: 'Tonelada', factorABase: 1000, usoCompra: true, usoVenta: false, usoProduccion: false, predeterminadaVenta: false },
-        { unidadId: 'paq', unidadClave: 'PAQ', unidadNombre: 'Paquete', factorABase: 1, usoCompra: false, usoVenta: true, usoProduccion: false, predeterminadaVenta: true },
+        { unidadId: 'ton', unidadClave: 'TON', unidadNombre: 'Tonelada', factorABase: 1000, usoCompra: true, usoVenta: false, usoProduccion: false, predeterminadaVenta: false, usoTraslado: false, predeterminadaTraslado: false },
+        { unidadId: 'paq', unidadClave: 'PAQ', unidadNombre: 'Paquete', factorABase: 1, usoCompra: false, usoVenta: true, usoProduccion: false, predeterminadaVenta: true, usoTraslado: false, predeterminadaTraslado: false },
       ],
     });
     expect(unidades.map((u) => u.valor)).toEqual(['kg', 'ton']);

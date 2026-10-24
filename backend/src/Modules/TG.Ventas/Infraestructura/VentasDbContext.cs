@@ -26,6 +26,8 @@ public sealed class VentasDbContext(DbContextOptions<VentasDbContext> options) :
         {
             e.ToTable("canales");
             e.HasIndex(c => c.Clave).IsUnique().HasDatabaseName("ux_canales_clave");
+            e.Property(c => c.FormatoLiquidacion).ComoTexto("canales");
+            e.Property(c => c.PedidoPor).ComoTexto("canales");
         });
 
         builder.Entity<ListaPrecio>(e =>

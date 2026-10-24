@@ -44,6 +44,9 @@ public sealed class Producto : EntidadAuditable, IVersionSync, IConcurrencia
 {
     public string Sku { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
+
+    /// <summary>RN-CAT-08: máximo 15 caracteres, único entre activos; vacío = SKU.</summary>
+    public string? NombreCorto { get; set; }
     public string? Descripcion { get; set; }
     public TipoProducto Tipo { get; set; }
     public Guid UnidadBaseId { get; set; }
@@ -59,6 +62,12 @@ public sealed class Producto : EntidadAuditable, IVersionSync, IConcurrencia
     public decimal? TasaIeps { get; set; }
     public string? CodigoBarras { get; set; }
     public decimal? StockMinimo { get; set; }
+
+    /// <summary>RN-LOG-24: la devolución fuera de tolerancia se carga al chofer.</summary>
+    public bool AplicaProductoACobro { get; set; }
+
+    /// <summary>RN-CAT-10: nulo = parámetro <c>logistica.dias_tolerancia_devolucion</c> [SUP-19].</summary>
+    public int? DiasToleranciaDevolucion { get; set; }
     public bool Activo { get; set; } = true;
     public long VersionSync { get; set; }
     public uint Version { get; set; }
@@ -91,6 +100,8 @@ public sealed class ProductoUnidad
     public bool UsoVenta { get; set; }
     public bool UsoProduccion { get; set; }
     public bool PredeterminadaVenta { get; set; }
+    public bool UsoTraslado { get; set; }
+    public bool PredeterminadaTraslado { get; set; }
 }
 
 public sealed class MotivoMerma : EntidadAuditable, IVersionSync

@@ -104,7 +104,7 @@ en orden de dependencia en lugar de crear `T-x.y-b` dispersas (cada una indica q
 alcance: facturación y cobranza de clientes. Cada tarea incluye migración, semilla, OpenAPI y cliente TS
 regenerado (definición de terminado).
 
-- [ ] **T-8.1 Catálogos y canales v0.2** *(ajusta T-1.1, T-4.1)*. Canales `AUTO`, `DET` (renombra `TRAD`),
+- [x] **T-8.1 Catálogos y canales v0.2** *(ajusta T-1.1, T-4.1)*. Canales `AUTO`, `DET` (renombra `TRAD`),
   `INST`, `CEDIS` con `formato_liquidacion`, `aplica_producto_a_cobro`, `pedido_por`, `orden`; producto
   `nombre_corto`, `aplica_producto_a_cobro`; conversiones `uso_traslado`/`predeterminada_traslado`; helper de cajas +
   paquetes en `@tg/shared` y `ICatalogosService`; `dias_tolerancia_devolucion`; parámetros nuevos de `03`. Web: ficha

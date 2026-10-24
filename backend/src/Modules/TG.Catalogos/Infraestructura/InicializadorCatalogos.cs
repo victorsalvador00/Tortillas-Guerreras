@@ -40,6 +40,16 @@ internal sealed class InicializadorCatalogos : InicializadorModulo<CatalogosDbCo
         (ClavesParametro.ProduccionUmbralVariacion, "0.05", TipoParametro.@decimal, "Umbral de variación teórico vs real (0.05 = 5 %)"),
         (ClavesParametro.ComprasTolerancia, "0.05", TipoParametro.@decimal, "Tolerancia para recibir de más (0.05 = 5 %) [SUP-04]"),
         (ClavesParametro.MetodoCosteo, "PromedioPonderado", TipoParametro.text, "Método de costeo [SUP-06]"),
+        (ClavesParametro.DiasToleranciaDevolucion, "11", TipoParametro.@int, "Días de antigüedad del lote devuelto sin cargo al chofer [SUP-19]"),
+        (ClavesParametro.PrecioProductoACobro, "ListaCanal", TipoParametro.text, "Valuación del producto a cobro: ListaCanal o Costo [SUP-20]"),
+        (ClavesParametro.CargoFaltanteProducto, "true", TipoParametro.@bool, "El faltante de producto en la liquidación genera cargo al chofer [SUP-21]"),
+        (ClavesParametro.CargoFaltanteEfectivo, "true", TipoParametro.@bool, "El faltante de efectivo en la liquidación genera cargo al chofer [SUP-21]"),
+        (ClavesParametro.RequiereRevisionSupervisor, "true", TipoParametro.@bool, "La liquidación pasa por la revisión del supervisor (RN-LOG-20)"),
+        (ClavesParametro.DiaInicioSemanaCorte, "1", TipoParametro.@int, "Día de inicio del corte semanal (1 = lunes) [SUP-22]"),
+        (ClavesParametro.DiasEstimadoReferencia, "7", TipoParametro.@int, "Sin pedido, el estimado toma el de hace N días [SUP-23]"),
+        (ClavesParametro.AlertaCantidadFactor, "3", TipoParametro.@decimal, "La app pide confirmar si la cantidad supera N veces el promedio (RN-APP-09)"),
+        (ClavesParametro.AlertaCantidadMaxima, "500", TipoParametro.@decimal, "Tope por partida en unidad de venta que pide confirmación (RN-APP-09)"),
+        (ClavesParametro.ConsumoPromedioVisitas, "8", TipoParametro.@int, "Ventas/entregas que promedia el consumo del cliente (RN-APP-09)"),
     ];
 
     // (clave, nombre, producción, almacén, ruta, retorno)
@@ -116,11 +126,12 @@ internal sealed class InicializadorCatalogos : InicializadorModulo<CatalogosDbCo
         }
 
         void Conversion(Producto p, string unidad, decimal factor, bool compra = false, bool venta = false,
-            bool produccion = false, bool predeterminada = false) =>
+            bool produccion = false, bool predeterminada = false, bool traslado = false) =>
             p.Conversiones.Add(new ProductoUnidad
             {
                 ProductoId = p.Id, UnidadId = u[unidad].Id, FactorABase = factor, UsoCompra = compra, UsoVenta = venta,
-                UsoProduccion = produccion, PredeterminadaVenta = predeterminada,
+                UsoProduccion = produccion, PredeterminadaVenta = predeterminada, UsoTraslado = traslado,
+                PredeterminadaTraslado = traslado,
             });
 
         Conversion(Nuevo("MP-MAIZ-BCO", "Maíz blanco", TipoProducto.MateriaPrima, "KG", 0m, minimo: 2000), "TON", 1000m, compra: true);
@@ -133,10 +144,17 @@ internal sealed class InicializadorCatalogos : InicializadorModulo<CatalogosDbCo
         Nuevo("EMP-PAPEL", "Papel estraza", TipoProducto.Empaque, "KG", 0.16m);
         Nuevo("SEM-MASA", "Masa de maíz", TipoProducto.Semiterminado, "KG", 0m, vidaUtil: 1);
         // [SUP-02] Tortilla: vida útil 2 días; masa: 1 día.
-        Conversion(Nuevo("PT-TORT-KG", "Tortilla de maíz", TipoProducto.Terminado, "KG", 0m, vidaUtil: 2, claveSat: satGenerica, minimo: 100),
-            "PAQ", 1m, venta: true, predeterminada: true);
+        // [SUP-26] Paquetes por caja propios de cada producto (24 de tortilla, 15 de tostada).
+        var tortilla = Nuevo("PT-TORT-KG", "Tortilla de maíz", TipoProducto.Terminado, "KG", 0m, vidaUtil: 2, claveSat: satGenerica, minimo: 100);
+        tortilla.NombreCorto = "TORT";
+        tortilla.AplicaProductoACobro = true;
+        Conversion(tortilla, "PAQ", 1m, venta: true, predeterminada: true);
+        Conversion(tortilla, "CAJ", 24m, traslado: true);
         Nuevo("PT-MASA-KG", "Masa para venta", TipoProducto.Terminado, "KG", 0m, vidaUtil: 1, claveSat: satGenerica);
-        Nuevo("PT-TOSTADA", "Tostada (paquete 30 pz)", TipoProducto.Terminado, "PAQ", 0m, vidaUtil: 30, claveSat: satGenerica);
+        var tostada = Nuevo("PT-TOSTADA", "Tostada (paquete 30 pz)", TipoProducto.Terminado, "PAQ", 0m, vidaUtil: 30, claveSat: satGenerica);
+        tostada.NombreCorto = "TOST";
+        tostada.AplicaProductoACobro = true;
+        Conversion(tostada, "CAJ", 15m, traslado: true);
         Nuevo("PT-TOTOPO", "Totopo (bolsa 500 g)", TipoProducto.Terminado, "PAQ", 0.16m, ieps: 0.08m, vidaUtil: 60, claveSat: satGenerica);
         Conversion(Nuevo("RV-SALSA", "Salsa embotellada", TipoProducto.Reventa, "PZA", 0.16m, claveSat: satGenerica), "CAJ", 12m, compra: true);
     }

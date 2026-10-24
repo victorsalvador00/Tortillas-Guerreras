@@ -15,4 +15,6 @@ export interface ConversionDto {
   usoVenta: boolean;
   usoProduccion: boolean;
   predeterminadaVenta: boolean;
+  usoTraslado: boolean;
+  predeterminadaTraslado: boolean;
 }

@@ -44,6 +44,12 @@ public static class ErroresCatalogos
         Error.Campo("CAT-009", "valor", $"El valor no es un {tipo} válido.");
 
     public static Error ClaveDuplicada(string campo = "clave") => Error.Campo("CAT-010", campo, "La clave ya existe.");
+
+    public static Error TrasladoNoEntero(string unidad) =>
+        Error.Campo("CAT-011", "conversiones", $"La unidad de traslado {unidad} debe contener un número entero de unidades de venta.");
+
+    public static readonly Error NombreCortoDuplicado =
+        Error.Campo("CAT-012", "nombreCorto", "Ya existe un producto activo con ese nombre corto.");
 }
 
 internal sealed class CatalogosService(CatalogosDbContext db, IMemoryCache cache) : ICatalogosService
@@ -192,11 +198,13 @@ internal sealed class CatalogosService(CatalogosDbContext db, IMemoryCache cache
         db.Productos.AsNoTracking().Include(p => p.UnidadBase).Include(p => p.Conversiones).ThenInclude(c => c.Unidad);
 
     internal static ProductoInfo AInfo(Producto p) => new(
-        p.Id, p.Sku, p.Nombre, p.Tipo.ToString(), p.UnidadBaseId, p.UnidadBase!.Clave, p.UnidadBase.ClaveSat,
+        p.Id, p.Sku, p.Nombre, p.NombreCorto, p.Tipo.ToString(), p.UnidadBaseId, p.UnidadBase!.Clave, p.UnidadBase.ClaveSat,
         p.UnidadBase.Decimales, p.EsComprable, p.EsProducible, p.EsVendible, p.ManejaLote, p.VidaUtilDias,
-        p.ClaveProdServSat, p.ObjetoImpuestoSat, p.TasaIva, p.TasaIeps, p.StockMinimo, p.Activo, p.VersionSync,
+        p.ClaveProdServSat, p.ObjetoImpuestoSat, p.TasaIva, p.TasaIeps, p.StockMinimo, p.AplicaProductoACobro,
+        p.DiasToleranciaDevolucion, p.Activo, p.VersionSync,
         p.Conversiones.Select(c => new ConversionInfo(c.UnidadId, c.Unidad!.Clave, c.Unidad.Nombre, c.Unidad.ClaveSat,
-            c.Unidad.Decimales, c.FactorABase, c.UsoCompra, c.UsoVenta, c.UsoProduccion, c.PredeterminadaVenta)).ToList());
+            c.Unidad.Decimales, c.FactorABase, c.UsoCompra, c.UsoVenta, c.UsoProduccion, c.PredeterminadaVenta, c.UsoTraslado,
+            c.PredeterminadaTraslado)).ToList());
 
     private static MotivoMermaInfo AInfo(MotivoMerma m) =>
         new(m.Id, m.Clave, m.Nombre, m.AplicaProduccion, m.AplicaAlmacen, m.AplicaRuta, m.AplicaRetorno, m.Activo, m.VersionSync);

@@ -14,9 +14,12 @@ namespace TG.Ventas.Aplicacion;
 
 // ───────────────────────────── Canales ─────────────────────────────
 
-public sealed record CanalDto(Guid Id, string Clave, string Nombre, bool RequiereFacturaDefault, bool Activo);
+public sealed record CanalDto(Guid Id, string Clave, string Nombre, bool RequiereFacturaDefault,
+    FormatoLiquidacion FormatoLiquidacion, bool AplicaProductoACobro, PedidoPor PedidoPor, short Orden, bool Activo);
 
-public sealed record GuardarCanalRequest(string Clave, string Nombre, bool RequiereFacturaDefault, bool Activo);
+public sealed record GuardarCanalRequest(string Clave, string Nombre, bool RequiereFacturaDefault, bool Activo,
+    FormatoLiquidacion FormatoLiquidacion = FormatoLiquidacion.Completo, bool AplicaProductoACobro = false,
+    PedidoPor PedidoPor = PedidoPor.Cliente, short Orden = 0);
 
 public sealed class GuardarCanalValidator : AbstractValidator<GuardarCanalRequest>
 {
@@ -24,14 +27,18 @@ public sealed class GuardarCanalValidator : AbstractValidator<GuardarCanalReques
     {
         RuleFor(x => x.Clave).NotEmpty().MaximumLength(10);
         RuleFor(x => x.Nombre).NotEmpty();
+        RuleFor(x => x.FormatoLiquidacion).IsInEnum();
+        RuleFor(x => x.PedidoPor).IsInEnum();
+        RuleFor(x => x.Orden).GreaterThanOrEqualTo((short)0);
     }
 }
 
 public sealed class CanalesHandler(VentasDbContext db)
 {
     public async Task<IReadOnlyList<CanalDto>> ListarAsync(CancellationToken ct) =>
-        await db.Canales.AsNoTracking().OrderBy(c => c.Clave)
-            .Select(c => new CanalDto(c.Id, c.Clave, c.Nombre, c.RequiereFacturaDefault, c.Activo)).ToListAsync(ct);
+        await db.Canales.AsNoTracking().OrderBy(c => c.Orden).ThenBy(c => c.Clave)
+            .Select(c => new CanalDto(c.Id, c.Clave, c.Nombre, c.RequiereFacturaDefault, c.FormatoLiquidacion,
+                c.AplicaProductoACobro, c.PedidoPor, c.Orden, c.Activo)).ToListAsync(ct);
 
     public async Task<Result<CanalDto>> GuardarAsync(Guid? id, GuardarCanalRequest r, CancellationToken ct)
     {
@@ -59,9 +66,14 @@ public sealed class CanalesHandler(VentasDbContext db)
         canal.Clave = clave;
         canal.Nombre = r.Nombre.Trim();
         canal.RequiereFacturaDefault = r.RequiereFacturaDefault;
+        canal.FormatoLiquidacion = r.FormatoLiquidacion;
+        canal.AplicaProductoACobro = r.AplicaProductoACobro;
+        canal.PedidoPor = r.PedidoPor;
+        canal.Orden = r.Orden;
         canal.Activo = r.Activo;
         await db.SaveChangesAsync(ct);
-        return new CanalDto(canal.Id, canal.Clave, canal.Nombre, canal.RequiereFacturaDefault, canal.Activo);
+        return new CanalDto(canal.Id, canal.Clave, canal.Nombre, canal.RequiereFacturaDefault, canal.FormatoLiquidacion,
+            canal.AplicaProductoACobro, canal.PedidoPor, canal.Orden, canal.Activo);
     }
 }
 

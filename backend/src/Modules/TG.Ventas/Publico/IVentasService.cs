@@ -2,6 +2,38 @@ using TG.SharedKernel.Resultados;
 
 namespace TG.Ventas.Publico;
 
+/// <summary>Claves de los canales del cliente (v0.2). <c>DET</c> reemplaza a <c>TRAD</c>.</summary>
+public static class ClavesCanal
+{
+    public const string Autoservicio = "AUTO";
+    public const string Detalle = "DET";
+    public const string Institucional = "INST";
+    public const string Cedis = "CEDIS";
+
+    /// <summary>Clave anterior de Detalle; el importador todavía la acepta.</summary>
+    public const string DetalleAnterior = "TRAD";
+
+    public static string Normalizar(string clave)
+    {
+        var c = clave.Trim().ToUpperInvariant();
+        return c == DetalleAnterior ? Detalle : c;
+    }
+}
+
+/// <summary>RN-LOG-19: formato de la hoja de liquidación del canal.</summary>
+public enum FormatoLiquidacion
+{
+    Completo,
+    Simplificado,
+}
+
+/// <summary>RN-VEN-16: un pedido por cliente o un pedido global de la ruta al genérico.</summary>
+public enum PedidoPor
+{
+    Cliente,
+    Ruta,
+}
+
 public enum CondicionPago
 {
     Contado,

@@ -39,7 +39,7 @@ export const ENTIDADES: { entidad: Entidad; titulo: string; descripcion: string;
   {
     entidad: 'clientes',
     titulo: 'Clientes',
-    descripcion: 'Con canal (INST, AUTO, TRAD), lista de precios y datos fiscales.',
+    descripcion: 'Con canal (AUTO, DET, INST, CEDIS), lista de precios y datos fiscales.',
     icono: 'groups',
     permiso: 'ventas.clientes',
     importar: importarClientes,

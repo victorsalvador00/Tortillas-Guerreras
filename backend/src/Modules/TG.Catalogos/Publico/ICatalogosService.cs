@@ -10,12 +10,14 @@ public enum UsoUnidad
 }
 
 public sealed record ConversionInfo(Guid UnidadId, string UnidadClave, string UnidadNombre, string ClaveSat, short Decimales,
-    decimal FactorABase, bool UsoCompra, bool UsoVenta, bool UsoProduccion, bool PredeterminadaVenta);
+    decimal FactorABase, bool UsoCompra, bool UsoVenta, bool UsoProduccion, bool PredeterminadaVenta, bool UsoTraslado,
+    bool PredeterminadaTraslado);
 
 public sealed record ProductoInfo(
     Guid Id,
     string Sku,
     string Nombre,
+    string? NombreCorto,
     string Tipo,
     Guid UnidadBaseId,
     string UnidadBaseClave,
@@ -31,6 +33,8 @@ public sealed record ProductoInfo(
     decimal TasaIva,
     decimal? TasaIeps,
     decimal? StockMinimo,
+    bool AplicaProductoACobro,
+    int? DiasToleranciaDevolucion,
     bool Activo,
     long VersionSync,
     IReadOnlyList<ConversionInfo> Conversiones);
@@ -41,6 +45,36 @@ public sealed record MotivoMermaInfo(Guid Id, string Clave, string Nombre, bool 
     bool AplicaRuta, bool AplicaRetorno, bool Activo, long VersionSync);
 
 public sealed record ParametroInfo(string Clave, string Valor, string Tipo, long VersionSync);
+
+/// <summary>RN-CAT-09: una cantidad de surtido expresada como "N cajas + M paquetes".</summary>
+public sealed record DesgloseCajas(decimal Cajas, string UnidadTraslado, decimal Paquetes, string UnidadVenta)
+{
+    public override string ToString() => $"{Cajas:0.####} {UnidadTraslado} + {Paquetes:0.####} {UnidadVenta}";
+
+    /// <summary>
+    /// <c>N = floor(cantidad_venta / paquetes_por_caja)</c>, <c>M = resto</c>, con
+    /// <c>paquetes_por_caja = factor_traslado / factor_venta</c>. La unidad de venta es la predeterminada (o la base).
+    /// Nulo si el producto no tiene unidad predeterminada de traslado.
+    /// </summary>
+    public static DesgloseCajas? Calcular(ProductoInfo producto, decimal cantidadBase)
+    {
+        var traslado = producto.Conversiones.FirstOrDefault(c => c.PredeterminadaTraslado);
+        if (traslado is null)
+        {
+            return null;
+        }
+
+        var venta = producto.Conversiones.FirstOrDefault(c => c.PredeterminadaVenta);
+        var factorVenta = venta?.FactorABase ?? 1m;
+        var paquetesPorCaja = traslado.FactorABase / factorVenta;
+        var cantidadVenta = cantidadBase / factorVenta;
+        var signo = Math.Sign(cantidadVenta);
+        var absoluta = Math.Abs(cantidadVenta);
+        var cajas = Math.Floor(absoluta / paquetesPorCaja);
+        return new DesgloseCajas(signo * cajas, traslado.UnidadClave, signo * (absoluta - cajas * paquetesPorCaja),
+            venta?.UnidadClave ?? producto.UnidadBaseClave);
+    }
+}
 
 /// <summary>Resultado de convertir una cantidad capturada a la unidad base del producto.</summary>
 public sealed record CantidadBase(Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal FactorABase, decimal Base);
@@ -78,6 +112,9 @@ public interface ICatalogosService
     Task<T> ObtenerParametroAsync<T>(string clave, T predeterminado, CancellationToken ct);
 
     Task<IReadOnlyList<ParametroInfo>> ListarParametrosAsync(CancellationToken ct);
+
+    /// <summary>RN-CAT-09: cantidad en unidad base como cajas + paquetes (para reportes).</summary>
+    DesgloseCajas? DesglosarCajas(ProductoInfo producto, decimal cantidadBase) => DesgloseCajas.Calcular(producto, cantidadBase);
 }
 
 /// <summary>
@@ -104,6 +141,18 @@ public static class ClavesParametro
     public const string ProduccionUmbralVariacion = "produccion.umbral_variacion_pct";
     public const string ComprasTolerancia = "compras.tolerancia_pct";
     public const string MetodoCosteo = "inventario.metodo_costeo";
+
+    // v0.2
+    public const string DiasToleranciaDevolucion = "logistica.dias_tolerancia_devolucion";
+    public const string PrecioProductoACobro = "logistica.precio_producto_a_cobro";
+    public const string CargoFaltanteProducto = "logistica.cargo_faltante_producto";
+    public const string CargoFaltanteEfectivo = "logistica.cargo_faltante_efectivo";
+    public const string RequiereRevisionSupervisor = "logistica.requiere_revision_supervisor";
+    public const string DiaInicioSemanaCorte = "logistica.dia_inicio_semana_corte";
+    public const string DiasEstimadoReferencia = "ventas.dias_estimado_referencia";
+    public const string AlertaCantidadFactor = "ruta.alerta_cantidad_factor";
+    public const string AlertaCantidadMaxima = "ruta.alerta_cantidad_maxima";
+    public const string ConsumoPromedioVisitas = "ruta.consumo_promedio_visitas";
 }
 
 public static class ClavesMotivoMerma
