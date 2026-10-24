@@ -3,6 +3,8 @@ import { pantalla } from '@/app/rutas-base';
 import { CambiosPendientes } from './CambiosPendientes';
 import { CargaDetalle, CargaNueva, Cargas } from './Cargas';
 import { Rutas, Vehiculos } from './Configuracion';
+import { CorteDetalle, CorteSemanal } from './CorteSemanal';
+import { CuentaChoferes } from './CuentaChoferes';
 import { HojaLiquidacion } from './HojaLiquidacion';
 import { LiquidacionDetalle, Liquidaciones } from './Liquidaciones';
 import { RetornoNuevo, Retornos } from './Retornos';
@@ -19,6 +21,9 @@ export function rutasLogistica(): AnyRoute[] {
     pantalla('/logistica/retornos', Retornos, ['logistica.retornos', 'logistica.ver']),
     pantalla('/logistica/retornos/nuevo', RetornoNuevo, 'logistica.retornos'),
     pantalla('/logistica/cambios-pendientes', CambiosPendientes, 'logistica.ver'),
+    pantalla('/logistica/cuenta-choferes', CuentaChoferes, 'logistica.cargos_chofer'),
+    pantalla('/logistica/cortes', CorteSemanal, 'logistica.cargos_chofer'),
+    pantalla('/logistica/cortes/$id', CorteDetalle, 'logistica.cargos_chofer'),
     pantalla('/logistica/rutas', Rutas, 'logistica.configurar'),
     pantalla('/logistica/rutas/$id', RutaDetalle, 'logistica.configurar'),
     pantalla('/logistica/vehiculos', Vehiculos, 'logistica.configurar'),

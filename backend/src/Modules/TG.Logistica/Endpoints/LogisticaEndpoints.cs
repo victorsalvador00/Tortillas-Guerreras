@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using TG.Logistica.Aplicacion;
 using TG.Logistica.Publico;
@@ -115,6 +116,33 @@ internal static class LogisticaEndpoints
         liquidaciones.MapGet("/{id:guid}/hoja", async (Guid id, LiquidacionesHandler h, CancellationToken ct) =>
             (await h.HojaAsync(id, ct)).AHttp()).RequireAuthorization(P.Ver)
             .WithName("hojaLiquidacion");
+
+        // v0.2: cuenta y corte semanal de los choferes (RN-LOG-25 a 30).
+        var cargos = grupo.MapGroup("/cargos-chofer").RequireAuthorization(P.CargosChofer);
+        cargos.MapGet("/", (Guid? choferId, EstadoCargoChofer? estado, DateOnly? desde, DateOnly? hasta, Guid? liquidacionId, Guid? corteId,
+                CargosChoferHandler h, CancellationToken ct) => h.ListarAsync(choferId, estado, desde, hasta, liquidacionId, corteId, ct))
+            .WithName("listarCargosChofer");
+        cargos.MapPost("/", async (CrearCargoChoferRequest r, CargosChoferHandler h, CancellationToken ct) => (await h.CrearAsync(r, ct)).AHttp())
+            .Validar<CrearCargoChoferRequest>().WithName("crearCargoChofer");
+        cargos.MapPost("/{id:guid}/cancelar", async (Guid id, CancelarCargoChoferRequest r, CargosChoferHandler h, CancellationToken ct) =>
+            (await h.CancelarAsync(id, r, ct)).AHttp()).WithName("cancelarCargoChofer");
+
+        var cortes = grupo.MapGroup("/cortes-chofer").RequireAuthorization(P.CargosChofer);
+        cortes.MapGet("/", (DateOnly fecha, Guid? choferId, CortesChoferHandler h, CancellationToken ct) => h.ResumenAsync(fecha, choferId, ct))
+            .WithName("resumenCortesChofer");
+        cortes.MapPost("/", async (AbrirCorteRequest r, CortesChoferHandler h, CancellationToken ct) => (await h.AbrirAsync(r, ct)).AHttp())
+            .WithName("abrirCorteChofer");
+        cortes.MapGet("/{id:guid}", async (Guid id, CortesChoferHandler h, CancellationToken ct) => (await h.ObtenerAsync(id, ct)).AHttp())
+            .WithName("obtenerCorteChofer");
+        cortes.MapPost("/{id:guid}/cerrar", async (Guid id, CortesChoferHandler h, CancellationToken ct) => (await h.CerrarAsync(id, ct)).AHttp())
+            .WithName("cerrarCorteChofer");
+        cortes.MapGet("/{id:guid}/exportar", async Task<Results<FileContentHttpResult, ProblemHttpResult>> (Guid id, CortesChoferHandler h,
+                CancellationToken ct) =>
+            {
+                var r = await h.ExportarAsync(id, ct);
+                return r.EsExito ? TypedResults.File(r.Valor.Contenido, r.Valor.TipoContenido, r.Valor.Nombre) : r.Error!.AProblema();
+            })
+            .WithName("exportarCorteChofer");
 
         return api;
     }

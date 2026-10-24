@@ -155,6 +155,44 @@ public sealed class Liquidacion : EntidadAuditable, IConcurrencia
     public List<LiquidacionGasto> Gastos { get; set; } = [];
 }
 
+/// <summary>RN-LOG-25: cargo a la cuenta del chofer; positivo = se le cobra.</summary>
+[Bitacora]
+public sealed class CargoChofer : EntidadAuditable, IConcurrencia
+{
+    public string Folio { get; set; } = string.Empty;
+    public Guid ChoferId { get; set; }
+    public TipoCargoChofer Tipo { get; set; }
+    public Guid? LiquidacionId { get; set; }
+    public Guid? ProductoId { get; set; }
+    public decimal? CantidadBase { get; set; }
+    public decimal? PrecioUnitario { get; set; }
+    public decimal Importe { get; set; }
+    public DateOnly FechaOperativa { get; set; }
+    public EstadoCargoChofer Estado { get; set; } = EstadoCargoChofer.Pendiente;
+    public Guid? CorteId { get; set; }
+    public string? Notas { get; set; }
+    public Guid? CanceladoPor { get; set; }
+    public DateTimeOffset? CanceladoEn { get; set; }
+    public string? MotivoCancelacion { get; set; }
+    public uint Version { get; set; }
+}
+
+/// <summary>RN-LOG-28: corte semanal del chofer.</summary>
+[Bitacora]
+public sealed class CorteChofer : EntidadAuditable, IConcurrencia
+{
+    public string Folio { get; set; } = string.Empty;
+    public Guid ChoferId { get; set; }
+    public DateOnly Desde { get; set; }
+    public DateOnly Hasta { get; set; }
+    public decimal TotalVenta { get; set; }
+    public decimal TotalCargos { get; set; }
+    public EstadoCorteChofer Estado { get; set; } = EstadoCorteChofer.Abierto;
+    public Guid? CerradoPor { get; set; }
+    public DateTimeOffset? CerradoEn { get; set; }
+    public uint Version { get; set; }
+}
+
 /// <summary>Gasto de ruta (diésel, casetas, maniobras…); los autorizados se restan del efectivo esperado (RN-LOG-08).</summary>
 public sealed class LiquidacionGasto
 {
@@ -185,6 +223,17 @@ public sealed class LiquidacionPartida
 
     /// <summary>Columna "Total $": importe con impuestos de lo vendido del producto, repartido entre lotes.</summary>
     public decimal ImporteVenta { get; set; }
+
+    /// <summary>RN-LOG-24: capturada por almacén; <c>null</c> = aún no capturada (se usa la sugerida).</summary>
+    public decimal? CantidadACobro { get; set; }
+
+    public decimal? PrecioACobro { get; set; }
+
+    /// <summary>RN-LOG-24: sugerencia por antigüedad del lote (calculada, no se guarda).</summary>
+    public decimal CantidadACobroSugerida { get; set; }
+
+    /// <summary>La partida admite producto a cobro (formato, canal, producto y devuelto no vendible).</summary>
+    public bool AplicaACobro { get; set; }
     public decimal DevueltoClientesVendible { get; set; }
     public decimal DevueltoClientesNoVendible { get; set; }
 
@@ -238,6 +287,38 @@ public static class ReglasLogistica
     /// <summary>RN-LOG-20: siguiente etapa válida para cerrar el dinero.</summary>
     public static bool PuedeCerrar(EstadoLiquidacion estado, bool requiereRevision) =>
         estado == EstadoLiquidacion.Revisada || (estado == EstadoLiquidacion.ProductoConfirmado && !requiereRevision);
+
+    /// <summary>RN-LOG-25: <c>importe = round(cantidad × precio, 2)</c>.</summary>
+    public static decimal ImporteCargo(decimal cantidad, decimal precio) => Dinero.Redondear(cantidad * precio);
+
+    /// <summary>
+    /// RN-LOG-24: días del lote a la fecha de operación. Lote <c>AAMMDD…</c>; si no trae fecha,
+    /// <c>fecha_caducidad − vida_util_dias</c>; <c>null</c> si no se puede saber.
+    /// </summary>
+    public static int? AntiguedadLote(string lote, DateOnly? fechaCaducidad, int? vidaUtilDias, DateOnly fechaOperacion)
+    {
+        if (lote.Length >= 6 && lote[..6].All(char.IsAsciiDigit)
+            && DateOnly.TryParseExact(lote[..6], "yyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var fechaLote))
+        {
+            return fechaOperacion.DayNumber - fechaLote.DayNumber;
+        }
+
+        return fechaCaducidad is { } caducidad && vidaUtilDias is { } vida
+            ? fechaOperacion.DayNumber - caducidad.AddDays(-vida).DayNumber
+            : null;
+    }
+
+    /// <summary>RN-LOG-24: se propone todo lo devuelto no vendible del lote si su antigüedad supera la tolerancia.</summary>
+    public static decimal ACobroSugerido(decimal devueltoNoVendible, int? antiguedad, int tolerancia) =>
+        antiguedad is { } dias && dias > tolerancia ? devueltoNoVendible : 0;
+
+    /// <summary>RN-LOG-28: inicio de la semana del corte (<c>diaInicio</c> 1 = lunes … 7 = domingo).</summary>
+    public static DateOnly InicioSemana(DateOnly fecha, int diaInicio)
+    {
+        var dia = fecha.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)fecha.DayOfWeek;
+        return fecha.AddDays(-((dia - Math.Clamp(diaInicio, 1, 7) + 7) % 7));
+    }
 
     /// <summary>Reparte un importe entre lotes en proporción a lo vendido; el redondeo va al último.</summary>
     public static IReadOnlyList<decimal> Repartir(decimal importe, IReadOnlyList<decimal> pesos)

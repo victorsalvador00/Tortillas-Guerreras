@@ -80,4 +80,34 @@ public sealed class ReglasLogisticaTests
         ReglasLogistica.Repartir(50m, [3m, 1m]).ShouldBe([37.50m, 12.50m]);
         ReglasLogistica.Repartir(10m, []).ShouldBeEmpty();
     }
+
+    [Theory]
+    [Trait("Regla", "RN-LOG-24")]
+    [InlineData("261011-ABC", null, null, 13)]          // lote AAMMDD
+    [InlineData("SINFECHA", "2026-10-20", 2, 6)]        // caducidad − vida útil = 18-oct
+    [InlineData("SINFECHA", null, 2, null)]
+    [InlineData("269999-X", "2026-10-23", 1, 2)]        // prefijo que no es fecha
+    public void AntiguedadLote_PorFechaDelLoteOCaducidad(string lote, string? caducidad, int? vida, int? esperado) =>
+        ReglasLogistica.AntiguedadLote(lote, caducidad is null ? null : DateOnly.Parse(caducidad), vida, new DateOnly(2026, 10, 24))
+            .ShouldBe(esperado);
+
+    [Theory]
+    [Trait("Regla", "RN-LOG-24")]
+    [InlineData(13, 11, 3)]
+    [InlineData(11, 11, 0)]
+    public void ACobroSugerido_SoloSiSuperaLaTolerancia(int antiguedad, int tolerancia, decimal esperado) =>
+        ReglasLogistica.ACobroSugerido(3m, antiguedad, tolerancia).ShouldBe(esperado);
+
+    [Theory]
+    [Trait("Regla", "RN-LOG-28")]
+    [InlineData("2026-10-24", 1, "2026-10-19")]   // sábado → lunes
+    [InlineData("2026-10-25", 1, "2026-10-19")]   // domingo → lunes anterior
+    [InlineData("2026-10-19", 1, "2026-10-19")]
+    [InlineData("2026-10-24", 7, "2026-10-18")]   // semana de domingo a sábado
+    public void InicioSemana_SegunDiaDeInicio(string fecha, int dia, string esperado) =>
+        ReglasLogistica.InicioSemana(DateOnly.Parse(fecha), dia).ShouldBe(DateOnly.Parse(esperado));
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-25")]
+    public void ImporteCargo_Redondeado() => ReglasLogistica.ImporteCargo(3m, 12.3456m).ShouldBe(37.04m);
 }

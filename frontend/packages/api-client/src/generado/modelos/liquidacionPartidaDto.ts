@@ -9,6 +9,8 @@ import type { LiquidacionPartidaDtoSobranteContado } from './liquidacionPartidaD
 import type { LiquidacionPartidaDtoDiferencia } from './liquidacionPartidaDtoDiferencia';
 import type { DestinoSobrante } from './destinoSobrante';
 import type { LiquidacionPartidaDtoMotivoMermaId } from './liquidacionPartidaDtoMotivoMermaId';
+import type { LiquidacionPartidaDtoCantidadACobro } from './liquidacionPartidaDtoCantidadACobro';
+import type { LiquidacionPartidaDtoPrecioACobro } from './liquidacionPartidaDtoPrecioACobro';
 
 export interface LiquidacionPartidaDto {
   productoId: string;
@@ -29,4 +31,8 @@ export interface LiquidacionPartidaDto {
   diferencia?: LiquidacionPartidaDtoDiferencia;
   destinoSobrante: DestinoSobrante;
   motivoMermaId?: LiquidacionPartidaDtoMotivoMermaId;
+  aplicaACobro: boolean;
+  cantidadACobroSugerida: number;
+  cantidadACobro?: LiquidacionPartidaDtoCantidadACobro;
+  precioACobro?: LiquidacionPartidaDtoPrecioACobro;
 }

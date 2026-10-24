@@ -8,6 +8,7 @@
 import type { ConteoPartidaRequestLote } from './conteoPartidaRequestLote';
 import type { DestinoSobrante } from './destinoSobrante';
 import type { ConteoPartidaRequestMotivoMermaId } from './conteoPartidaRequestMotivoMermaId';
+import type { ConteoPartidaRequestCantidadACobro } from './conteoPartidaRequestCantidadACobro';
 
 export interface ConteoPartidaRequest {
   productoId: string;
@@ -15,4 +16,5 @@ export interface ConteoPartidaRequest {
   sobranteContado: number;
   destino: DestinoSobrante;
   motivoMermaId?: ConteoPartidaRequestMotivoMermaId;
+  cantidadACobro?: ConteoPartidaRequestCantidadACobro;
 }

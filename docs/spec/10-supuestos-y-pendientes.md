@@ -39,7 +39,7 @@ sus Excel. Procedimiento (también disponible como comando `/actualizar-modelo`)
 | SUP-17 | Impresión de tickets en ruta opcional (ESC/POS Bluetooth); por defecto se comparte por WhatsApp | App | Cliente | Abierto |
 | SUP-18 | Dominio propio del cliente con subdominios `app`, `api`, `factura` | Infra | Cliente | Abierto |
 | SUP-19 | Tolerancia de devolución antes de "producto a cobro": 11 días medidos desde la fecha del lote, configurable por producto. **Contradice SUP-02** (tortilla con 2 días de vida útil): confirmar vida útil real del producto empacado y desde cuándo se cuentan los días | Logística, Catálogos | Almacén | Abierto (v0.2) |
-| SUP-20 | El producto a cobro y los faltantes de producto se valúan a precio de lista del canal de la ruta | Logística | Cliente / crédito y cobranza | Abierto (v0.2) |
+| SUP-20 | El producto a cobro y los faltantes de producto se valúan a precio de lista del canal de la ruta (implementado: precio sin impuestos del cliente genérico de la ruta; sin precio, costo promedio) | Logística | Cliente / crédito y cobranza | Abierto (v0.2) |
 | SUP-21 | Faltante de producto y de efectivo generan cargo automático al chofer; diferencia de precio solo si el supervisor lo decide | Logística | Cliente | Abierto (v0.2) |
 | SUP-22 | El corte semanal va de lunes a domingo | Logística | Crédito y cobranza | Abierto (v0.2) |
 | SUP-23 | Sin pedido, el estimado propone lo del mismo día de la semana anterior (7 días) | Producción | Cliente | Abierto (v0.2) |

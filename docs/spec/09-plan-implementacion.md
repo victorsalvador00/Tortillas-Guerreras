@@ -156,7 +156,7 @@ regenerado (definición de terminado).
   movimientos al confirmar producto, gastos, forma de pago `Cheque`, totales de dinero de solo lectura (créditos y
   cobros sin cambios en Ventas), diferencia de precios, hoja imprimible con firmas. *Lee:* `logistica.md`
   (RN-LOG-06 a 10, 19 a 23). *Acepta:* RN-LOG-06, 07, 08 modificadas, 19 a 23, y criterios v0.2 de liquidación.
-- [ ] **T-8.11 Cobranza a choferes** *(nueva)*. Producto a cobro con sugerencia por antigüedad del lote,
+- [x] **T-8.11 Cobranza a choferes** *(nueva)*. Producto a cobro con sugerencia por antigüedad del lote,
   `cargos_chofer`, `cortes_chofer`, cancelaciones, exportación; pantallas Cuenta de choferes y Corte semanal; pestaña
   Cargos de la liquidación. *Lee:* `logistica.md` (RN-LOG-24 a 30). *Acepta:* RN-LOG-24 a 30.
 - [ ] **T-8.12 App de ruta v0.2** *(ajusta T-5.3, T-5.4)*. Migración Drizzle, colecciones nuevas, alcance por carga y

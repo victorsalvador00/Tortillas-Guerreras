@@ -307,6 +307,9 @@ public sealed record ResumenRutaDia(
     IReadOnlyList<ImporteProductoDia>? ImportePorProducto = null,
     IReadOnlyList<CreditoDelDia>? Creditos = null);
 
+/// <summary>Lo vendido por un vendedor en un día y producto; importe con impuestos.</summary>
+public sealed record VentaVendedorDia(Guid VendedorId, DateOnly Fecha, Guid ProductoId, decimal CantidadBase, decimal Importe);
+
 /// <summary>Importe con impuestos vendido de un producto en el día (columna "Total $" de la liquidación).</summary>
 public sealed record ImporteProductoDia(Guid ProductoId, decimal Importe);
 
@@ -407,6 +410,14 @@ public interface IVentasService
     Task<IReadOnlyList<VentaInfo>> ObtenerVentasAsync(IEnumerable<Guid> ids, CancellationToken ct);
 
     Task<ResumenRutaDia> ResumenRutaDiaAsync(Guid rutaId, DateOnly fecha, CancellationToken ct);
+
+    /// <summary>Precio vigente sin impuestos del cliente por unidad base (RN-VEN-12); falta la llave si no tiene precio.</summary>
+    Task<IReadOnlyDictionary<Guid, decimal>> PreciosBaseClienteAsync(Guid clienteId, IReadOnlyCollection<Guid> productoIds, DateOnly fecha,
+        CancellationToken ct);
+
+    /// <summary>Ventas registradas por vendedor, día y producto (corte semanal, RN-LOG-28).</summary>
+    Task<IReadOnlyList<VentaVendedorDia>> VentasDeVendedoresAsync(DateOnly desde, DateOnly hasta, IReadOnlyCollection<Guid>? vendedorIds,
+        CancellationToken ct);
 
     /// <summary>RN-FAC-04: ventas <c>Registrada</c>, de contado, sin factura, del periodo.</summary>
     Task<IReadOnlyList<VentaInfo>> VentasParaFacturaGlobalAsync(DateOnly desde, DateOnly hasta, CancellationToken ct);

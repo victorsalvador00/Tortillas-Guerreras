@@ -17,6 +17,7 @@ public static class LogisticaModule
         services.AgregarDbContextModulo<LogisticaDbContext>(LogisticaDbContext.Esquema);
         services.AgregarHandlers(typeof(LogisticaModule).Assembly);
         services.AddScoped<ServicioRetornos>();
+        services.AddScoped<ServicioCargosChofer>();
         services.AddScoped<ILogisticaService, LogisticaService>();
         // Sincronización puede reemplazarla registrando la suya (Replace o registro posterior).
         services.TryAddScoped<IEstadoSincronizacionRuta, EstadoSincronizacionRutaPredeterminado>();

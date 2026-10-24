@@ -419,7 +419,7 @@ de producto retirado, sin venta (RN-INV-11).
 `vendido`, `devuelto_clientes_vendible`, `devuelto_clientes_no_vendible`, `sobrante_esperado`,
 `sobrante_contado null`, `diferencia null`, `destino_sobrante` (`Reintegrar`, `Merma`, `Reproceso`),
 `motivo_merma_id null`. **(v0.2)** Se agregan: `cargado_inicial`, `recargado` (`cargado` = suma),
-`cambios_entregados` (salidas `SalidaCambio`), `cantidad_a_cobro numeric(18,4)` (RN-LOG-24, default 0),
+`cambios_entregados` (salidas `SalidaCambio`), `cantidad_a_cobro numeric(18,4) null` (RN-LOG-24; `null` = no capturada, se usa la sugerida),
 `precio_a_cobro numeric(18,4) null`, `importe_venta numeric(18,2)` (columna "Total $" del formato).
 
 **liquidaciones_gastos (v0.2)**: `id`, `liquidacion_id`, `concepto text` (diésel, casetas, maniobras…),

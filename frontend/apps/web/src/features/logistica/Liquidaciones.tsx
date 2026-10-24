@@ -42,6 +42,7 @@ import { BarraFiltros } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { SelectorRuta } from './comunes-logistica';
+import { DialogoNuevoCargo, TablaCargos } from './CuentaChoferes';
 import { capturasIniciales, diferencia, llavePartida, resumenCierre, type CapturaPartida } from './liquidacion';
 
 export function Liquidaciones() {
@@ -187,6 +188,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
   const [modificado, setModificado] = useState(false);
   const [dialogo, setDialogo] = useState<'confirmar' | 'cerrar' | 'regresar' | null>(null);
   const [forzar, setForzar] = useState(false);
+  const [nuevoCargo, setNuevoCargo] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -219,6 +221,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
               sobranteContado: Number(c.contado),
               destino: c.destino,
               motivoMermaId: c.motivoMermaId || null,
+              cantidadACobro: p.aplicaACobro && (c.aCobro ?? '').trim() !== '' ? Number(c.aCobro) : null,
             };
           }),
       },
@@ -311,6 +314,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                   <th className="px-3 font-medium">Sobrante</th>
                   <th className="px-3 font-medium">Destino del sobrante</th>
                   <th className="px-3 text-right font-medium">Diferencia</th>
+                  {l.aplicaProductoACobro && <th className="px-3 font-medium">A cobro</th>}
                 </tr>
               </thead>
               <tbody>
@@ -390,6 +394,26 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                       <td className="px-3 text-right">
                         <CantidadDiferencia valor={dif} unidad={p.unidad} />
                       </td>
+                      {l.aplicaProductoACobro && (
+                        <td className="w-32 px-3 py-2">
+                          {!p.aplicaACobro ? (
+                            <span className="text-muted">—</span>
+                          ) : editable ? (
+                            <Campo
+                              compacto
+                              etiqueta={`A cobro de ${p.producto}`}
+                              type="number"
+                              step="any"
+                              inputMode="decimal"
+                              value={c.aCobro ?? ''}
+                              onChange={(e) => cambiar(k, { aCobro: e.target.value })}
+                              ayuda={p.cantidadACobroSugerida > 0 ? `Sugerido ${formatoCantidad(p.cantidadACobroSugerida)} (lote antiguo)` : undefined}
+                            />
+                          ) : (
+                            <span className="tabular-nums">{formatoCantidad(p.cantidadACobro ?? 0)}</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -401,7 +425,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                       Total
                     </td>
                     <td className="px-3 text-right tabular-nums">{formatoMoneda(totalImporte)}</td>
-                    <td colSpan={completo ? 7 : 4} />
+                    <td colSpan={(completo ? 7 : 4) + (l.aplicaProductoACobro ? 1 : 0)} />
                   </tr>
                 </tfoot>
               )}
@@ -457,6 +481,21 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
         </Tarjeta>
 
         <GastosLiquidacion liquidacion={l} editable={!cerrada && tienePermiso('logistica.liquidar')} />
+
+        <Tarjeta
+          titulo="Cargos al chofer"
+          subtitulo="Producto a cobro y faltantes se generan al confirmar el producto; el faltante de efectivo, al cerrar."
+          acciones={
+            tienePermiso('logistica.cargos_chofer') &&
+            l.choferId && (
+              <Boton variante="secundario" tamano="chico" icono="add" onClick={() => setNuevoCargo(true)}>
+                Agregar cargo
+              </Boton>
+            )
+          }
+        >
+          <TablaCargos cargos={l.cargos} puedeCancelar={tienePermiso('logistica.cargos_chofer')} />
+        </Tarjeta>
 
         {editable && (
           <BarraAccion
@@ -566,6 +605,7 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
       </DialogoConfirmacion>
 
       {dialogo === 'regresar' && <DialogoRegresar liquidacion={l} onCerrar={() => setDialogo(null)} />}
+      {nuevoCargo && <DialogoNuevoCargo liquidacionId={l.id} onCerrar={() => setNuevoCargo(false)} />}
     </>
   );
 }

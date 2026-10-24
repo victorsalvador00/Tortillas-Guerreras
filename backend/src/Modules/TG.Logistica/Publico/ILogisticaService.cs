@@ -51,6 +51,29 @@ public enum EstadoRetorno
     Cancelado,
 }
 
+/// <summary>RN-LOG-25: cuenta del chofer.</summary>
+public enum TipoCargoChofer
+{
+    ProductoACobro,
+    FaltanteProducto,
+    FaltanteEfectivo,
+    DiferenciaPrecio,
+    Otro,
+}
+
+public enum EstadoCargoChofer
+{
+    Pendiente,
+    Aplicado,
+    Cancelado,
+}
+
+public enum EstadoCorteChofer
+{
+    Abierto,
+    Cerrado,
+}
+
 /// <summary>RN-LOG-20: <c>Abierta</c> → <c>ProductoConfirmado</c> (almacén) → <c>Revisada</c> (supervisor) → <c>Cerrada</c> (caja).</summary>
 public enum EstadoLiquidacion
 {
@@ -203,6 +226,11 @@ public static class ErroresLogistica
     public const string ChoferEnOtraRuta = "LOG-018";
     public const string CambioSinCliente = "LOG-019";
     public const string TransicionInvalida = "LOG-021";
+    public const string ACobroInvalido = "LOG-022";
+    public const string CargoAplicado = "LOG-023";
+    public const string CorteConLiquidacionesAbiertas = "LOG-024";
+    public const string CargoNoEncontrado = "LOG-028";
+    public const string CorteNoEncontrado = "LOG-029";
     public const string PendienteInvalido = "LOG-020";
     public const string ClienteOtroCanal = "LOG-025";
     public const string ChoferDistintoJornada = "LOG-026";

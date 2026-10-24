@@ -25,14 +25,20 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AbrirCorteRequest,
   CambioPendienteDto,
   CancelarCambioPendienteRequest,
+  CancelarCargoChoferRequest,
   CapturarConteoLiquidacionRequest,
   CargasSugeridasDto,
+  CargoChoferDto,
   CerrarLiquidacionBody,
   ClienteRutaDto,
   ClientesRutaRequest,
   ConfirmarProductoLiquidacionBody,
+  CorteDetalleDto,
+  CorteResumenDto,
+  CrearCargoChoferRequest,
   EnvioDto,
   GastoLiquidacionRequest,
   GenerarSugeridasDto,
@@ -45,6 +51,7 @@ import type {
   LiquidacionDto,
   LiquidacionGastoDto,
   ListarCambiosPendientesParams,
+  ListarCargosChoferParams,
   ListarEnviosParams,
   ListarLiquidacionesParams,
   ListarRetornosParams,
@@ -56,6 +63,7 @@ import type {
   PaginadoOfRetornoDto,
   RegistrarRetornoRequest,
   RegresarLiquidacionRequest,
+  ResumenCortesChoferParams,
   RetornoDto,
   RutaDto,
   UsuarioResumen,
@@ -2462,6 +2470,583 @@ export function useHojaLiquidacion<TData = Awaited<ReturnType<typeof hojaLiquida
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getHojaLiquidacionQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const listarCargosChofer = (
+    params?: ListarCargosChoferParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CargoChoferDto[]>(
+      {url: `/api/v1/logistica/cargos-chofer`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarCargosChoferQueryKey = (params?: ListarCargosChoferParams,) => {
+    return [
+    `/api/v1/logistica/cargos-chofer`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListarCargosChoferQueryOptions = <TData = Awaited<ReturnType<typeof listarCargosChofer>>, TError = ErrorType<unknown>>(params?: ListarCargosChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarCargosChoferQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarCargosChofer>>> = ({ signal }) => listarCargosChofer(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarCargosChoferQueryResult = NonNullable<Awaited<ReturnType<typeof listarCargosChofer>>>
+export type ListarCargosChoferQueryError = ErrorType<unknown>
+
+
+export function useListarCargosChofer<TData = Awaited<ReturnType<typeof listarCargosChofer>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListarCargosChoferParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarCargosChofer>>,
+          TError,
+          Awaited<ReturnType<typeof listarCargosChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarCargosChofer<TData = Awaited<ReturnType<typeof listarCargosChofer>>, TError = ErrorType<unknown>>(
+ params?: ListarCargosChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarCargosChofer>>,
+          TError,
+          Awaited<ReturnType<typeof listarCargosChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarCargosChofer<TData = Awaited<ReturnType<typeof listarCargosChofer>>, TError = ErrorType<unknown>>(
+ params?: ListarCargosChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarCargosChofer<TData = Awaited<ReturnType<typeof listarCargosChofer>>, TError = ErrorType<unknown>>(
+ params?: ListarCargosChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarCargosChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarCargosChoferQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const crearCargoChofer = (
+    crearCargoChoferRequest: BodyType<CrearCargoChoferRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CargoChoferDto>(
+      {url: `/api/v1/logistica/cargos-chofer`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: crearCargoChoferRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCrearCargoChoferMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearCargoChofer>>, TError,{data: BodyType<CrearCargoChoferRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof crearCargoChofer>>, TError,{data: BodyType<CrearCargoChoferRequest>}, TContext> => {
+
+const mutationKey = ['crearCargoChofer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof crearCargoChofer>>, {data: BodyType<CrearCargoChoferRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  crearCargoChofer(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CrearCargoChoferMutationResult = NonNullable<Awaited<ReturnType<typeof crearCargoChofer>>>
+    export type CrearCargoChoferMutationBody = BodyType<CrearCargoChoferRequest>
+    export type CrearCargoChoferMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useCrearCargoChofer = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearCargoChofer>>, TError,{data: BodyType<CrearCargoChoferRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof crearCargoChofer>>,
+        TError,
+        {data: BodyType<CrearCargoChoferRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCrearCargoChoferMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const cancelarCargoChofer = (
+    id: string,
+    cancelarCargoChoferRequest: BodyType<CancelarCargoChoferRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CargoChoferDto>(
+      {url: `/api/v1/logistica/cargos-chofer/${id}/cancelar`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: cancelarCargoChoferRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCancelarCargoChoferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelarCargoChofer>>, TError,{id: string;data: BodyType<CancelarCargoChoferRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelarCargoChofer>>, TError,{id: string;data: BodyType<CancelarCargoChoferRequest>}, TContext> => {
+
+const mutationKey = ['cancelarCargoChofer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelarCargoChofer>>, {id: string;data: BodyType<CancelarCargoChoferRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelarCargoChofer(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelarCargoChoferMutationResult = NonNullable<Awaited<ReturnType<typeof cancelarCargoChofer>>>
+    export type CancelarCargoChoferMutationBody = BodyType<CancelarCargoChoferRequest>
+    export type CancelarCargoChoferMutationError = ErrorType<unknown>
+
+    export const useCancelarCargoChofer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelarCargoChofer>>, TError,{id: string;data: BodyType<CancelarCargoChoferRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelarCargoChofer>>,
+        TError,
+        {id: string;data: BodyType<CancelarCargoChoferRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCancelarCargoChoferMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const resumenCortesChofer = (
+    params: ResumenCortesChoferParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CorteResumenDto[]>(
+      {url: `/api/v1/logistica/cortes-chofer`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getResumenCortesChoferQueryKey = (params?: ResumenCortesChoferParams,) => {
+    return [
+    `/api/v1/logistica/cortes-chofer`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getResumenCortesChoferQueryOptions = <TData = Awaited<ReturnType<typeof resumenCortesChofer>>, TError = ErrorType<unknown>>(params: ResumenCortesChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getResumenCortesChoferQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof resumenCortesChofer>>> = ({ signal }) => resumenCortesChofer(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ResumenCortesChoferQueryResult = NonNullable<Awaited<ReturnType<typeof resumenCortesChofer>>>
+export type ResumenCortesChoferQueryError = ErrorType<unknown>
+
+
+export function useResumenCortesChofer<TData = Awaited<ReturnType<typeof resumenCortesChofer>>, TError = ErrorType<unknown>>(
+ params: ResumenCortesChoferParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumenCortesChofer>>,
+          TError,
+          Awaited<ReturnType<typeof resumenCortesChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useResumenCortesChofer<TData = Awaited<ReturnType<typeof resumenCortesChofer>>, TError = ErrorType<unknown>>(
+ params: ResumenCortesChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumenCortesChofer>>,
+          TError,
+          Awaited<ReturnType<typeof resumenCortesChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useResumenCortesChofer<TData = Awaited<ReturnType<typeof resumenCortesChofer>>, TError = ErrorType<unknown>>(
+ params: ResumenCortesChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useResumenCortesChofer<TData = Awaited<ReturnType<typeof resumenCortesChofer>>, TError = ErrorType<unknown>>(
+ params: ResumenCortesChoferParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resumenCortesChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getResumenCortesChoferQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const abrirCorteChofer = (
+    abrirCorteRequest: BodyType<AbrirCorteRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CorteDetalleDto>(
+      {url: `/api/v1/logistica/cortes-chofer`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: abrirCorteRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getAbrirCorteChoferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof abrirCorteChofer>>, TError,{data: BodyType<AbrirCorteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof abrirCorteChofer>>, TError,{data: BodyType<AbrirCorteRequest>}, TContext> => {
+
+const mutationKey = ['abrirCorteChofer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof abrirCorteChofer>>, {data: BodyType<AbrirCorteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  abrirCorteChofer(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AbrirCorteChoferMutationResult = NonNullable<Awaited<ReturnType<typeof abrirCorteChofer>>>
+    export type AbrirCorteChoferMutationBody = BodyType<AbrirCorteRequest>
+    export type AbrirCorteChoferMutationError = ErrorType<unknown>
+
+    export const useAbrirCorteChofer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof abrirCorteChofer>>, TError,{data: BodyType<AbrirCorteRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof abrirCorteChofer>>,
+        TError,
+        {data: BodyType<AbrirCorteRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getAbrirCorteChoferMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const obtenerCorteChofer = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CorteDetalleDto>(
+      {url: `/api/v1/logistica/cortes-chofer/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getObtenerCorteChoferQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/logistica/cortes-chofer/${id}`
+    ] as const;
+    }
+
+    
+export const getObtenerCorteChoferQueryOptions = <TData = Awaited<ReturnType<typeof obtenerCorteChofer>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getObtenerCorteChoferQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof obtenerCorteChofer>>> = ({ signal }) => obtenerCorteChofer(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ObtenerCorteChoferQueryResult = NonNullable<Awaited<ReturnType<typeof obtenerCorteChofer>>>
+export type ObtenerCorteChoferQueryError = ErrorType<unknown>
+
+
+export function useObtenerCorteChofer<TData = Awaited<ReturnType<typeof obtenerCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerCorteChofer>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerCorteChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerCorteChofer<TData = Awaited<ReturnType<typeof obtenerCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerCorteChofer>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerCorteChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerCorteChofer<TData = Awaited<ReturnType<typeof obtenerCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useObtenerCorteChofer<TData = Awaited<ReturnType<typeof obtenerCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getObtenerCorteChoferQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const cerrarCorteChofer = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CorteDetalleDto>(
+      {url: `/api/v1/logistica/cortes-chofer/${id}/cerrar`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getCerrarCorteChoferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cerrarCorteChofer>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof cerrarCorteChofer>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['cerrarCorteChofer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cerrarCorteChofer>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  cerrarCorteChofer(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CerrarCorteChoferMutationResult = NonNullable<Awaited<ReturnType<typeof cerrarCorteChofer>>>
+    
+    export type CerrarCorteChoferMutationError = ErrorType<unknown>
+
+    export const useCerrarCorteChofer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cerrarCorteChofer>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cerrarCorteChofer>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getCerrarCorteChoferMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const exportarCorteChofer = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<void>(
+      {url: `/api/v1/logistica/cortes-chofer/${id}/exportar`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getExportarCorteChoferQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/logistica/cortes-chofer/${id}/exportar`
+    ] as const;
+    }
+
+    
+export const getExportarCorteChoferQueryOptions = <TData = Awaited<ReturnType<typeof exportarCorteChofer>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportarCorteChoferQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportarCorteChofer>>> = ({ signal }) => exportarCorteChofer(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportarCorteChoferQueryResult = NonNullable<Awaited<ReturnType<typeof exportarCorteChofer>>>
+export type ExportarCorteChoferQueryError = ErrorType<unknown>
+
+
+export function useExportarCorteChofer<TData = Awaited<ReturnType<typeof exportarCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportarCorteChofer>>,
+          TError,
+          Awaited<ReturnType<typeof exportarCorteChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportarCorteChofer<TData = Awaited<ReturnType<typeof exportarCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportarCorteChofer>>,
+          TError,
+          Awaited<ReturnType<typeof exportarCorteChofer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportarCorteChofer<TData = Awaited<ReturnType<typeof exportarCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useExportarCorteChofer<TData = Awaited<ReturnType<typeof exportarCorteChofer>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarCorteChofer>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportarCorteChoferQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

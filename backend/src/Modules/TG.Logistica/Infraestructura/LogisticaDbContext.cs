@@ -16,6 +16,8 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
     public DbSet<Retorno> Retornos => Set<Retorno>();
     public DbSet<Liquidacion> Liquidaciones => Set<Liquidacion>();
     public DbSet<CambioPendiente> CambiosPendientes => Set<CambioPendiente>();
+    public DbSet<CargoChofer> CargosChofer => Set<CargoChofer>();
+    public DbSet<CorteChofer> CortesChofer => Set<CorteChofer>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -127,6 +129,10 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.Property(p => p.Recargado).Cantidad();
             e.Property(p => p.Vendido).Cantidad();
             e.Property(p => p.ImporteVenta).Importe();
+            e.Property(p => p.CantidadACobro).Cantidad();
+            e.Property(p => p.PrecioACobro).Precio();
+            e.Ignore(p => p.CantidadACobroSugerida);
+            e.Ignore(p => p.AplicaACobro);
             e.Property(p => p.DevueltoClientesVendible).Cantidad();
             e.Property(p => p.DevueltoClientesNoVendible).Cantidad();
             e.Property(p => p.CambiosEntregados).Cantidad();
@@ -134,6 +140,33 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.Property(p => p.SobranteContado).Cantidad();
             e.Property(p => p.Diferencia).Cantidad();
             e.Property(p => p.DestinoSobrante).ComoTexto("liquidaciones_partidas");
+        });
+
+        builder.Entity<CargoChofer>(e =>
+        {
+            e.ToTable("cargos_chofer");
+            e.HasIndex(c => c.Folio).IsUnique().HasDatabaseName("ux_cargos_chofer_folio");
+            e.HasIndex(c => new { c.ChoferId, c.Estado }).HasDatabaseName("ix_cargos_chofer_chofer_estado");
+            e.HasIndex(c => c.LiquidacionId).HasDatabaseName("ix_cargos_chofer_liquidacion");
+            e.Property(c => c.Tipo).ComoTexto("cargos_chofer");
+            e.Property(c => c.Estado).ComoTexto("cargos_chofer");
+            e.Property(c => c.CantidadBase).Cantidad();
+            e.Property(c => c.PrecioUnitario).Precio();
+            e.Property(c => c.Importe).Importe();
+            e.Property(c => c.Notas).HasMaxLength(500);
+            e.Property(c => c.MotivoCancelacion).HasMaxLength(500);
+            e.ConcurrenciaXmin();
+        });
+
+        builder.Entity<CorteChofer>(e =>
+        {
+            e.ToTable("cortes_chofer");
+            e.HasIndex(c => c.Folio).IsUnique().HasDatabaseName("ux_cortes_chofer_folio");
+            e.HasIndex(c => new { c.ChoferId, c.Desde }).IsUnique().HasDatabaseName("ux_cortes_chofer_chofer_desde");
+            e.Property(c => c.Estado).ComoTexto("cortes_chofer");
+            e.Property(c => c.TotalVenta).Importe();
+            e.Property(c => c.TotalCargos).Importe();
+            e.ConcurrenciaXmin();
         });
 
         builder.Entity<LiquidacionGasto>(e =>

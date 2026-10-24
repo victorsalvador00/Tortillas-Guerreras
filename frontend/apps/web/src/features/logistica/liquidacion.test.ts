@@ -17,6 +17,8 @@ function partida(lote: string, esperado: number, extra: Partial<LiquidacionParti
     cargadoInicial: 0,
     recargado: 0,
     importeVenta: 0,
+    aplicaACobro: false,
+    cantidadACobroSugerida: 0,
     sobranteEsperado: esperado,
     destinoSobrante: 'Reintegrar',
     ...extra,

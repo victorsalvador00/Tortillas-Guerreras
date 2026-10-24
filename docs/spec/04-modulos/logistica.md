@@ -156,7 +156,25 @@ producto y efectivo.
 mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas,
 `LOG-026` la jornada (ruta y fecha) ya tiene otro chofer, `LOG-027` canal inexistente o inactivo.
 
-**Notas de implementación (T-8.10).**
+**Notas de implementación (T-8.11).**
+- Producto a cobro: la partida lo admite si la liquidación es `Completo`, el canal y el producto tienen
+  `aplica_producto_a_cobro` y hay devuelto no vendible. Sugerencia por lote: todo lo devuelto no vendible del lote si su
+  antigüedad (prefijo `AAMMDD` del lote, o caducidad del kardex del retorno − vida útil) supera la tolerancia `[SUP-19]`.
+  `cantidad_a_cobro` queda `null` hasta que almacén la captura en `PUT /conteo`; al confirmar producto se guarda la
+  capturada o, si no hay, la sugerida. `LOG-022` si excede lo devuelto no vendible o la partida no admite producto a cobro.
+- Precio `[SUP-20]`: con `ListaCanal`, precio sin impuestos por unidad base del cliente genérico de la ruta (la lista del
+  canal); si no hay precio, o con `Costo`, el costo promedio. Mismo precio para `FaltanteProducto`.
+- Los cargos automáticos se crean en la transacción de confirmar producto (`ProductoACobro`, `FaltanteProducto`) o de cerrar
+  (`FaltanteEfectivo`), con folio `CCH-`. Sin chofer en la liquidación no se generan.
+- `POST /cargos-chofer` solo acepta `DiferenciaPrecio` (importe > 0) y `Otro` (nota obligatoria, puede ser negativo); con
+  `liquidacionId` toma su chofer y fecha. `GET /cargos-chofer` devuelve hasta 1000 registros.
+- Corte: `GET /cortes-chofer?fecha&choferId` resume la semana por chofer (ventas registradas con `vendedor_id`, cargos por
+  tipo, total a descontar y liquidaciones sin cerrar); `POST /cortes-chofer { choferId, fecha }` obtiene o crea el corte
+  `Abierto` de la semana; `GET /cortes-chofer/{id}` detalle; `POST /{id}/cerrar` (`LOG-024`); `GET /{id}/exportar` CSV.
+  Un corte abierto muestra los cargos `Pendiente` sin corte con fecha ≤ hasta; uno cerrado, los que aplicó.
+- Errores nuevos: `LOG-028` cargo inexistente, `LOG-029` corte inexistente. Cerrar un corte ya cerrado: `LOG-021`.
+
+**Notas de implementación (T-8.10).
 - Flujo: `PUT /conteo` solo en `Abierta` (`logistica.liquidar_producto`); `POST /confirmar-producto { forzar }` aplica RN-LOG-09,
   exige conteo y genera los movimientos de RN-LOG-07 (ajustes, reintegro a `PT`, mermas, incidencia de producto), guarda
   las partidas, pasa los envíos a `Liquidado` y toma la foto de `total_venta`. `POST /revisar` y `POST /regresar { nota }`
@@ -221,8 +239,8 @@ mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte c
 | GET | **(v0.2)** `/liquidaciones/{id}/hoja` (PDF/HTML imprimible) | `logistica.ver` |
 | GET | **(v0.2)** `/cambios-pendientes?clienteId&rutaId&estado` | `logistica.ver` |
 | POST | **(v0.2)** `/cambios-pendientes/{id}/cancelar` | `logistica.cambios_cancelar` |
-| GET/POST | **(v0.2)** `/cargos-chofer?choferId&estado&desde&hasta`, `POST /cargos-chofer/{id}/cancelar` | `logistica.cargos_chofer` |
-| GET/POST | **(v0.2)** `/cortes-chofer`, `POST /cortes-chofer/{id}/cerrar`, `GET /cortes-chofer/{id}/exportar` | `logistica.cargos_chofer` |
+| GET/POST | **(v0.2)** `/cargos-chofer?choferId&estado&desde&hasta&liquidacionId&corteId`, `POST /cargos-chofer`, `POST /cargos-chofer/{id}/cancelar` | `logistica.cargos_chofer` |
+| GET/POST | **(v0.2)** `/cortes-chofer?fecha&choferId`, `POST /cortes-chofer`, `GET /cortes-chofer/{id}`, `POST /cortes-chofer/{id}/cerrar`, `GET /cortes-chofer/{id}/exportar` | `logistica.cargos_chofer` |
 
 **(v0.2)** `POST/PUT /envios` reciben `choferId` y `vehiculoId`; `POST /retornos` acepta tipo `CambioFisico` con
 partidas `sentido`. El permiso `logistica.liquidar` pasa a ser solo de la etapa de dinero (rol Liquidaciones); la

@@ -893,6 +893,49 @@ public sealed class VentasService(
                 .ToList());
     }
 
+    public async Task<IReadOnlyDictionary<Guid, decimal>> PreciosBaseClienteAsync(Guid clienteId, IReadOnlyCollection<Guid> productoIds,
+        DateOnly fecha, CancellationToken ct)
+    {
+        var resultado = new Dictionary<Guid, decimal>();
+        var cliente = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clienteId, ct);
+        if (cliente is null)
+        {
+            return resultado;
+        }
+
+        var productos = await catalogos.ObtenerProductosAsync(productoIds, ct);
+        foreach (var producto in productos.Values)
+        {
+            if (await db.VigenteAsync(cliente, producto.Id, producto.UnidadBaseId, fecha, ct) is { } precio)
+            {
+                resultado[producto.Id] = precio;
+            }
+        }
+
+        return resultado;
+    }
+
+    public async Task<IReadOnlyList<VentaVendedorDia>> VentasDeVendedoresAsync(DateOnly desde, DateOnly hasta,
+        IReadOnlyCollection<Guid>? vendedorIds, CancellationToken ct)
+    {
+        var consulta = db.Ventas.AsNoTracking()
+            .Where(v => v.Estado == EstadoVenta.Registrada && v.FechaOperativa >= desde && v.FechaOperativa <= hasta);
+        if (vendedorIds is not null)
+        {
+            consulta = consulta.Where(v => vendedorIds.Contains(v.VendedorId));
+        }
+
+        var filas = await consulta.SelectMany(v => v.Partidas.Select(p => new
+            {
+                v.VendedorId, v.FechaOperativa, p.ProductoId, p.CantidadBase, Importe = p.Importe + p.Ieps + p.Iva,
+            }))
+            .ToListAsync(ct);
+        return filas.GroupBy(f => (f.VendedorId, f.FechaOperativa, f.ProductoId))
+            .Select(g => new VentaVendedorDia(g.Key.VendedorId, g.Key.FechaOperativa, g.Key.ProductoId, g.Sum(f => f.CantidadBase),
+                g.Sum(f => f.Importe)))
+            .OrderBy(v => v.Fecha).ToList();
+    }
+
     public async Task<IReadOnlyList<VentaInfo>> VentasParaFacturaGlobalAsync(DateOnly desde, DateOnly hasta, CancellationToken ct) =>
         (await db.Ventas.AsNoTracking().Include(v => v.Partidas)
             .Where(v => v.Estado == EstadoVenta.Registrada && v.CondicionPago == CondicionPago.Contado && v.FacturaId == null

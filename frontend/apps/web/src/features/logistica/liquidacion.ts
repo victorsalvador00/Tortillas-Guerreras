@@ -5,6 +5,8 @@ export interface CapturaPartida {
   contado: string;
   destino: DestinoSobrante;
   motivoMermaId: string;
+  /** RN-LOG-24: cantidad a cobro al chofer (vacío = la sugerida). */
+  aCobro?: string;
 }
 
 export function llavePartida(p: Pick<LiquidacionPartidaDto, 'productoId' | 'lote'>): string {
@@ -71,6 +73,7 @@ export function capturasIniciales(partidas: LiquidacionPartidaDto[]): Record<str
         contado: p.sobranteContado == null ? '' : String(p.sobranteContado),
         destino: p.destinoSobrante,
         motivoMermaId: p.motivoMermaId ?? '',
+        aCobro: p.aplicaACobro ? String(p.cantidadACobro ?? p.cantidadACobroSugerida) : '',
       },
     ]),
   );

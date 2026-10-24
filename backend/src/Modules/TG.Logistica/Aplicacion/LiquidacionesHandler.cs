@@ -33,7 +33,11 @@ public sealed record LiquidacionPartidaDto(
     decimal? SobranteContado,
     decimal? Diferencia,
     DestinoSobrante DestinoSobrante,
-    Guid? MotivoMermaId);
+    Guid? MotivoMermaId,
+    bool AplicaACobro,
+    decimal CantidadACobroSugerida,
+    decimal? CantidadACobro,
+    decimal? PrecioACobro);
 
 public sealed record LiquidacionDto(
     Guid Id,
@@ -71,7 +75,9 @@ public sealed record LiquidacionDto(
     bool CerradaForzada,
     string? Notas,
     IReadOnlyList<LiquidacionPartidaDto> Partidas,
-    IReadOnlyList<LiquidacionGastoDto> Gastos);
+    IReadOnlyList<LiquidacionGastoDto> Gastos,
+    bool AplicaProductoACobro,
+    IReadOnlyList<CargoChoferDto> Cargos);
 
 public sealed record LiquidacionGastoDto(Guid Id, string Concepto, decimal Importe, string? Comprobante, bool Autorizado,
     DateTimeOffset CapturadoEn, string? CapturadoPor);
@@ -109,8 +115,9 @@ public sealed record LiquidacionResumenDto(
     decimal? DiferenciaEfectivo,
     DateTimeOffset? CerradaEn);
 
+/// <summary><c>CantidadACobro</c> (RN-LOG-24): <c>null</c> deja la capturada antes o la sugerida.</summary>
 public sealed record ConteoPartidaRequest(Guid ProductoId, string? Lote, decimal SobranteContado, DestinoSobrante Destino,
-    Guid? MotivoMermaId);
+    Guid? MotivoMermaId, decimal? CantidadACobro = null);
 
 public sealed record CapturarConteoLiquidacionRequest(decimal? EfectivoEntregado, string? Notas, IReadOnlyList<ConteoPartidaRequest> Partidas);
 
@@ -124,6 +131,8 @@ public sealed class CapturarConteoLiquidacionValidator : AbstractValidator<Captu
         {
             p.RuleFor(x => x.ProductoId).NotEmpty();
             p.RuleFor(x => x.SobranteContado).GreaterThanOrEqualTo(0).WithMessage("El sobrante contado no puede ser negativo.");
+            p.RuleFor(x => x.CantidadACobro).GreaterThanOrEqualTo(0).When(x => x.CantidadACobro is not null)
+                .WithMessage("La cantidad a cobro no puede ser negativa.");
         });
     }
 }
@@ -147,6 +156,7 @@ public sealed class LiquidacionesHandler(
     ISeguridadService seguridad,
     IUsuarioActual usuario,
     IUnitOfWork unitOfWork,
+    ServicioCargosChofer cargos,
     TimeProvider reloj)
 {
     private sealed record Llave(Guid ProductoId, string Lote);
@@ -236,11 +246,20 @@ public sealed class LiquidacionesHandler(
                 return new LiquidacionPartidaDto(p.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?",
                     producto?.UnidadBaseClave ?? string.Empty, p.Lote, p.Cargado, p.CargadoInicial, p.Recargado, p.Vendido,
                     p.ImporteVenta, p.DevueltoClientesVendible, p.DevueltoClientesNoVendible, p.SobranteEsperado, p.CambiosEntregados,
-                    p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId);
+                    p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId, p.AplicaACobro, p.CantidadACobroSugerida,
+                    p.CantidadACobro, p.PrecioACobro);
             }).ToList(),
             liquidacion.Gastos.OrderBy(g => g.CapturadoEn).Select(g => new LiquidacionGastoDto(g.Id, g.Concepto, g.Importe, g.Comprobante,
-                g.Autorizado, g.CapturadoEn, Nombre(g.CapturadoPor))).ToList());
+                g.Autorizado, g.CapturadoEn, Nombre(g.CapturadoPor))).ToList(),
+            await AplicaProductoACobroAsync(liquidacion, ruta, ct),
+            await CargosChoferHandler.ADtosAsync(db, catalogos, seguridad,
+                await db.CargosChofer.AsNoTracking().Where(c => c.LiquidacionId == liquidacion.Id).OrderBy(c => c.Folio).ToListAsync(ct), ct));
     }
+
+    /// <summary>RN-LOG-19/24: solo formato <c>Completo</c> y canal con producto a cobro.</summary>
+    private async Task<bool> AplicaProductoACobroAsync(Liquidacion liquidacion, Ruta ruta, CancellationToken ct) =>
+        liquidacion.Formato == FormatoLiquidacion.Completo
+        && (await ventas.ListarCanalesAsync(ct)).FirstOrDefault(c => c.Id == ruta.CanalId) is { AplicaProductoACobro: true };
 
     /// <summary>RN-LOG-22: datos de la hoja imprimible (formato, dinero, créditos por cliente y folio, gastos y firmas).</summary>
     public async Task<Result<HojaLiquidacionDto>> HojaAsync(Guid id, CancellationToken ct)
@@ -289,6 +308,23 @@ public sealed class LiquidacionesHandler(
             {
                 partida = new LiquidacionPartida { LiquidacionId = liquidacion.Id, ProductoId = captura.ProductoId, Lote = lote };
                 calculadas.Add(partida);
+            }
+
+            if (captura.CantidadACobro is { } aCobro)
+            {
+                if (!partida.AplicaACobro && aCobro != 0)
+                {
+                    return Error.Validacion(ErroresLogistica.ACobroInvalido,
+                        "Esa partida no admite producto a cobro (formato simplificado, canal o producto sin producto a cobro, o sin devolución no vendible).");
+                }
+
+                if (aCobro > partida.DevueltoClientesNoVendible)
+                {
+                    return Error.Validacion(ErroresLogistica.ACobroInvalido,
+                        $"La cantidad a cobro ({aCobro:0.####}) no puede ser mayor que lo devuelto no vendible ({partida.DevueltoClientesNoVendible:0.####}).");
+                }
+
+                partida.CantidadACobro = aCobro;
             }
 
             partida.SobranteContado = captura.SobranteContado;
@@ -444,7 +480,37 @@ public sealed class LiquidacionesHandler(
                 }, c);
             }
 
-            // 3. Producto confirmado (V2-08: desde aquí el sobrante reintegrado está disponible en PT).
+            // 3. RN-LOG-26: cargos ProductoACobro y, si aplica [SUP-21], FaltanteProducto.
+            var cargoFaltante = await catalogos.ObtenerParametroAsync(ClavesParametro.CargoFaltanteProducto, true, c);
+            foreach (var p in partidas)
+            {
+                p.CantidadACobro = p.AplicaACobro ? p.CantidadACobro ?? p.CantidadACobroSugerida : 0;
+            }
+
+            var aCobrar = partidas.Where(p => p.CantidadACobro > 0).ToList();
+            var faltantes = cargoFaltante ? partidas.Where(p => p.Diferencia < 0).ToList() : [];
+            var precios = await cargos.PreciosAsync(ruta, aCobrar.Concat(faltantes).Select(p => p.ProductoId).Distinct().ToList(),
+                liquidacion.FechaOperativa, c);
+            foreach (var p in aCobrar)
+            {
+                p.PrecioACobro = precios.GetValueOrDefault(p.ProductoId);
+                if (liquidacion.ChoferId is { } chofer)
+                {
+                    await cargos.AgregarAsync(chofer, TipoCargoChofer.ProductoACobro, liquidacion.Id, liquidacion.FechaOperativa,
+                        ReglasLogistica.ImporteCargo(p.CantidadACobro!.Value, p.PrecioACobro.Value), p.ProductoId, p.CantidadACobro,
+                        p.PrecioACobro, p.Lote.Length > 0 ? $"Lote {p.Lote}" : null, c);
+                }
+            }
+
+            foreach (var p in faltantes.Where(_ => liquidacion.ChoferId is not null))
+            {
+                var precio = precios.GetValueOrDefault(p.ProductoId);
+                await cargos.AgregarAsync(liquidacion.ChoferId!.Value, TipoCargoChofer.FaltanteProducto, liquidacion.Id, liquidacion.FechaOperativa,
+                    ReglasLogistica.ImporteCargo(-p.Diferencia!.Value, precio), p.ProductoId, -p.Diferencia, precio,
+                    p.Lote.Length > 0 ? $"Lote {p.Lote}" : null, c);
+            }
+
+            // 4. Producto confirmado (V2-08: desde aquí el sobrante reintegrado está disponible en PT).
             Guardar(liquidacion, partidas);
             liquidacion.Estado = EstadoLiquidacion.ProductoConfirmado;
             liquidacion.TotalVenta = resumen.TotalVendido;
@@ -576,6 +642,14 @@ public sealed class LiquidacionesHandler(
                 }, c);
             }
 
+            // RN-LOG-08/26: el faltante de efectivo se carga al chofer [SUP-21]; el sobrante solo es incidencia.
+            if (liquidacion.DiferenciaEfectivo < 0 && liquidacion.ChoferId is { } chofer
+                && await catalogos.ObtenerParametroAsync(ClavesParametro.CargoFaltanteEfectivo, true, c))
+            {
+                await cargos.AgregarAsync(chofer, TipoCargoChofer.FaltanteEfectivo, liquidacion.Id, liquidacion.FechaOperativa,
+                    -liquidacion.DiferenciaEfectivo.Value, null, null, null, null, c);
+            }
+
             liquidacion.Estado = EstadoLiquidacion.Cerrada;
             liquidacion.CerradaEn = reloj.GetUtcNow();
             liquidacion.CerradaPor = usuario.Id;
@@ -665,6 +739,7 @@ public sealed class LiquidacionesHandler(
                     SobranteContado = guardada?.SobranteContado,
                     DestinoSobrante = guardada?.DestinoSobrante ?? DestinoSobrante.Reintegrar,
                     MotivoMermaId = guardada?.MotivoMermaId,
+                    CantidadACobro = guardada?.CantidadACobro,
                 };
                 mapa[llave] = p;
             }
@@ -746,7 +821,57 @@ public sealed class LiquidacionesHandler(
             p.Diferencia = p.SobranteContado is { } contado ? ReglasLogistica.Diferencia(contado, p.SobranteEsperado) : null;
         }
 
+        await SugerirACobroAsync(liquidacion, ruta, mapa.Values.ToList(), retornos, ct);
         return mapa.Values.ToList();
+    }
+
+    /// <summary>
+    /// RN-LOG-24: partidas que admiten producto a cobro y sugerencia cuando la antigüedad del lote supera la tolerancia del
+    /// producto (o <c>logistica.dias_tolerancia_devolucion</c>) [SUP-19].
+    /// </summary>
+    private async Task SugerirACobroAsync(Liquidacion liquidacion, Ruta ruta, List<LiquidacionPartida> partidas, List<Retorno> retornos,
+        CancellationToken ct)
+    {
+        var candidatas = partidas.Where(p => p.DevueltoClientesNoVendible > 0).ToList();
+        if (candidatas.Count == 0 || !await AplicaProductoACobroAsync(liquidacion, ruta, ct))
+        {
+            return;
+        }
+
+        var productos = await catalogos.ObtenerProductosAsync(candidatas.Select(p => p.ProductoId), ct);
+        var tolerancia = await catalogos.ObtenerParametroAsync(ClavesParametro.DiasToleranciaDevolucion, 11, ct);
+        Dictionary<Llave, DateOnly?>? caducidades = null;
+        foreach (var p in candidatas)
+        {
+            if (productos.GetValueOrDefault(p.ProductoId) is not { AplicaProductoACobro: true } producto)
+            {
+                continue;
+            }
+
+            p.AplicaACobro = true;
+            DateOnly? caducidad = null;
+            if (ReglasLogistica.AntiguedadLote(p.Lote, null, null, liquidacion.FechaOperativa) is null)
+            {
+                // Sin fecha en el lote: la caducidad viene del kardex de los retornos.
+                if (caducidades is null)
+                {
+                    caducidades = [];
+                    foreach (var retorno in retornos)
+                    {
+                        foreach (var m in await inventario.MovimientosDeDocumentoAsync(DocumentoInventario.Retorno, retorno.Id, ct))
+                        {
+                            caducidades[new Llave(m.ProductoId, m.Lote)] = m.FechaCaducidad ?? caducidades.GetValueOrDefault(new Llave(m.ProductoId, m.Lote));
+                        }
+                    }
+                }
+
+                caducidad = caducidades.GetValueOrDefault(new Llave(p.ProductoId, p.Lote));
+            }
+
+            var antiguedad = ReglasLogistica.AntiguedadLote(p.Lote, caducidad, producto.VidaUtilDias, liquidacion.FechaOperativa);
+            p.CantidadACobroSugerida = ReglasLogistica.ACobroSugerido(p.DevueltoClientesNoVendible, antiguedad,
+                producto.DiasToleranciaDevolucion ?? tolerancia);
+        }
     }
 
     /// <summary>Sustituye las partidas guardadas por las calculadas (las nuevas se insertan, las demás se actualizan).</summary>
@@ -775,6 +900,10 @@ public sealed class LiquidacionesHandler(
             guardada.Diferencia = nueva.Diferencia;
             guardada.DestinoSobrante = nueva.DestinoSobrante;
             guardada.MotivoMermaId = nueva.MotivoMermaId;
+            guardada.CantidadACobro = nueva.CantidadACobro;
+            guardada.PrecioACobro = nueva.PrecioACobro;
+            guardada.AplicaACobro = nueva.AplicaACobro;
+            guardada.CantidadACobroSugerida = nueva.CantidadACobroSugerida;
         }
 
         foreach (var nueva in calculadas.Where(n => liquidacion.Partidas.All(g => g.ProductoId != n.ProductoId || g.Lote != n.Lote)))

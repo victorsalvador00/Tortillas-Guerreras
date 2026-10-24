@@ -21,6 +21,7 @@ import type { LiquidacionDtoCerradaPor } from './liquidacionDtoCerradaPor';
 import type { LiquidacionDtoNotas } from './liquidacionDtoNotas';
 import type { LiquidacionPartidaDto } from './liquidacionPartidaDto';
 import type { LiquidacionGastoDto } from './liquidacionGastoDto';
+import type { CargoChoferDto } from './cargoChoferDto';
 
 export interface LiquidacionDto {
   id: string;
@@ -59,4 +60,6 @@ export interface LiquidacionDto {
   notas?: LiquidacionDtoNotas;
   partidas: LiquidacionPartidaDto[];
   gastos: LiquidacionGastoDto[];
+  aplicaProductoACobro: boolean;
+  cargos: CargoChoferDto[];
 }

@@ -7001,6 +7001,313 @@
         }
       }
     },
+    "/api/v1/logistica/cargos-chofer": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarCargosChofer",
+        "parameters": [
+          {
+            "name": "choferId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoCargoChofer"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "liquidacionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "corteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CargoChoferDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "crearCargoChofer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearCargoChoferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargoChoferDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cargos-chofer/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "cancelarCargoChofer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelarCargoChoferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargoChoferDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cortes-chofer": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "resumenCortesChofer",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "choferId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CorteResumenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "abrirCorteChofer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbrirCorteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteDetalleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cortes-chofer/{id}": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerCorteChofer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteDetalleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cortes-chofer/{id}/cerrar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "cerrarCorteChofer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteDetalleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/cortes-chofer/{id}/exportar": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "exportarCorteChofer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/facturacion/emisor": {
       "get": {
         "tags": [
@@ -8231,6 +8538,23 @@
           }
         }
       },
+      "AbrirCorteRequest": {
+        "required": [
+          "choferId",
+          "fecha"
+        ],
+        "type": "object",
+        "properties": {
+          "choferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "AccionPlan": {
         "enum": [
           "Producir",
@@ -8772,6 +9096,17 @@
           }
         }
       },
+      "CancelarCargoChoferRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
+          }
+        }
+      },
       "CancelarFacturaRequest": {
         "required": [
           "motivo"
@@ -9002,6 +9337,139 @@
             "items": {
               "$ref": "#/components/schemas/PartidaSugeridaDto"
             }
+          }
+        }
+      },
+      "CargoChoferDto": {
+        "required": [
+          "id",
+          "folio",
+          "choferId",
+          "tipo",
+          "importe",
+          "fechaOperativa",
+          "estado"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "choferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chofer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoCargoChofer"
+          },
+          "liquidacionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "liquidacionFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "sku": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "producto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cantidadBase": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "precioUnitario": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCargoChofer"
+          },
+          "corteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "canceladoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "motivoCancelacion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CargoTipoTotalDto": {
+        "required": [
+          "tipo",
+          "importe"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoCargoChofer"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -9970,6 +10438,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "cantidadACobro": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -10155,6 +10630,226 @@
               "number"
             ],
             "format": "double"
+          }
+        }
+      },
+      "CorteDetalleDto": {
+        "required": [
+          "id",
+          "folio",
+          "choferId",
+          "desde",
+          "hasta",
+          "estado",
+          "totalVenta",
+          "totalCargos",
+          "liquidacionesAbiertas",
+          "ventas",
+          "cargosPorTipo",
+          "cargos"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "choferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chofer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCorteChofer"
+          },
+          "totalVenta": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCargos": {
+            "type": "number",
+            "format": "double"
+          },
+          "liquidacionesAbiertas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cerradoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cerradoPor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ventas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VentaCorteDto"
+            }
+          },
+          "cargosPorTipo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargoTipoTotalDto"
+            }
+          },
+          "cargos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargoChoferDto"
+            }
+          }
+        }
+      },
+      "CorteResumenDto": {
+        "required": [
+          "choferId",
+          "desde",
+          "hasta",
+          "totalVenta",
+          "cargos",
+          "totalCargos",
+          "liquidacionesAbiertas"
+        ],
+        "type": "object",
+        "properties": {
+          "choferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chofer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "corteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "folio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EstadoCorteChofer"
+              }
+            ]
+          },
+          "totalVenta": {
+            "type": "number",
+            "format": "double"
+          },
+          "cargos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargoTipoTotalDto"
+            }
+          },
+          "totalCargos": {
+            "type": "number",
+            "format": "double"
+          },
+          "liquidacionesAbiertas": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CrearCargoChoferRequest": {
+        "required": [
+          "tipo",
+          "importe"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoCargoChofer"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "liquidacionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "choferId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cantidadBase": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "notas": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -10743,6 +11438,13 @@
           "Cancelado"
         ]
       },
+      "EstadoCargoChofer": {
+        "enum": [
+          "Pendiente",
+          "Aplicado",
+          "Cancelado"
+        ]
+      },
       "EstadoCobro": {
         "enum": [
           "Registrado",
@@ -10754,6 +11456,13 @@
           "Abierto",
           "Cerrado",
           "Cancelado"
+        ]
+      },
+      "EstadoCorteChofer": {
+        "enum": [
+          "Abierto",
+          "Cerrado",
+          null
         ]
       },
       "EstadoDispositivoServidor": {
@@ -12641,7 +13350,9 @@
           "operacionesPendientes",
           "cerradaForzada",
           "partidas",
-          "gastos"
+          "gastos",
+          "aplicaProductoACobro",
+          "cargos"
         ],
         "type": "object",
         "properties": {
@@ -12816,6 +13527,15 @@
             "items": {
               "$ref": "#/components/schemas/LiquidacionGastoDto"
             }
+          },
+          "aplicaProductoACobro": {
+            "type": "boolean"
+          },
+          "cargos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargoChoferDto"
+            }
           }
         }
       },
@@ -12877,7 +13597,9 @@
           "devueltoClientesNoVendible",
           "sobranteEsperado",
           "cambiosEntregados",
-          "destinoSobrante"
+          "destinoSobrante",
+          "aplicaACobro",
+          "cantidadACobroSugerida"
         ],
         "type": "object",
         "properties": {
@@ -12956,6 +13678,27 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "aplicaACobro": {
+            "type": "boolean"
+          },
+          "cantidadACobroSugerida": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadACobro": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "precioACobro": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -18020,6 +18763,15 @@
           "Ruta"
         ]
       },
+      "TipoCargoChofer": {
+        "enum": [
+          "ProductoACobro",
+          "FaltanteProducto",
+          "FaltanteEfectivo",
+          "DiferenciaPrecio",
+          "Otro"
+        ]
+      },
       "TipoEnvio": {
         "enum": [
           "CargaInicial",
@@ -18592,6 +19344,45 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "VentaCorteDto": {
+        "required": [
+          "fecha",
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "cantidadBase",
+          "importe"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
           }
         }
       },

@@ -118,6 +118,208 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("TG.Logistica.Dominio.CargoChofer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<Guid?>("ActualizadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actualizado_por");
+
+                    b.Property<DateTimeOffset?>("CanceladoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelado_en");
+
+                    b.Property<Guid?>("CanceladoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelado_por");
+
+                    b.Property<decimal?>("CantidadBase")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_base");
+
+                    b.Property<Guid>("ChoferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chofer_id");
+
+                    b.Property<Guid?>("CorteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("corte_id");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("estado");
+
+                    b.Property<DateOnly>("FechaOperativa")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_operativa");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("folio");
+
+                    b.Property<decimal>("Importe")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("importe");
+
+                    b.Property<Guid?>("LiquidacionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("liquidacion_id");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_cancelacion");
+
+                    b.Property<string>("Notas")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notas");
+
+                    b.Property<decimal?>("PrecioUnitario")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("precio_unitario");
+
+                    b.Property<Guid?>("ProductoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("producto_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cargos_chofer");
+
+                    b.HasIndex("Folio")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cargos_chofer_folio");
+
+                    b.HasIndex("LiquidacionId")
+                        .HasDatabaseName("ix_cargos_chofer_liquidacion");
+
+                    b.HasIndex("ChoferId", "Estado")
+                        .HasDatabaseName("ix_cargos_chofer_chofer_estado");
+
+                    b.ToTable("cargos_chofer", "logistica", t =>
+                        {
+                            t.HasCheckConstraint("ck_cargos_chofer_estado", "estado IN ('Pendiente', 'Aplicado', 'Cancelado')");
+
+                            t.HasCheckConstraint("ck_cargos_chofer_tipo", "tipo IN ('ProductoACobro', 'FaltanteProducto', 'FaltanteEfectivo', 'DiferenciaPrecio', 'Otro')");
+                        });
+                });
+
+            modelBuilder.Entity("TG.Logistica.Dominio.CorteChofer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<Guid?>("ActualizadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actualizado_por");
+
+                    b.Property<DateTimeOffset?>("CerradoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cerrado_en");
+
+                    b.Property<Guid?>("CerradoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cerrado_por");
+
+                    b.Property<Guid>("ChoferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chofer_id");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<DateOnly>("Desde")
+                        .HasColumnType("date")
+                        .HasColumnName("desde");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("folio");
+
+                    b.Property<DateOnly>("Hasta")
+                        .HasColumnType("date")
+                        .HasColumnName("hasta");
+
+                    b.Property<decimal>("TotalCargos")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_cargos");
+
+                    b.Property<decimal>("TotalVenta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_venta");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cortes_chofer");
+
+                    b.HasIndex("Folio")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cortes_chofer_folio");
+
+                    b.HasIndex("ChoferId", "Desde")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cortes_chofer_chofer_desde");
+
+                    b.ToTable("cortes_chofer", "logistica", t =>
+                        {
+                            t.HasCheckConstraint("ck_cortes_chofer_estado", "estado IN ('Abierto', 'Cerrado')");
+                        });
+                });
+
             modelBuilder.Entity("TG.Logistica.Dominio.Envio", b =>
                 {
                     b.Property<Guid>("Id")
@@ -473,6 +675,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("cambios_entregados");
 
+                    b.Property<decimal?>("CantidadACobro")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_a_cobro");
+
                     b.Property<decimal>("Cargado")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
@@ -520,6 +727,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.Property<Guid?>("MotivoMermaId")
                         .HasColumnType("uuid")
                         .HasColumnName("motivo_merma_id");
+
+                    b.Property<decimal?>("PrecioACobro")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("precio_a_cobro");
 
                     b.Property<Guid>("ProductoId")
                         .HasColumnType("uuid")
