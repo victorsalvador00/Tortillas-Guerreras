@@ -302,6 +302,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("diferencia_efectivo");
 
+                    b.Property<decimal>("DiferenciaPrecios")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("diferencia_precios");
+
                     b.Property<decimal?>("EfectivoEntregado")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -326,13 +331,64 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("text")
                         .HasColumnName("folio");
 
+                    b.Property<string>("Formato")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("formato");
+
                     b.Property<string>("Notas")
                         .HasColumnType("text")
                         .HasColumnName("notas");
 
+                    b.Property<DateTimeOffset?>("ProductoConfirmadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("producto_confirmado_en");
+
+                    b.Property<Guid?>("ProductoConfirmadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("producto_confirmado_por");
+
+                    b.Property<DateTimeOffset?>("RevisadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revisada_en");
+
+                    b.Property<Guid?>("RevisadaPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revisada_por");
+
                     b.Property<Guid>("RutaId")
                         .HasColumnType("uuid")
                         .HasColumnName("ruta_id");
+
+                    b.Property<decimal?>("TotalCheques")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_cheques");
+
+                    b.Property<decimal?>("TotalCobros")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_cobros");
+
+                    b.Property<decimal?>("TotalCredito")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_credito");
+
+                    b.Property<decimal>("TotalGastos")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_gastos");
+
+                    b.Property<decimal?>("TotalTransferencias")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_transferencias");
+
+                    b.Property<decimal?>("TotalVenta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_venta");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -353,8 +409,57 @@ namespace TG.Logistica.Infraestructura.Migraciones
 
                     b.ToTable("liquidaciones", "logistica", t =>
                         {
-                            t.HasCheckConstraint("ck_liquidaciones_estado", "estado IN ('Abierta', 'Cerrada')");
+                            t.HasCheckConstraint("ck_liquidaciones_estado", "estado IN ('Abierta', 'Cerrada', 'ProductoConfirmado', 'Revisada')");
+
+                            t.HasCheckConstraint("ck_liquidaciones_formato", "formato IN ('Completo', 'Simplificado')");
                         });
+                });
+
+            modelBuilder.Entity("TG.Logistica.Dominio.LiquidacionGasto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Autorizado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("autorizado");
+
+                    b.Property<DateTimeOffset>("CapturadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("capturado_en");
+
+                    b.Property<Guid>("CapturadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("capturado_por");
+
+                    b.Property<string>("Comprobante")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("comprobante");
+
+                    b.Property<string>("Concepto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("concepto");
+
+                    b.Property<decimal>("Importe")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("importe");
+
+                    b.Property<Guid>("LiquidacionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("liquidacion_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_liquidaciones_gastos");
+
+                    b.HasIndex("LiquidacionId")
+                        .HasDatabaseName("ix_liquidaciones_gastos_liquidacion_id");
+
+                    b.ToTable("liquidaciones_gastos", "logistica");
                 });
 
             modelBuilder.Entity("TG.Logistica.Dominio.LiquidacionPartida", b =>
@@ -372,6 +477,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("cargado");
+
+                    b.Property<decimal>("CargadoInicial")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cargado_inicial");
 
                     b.Property<string>("DestinoSobrante")
                         .IsRequired()
@@ -393,6 +503,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("diferencia");
 
+                    b.Property<decimal>("ImporteVenta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("importe_venta");
+
                     b.Property<Guid>("LiquidacionId")
                         .HasColumnType("uuid")
                         .HasColumnName("liquidacion_id");
@@ -409,6 +524,11 @@ namespace TG.Logistica.Infraestructura.Migraciones
                     b.Property<Guid>("ProductoId")
                         .HasColumnType("uuid")
                         .HasColumnName("producto_id");
+
+                    b.Property<decimal>("Recargado")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("recargado");
 
                     b.Property<decimal?>("SobranteContado")
                         .HasPrecision(18, 4)
@@ -845,6 +965,16 @@ namespace TG.Logistica.Infraestructura.Migraciones
                         .HasConstraintName("fk_envios_partidas_envios_envio_id");
                 });
 
+            modelBuilder.Entity("TG.Logistica.Dominio.LiquidacionGasto", b =>
+                {
+                    b.HasOne("TG.Logistica.Dominio.Liquidacion", null)
+                        .WithMany("Gastos")
+                        .HasForeignKey("LiquidacionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_liquidaciones_gastos_liquidaciones_liquidacion_id");
+                });
+
             modelBuilder.Entity("TG.Logistica.Dominio.LiquidacionPartida", b =>
                 {
                     b.HasOne("TG.Logistica.Dominio.Liquidacion", null)
@@ -872,6 +1002,8 @@ namespace TG.Logistica.Infraestructura.Migraciones
 
             modelBuilder.Entity("TG.Logistica.Dominio.Liquidacion", b =>
                 {
+                    b.Navigation("Gastos");
+
                     b.Navigation("Partidas");
                 });
 

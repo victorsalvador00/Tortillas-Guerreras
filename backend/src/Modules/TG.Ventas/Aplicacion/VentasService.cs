@@ -640,7 +640,7 @@ public sealed class VentasService(
             return Error.Campo("VAL-001", "importe", "El importe debe ser mayor que cero.");
         }
 
-        if (c.FormaPago == FormaPago.Credito)
+        if (c.FormaPago is FormaPago.Credito or FormaPago.Cheque)
         {
             return Error.Campo(ErroresVentas.FormaPagoInvalida, "formaPago", "Un cobro se recibe en efectivo o transferencia.");
         }
@@ -867,12 +867,30 @@ public sealed class VentasService(
         var registradas = ventas.Where(v => v.Estado == EstadoVenta.Registrada).ToList();
         var contadoEfectivo = registradas.Where(v => v.CondicionPago == CondicionPago.Contado && v.FormaPago == FormaPago.Efectivo)
             .Sum(v => v.Total);
-        var cobros = await db.Cobros.AsNoTracking()
-            .Where(x => x.RutaId == rutaId && x.FechaOperativa == fecha && x.Estado == EstadoCobro.Registrado && x.FormaPago == FormaPago.Efectivo)
-            .SumAsync(x => x.Importe, ct);
+        var cobrosDia = await db.Cobros.AsNoTracking()
+            .Where(x => x.RutaId == rutaId && x.FechaOperativa == fecha && x.Estado == EstadoCobro.Registrado)
+            .Select(x => new { x.FormaPago, x.Importe }).ToListAsync(ct);
+        var cobros = cobrosDia.Where(x => x.FormaPago == FormaPago.Efectivo).Sum(x => x.Importe);
+
+        // RN-LOG-23: (precio de referencia del cliente − precio cobrado) × cantidad; positivo = cobró de menos.
+        var ids = registradas.Select(v => v.Id).ToList();
+        var partidas = await db.VentasPartidas.AsNoTracking().Where(p => ids.Contains(p.VentaId)).ToListAsync(ct);
+        var diferenciaPrecios = Dinero.Redondear(partidas.Where(p => p.PrecioReferencia is { } r && r != p.PrecioUnitario)
+            .Sum(p => (p.PrecioReferencia!.Value - p.PrecioUnitario) * p.Cantidad));
+        var importes = partidas.GroupBy(p => p.ProductoId)
+            .Select(g => new ImporteProductoDia(g.Key, g.Sum(p => p.Importe + p.Ieps + p.Iva))).ToList();
+        var aCredito = registradas.Where(v => v.CondicionPago == CondicionPago.Credito).ToList();
+        var nombres = await db.Clientes.AsNoTracking().Where(c => aCredito.Select(v => v.ClienteId).Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Nombre, ct);
         return new ResumenRutaDia(rutaId, fecha,
             vendido.Where(v => v.Value != 0).Select(v => new VendidoProductoLote(v.Key.Item1, v.Key.Item2, v.Value)).ToList(),
-            contadoEfectivo, cobros, contadoEfectivo + cobros, registradas.Count, registradas.Sum(v => v.Total));
+            contadoEfectivo, cobros, contadoEfectivo + cobros, registradas.Count, registradas.Sum(v => v.Total),
+            aCredito.Sum(v => v.Total), cobrosDia.Sum(x => x.Importe),
+            registradas.Where(v => v.FormaPago == FormaPago.Transferencia).Sum(v => v.Total),
+            cobrosDia.Where(x => x.FormaPago == FormaPago.Transferencia).Sum(x => x.Importe),
+            registradas.Where(v => v.FormaPago == FormaPago.Cheque).Sum(v => v.Total), diferenciaPrecios, importes,
+            aCredito.OrderBy(v => v.Folio).Select(v => new CreditoDelDia(v.Id, v.Folio, v.ClienteId, nombres.GetValueOrDefault(v.ClienteId) ?? "?", v.Total))
+                .ToList());
     }
 
     public async Task<IReadOnlyList<VentaInfo>> VentasParaFacturaGlobalAsync(DateOnly desde, DateOnly hasta, CancellationToken ct) =>

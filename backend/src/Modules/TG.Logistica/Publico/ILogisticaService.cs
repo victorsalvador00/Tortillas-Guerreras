@@ -51,10 +51,13 @@ public enum EstadoRetorno
     Cancelado,
 }
 
+/// <summary>RN-LOG-20: <c>Abierta</c> → <c>ProductoConfirmado</c> (almacén) → <c>Revisada</c> (supervisor) → <c>Cerrada</c> (caja).</summary>
 public enum EstadoLiquidacion
 {
     Abierta,
     Cerrada,
+    ProductoConfirmado,
+    Revisada,
 }
 
 public enum DestinoSobrante
@@ -199,6 +202,7 @@ public static class ErroresLogistica
     public const string ChoferInvalido = "LOG-017";
     public const string ChoferEnOtraRuta = "LOG-018";
     public const string CambioSinCliente = "LOG-019";
+    public const string TransicionInvalida = "LOG-021";
     public const string PendienteInvalido = "LOG-020";
     public const string ClienteOtroCanal = "LOG-025";
     public const string ChoferDistintoJornada = "LOG-026";

@@ -88,11 +88,33 @@ internal static class LogisticaEndpoints
         liquidaciones.MapGet("/{id:guid}", async (Guid id, LiquidacionesHandler h, CancellationToken ct) => (await h.ObtenerAsync(id, ct)).AHttp())
             .AlgunPermiso(P.Ver, P.Liquidar).WithName("obtenerLiquidacion");
         liquidaciones.MapPut("/{id:guid}/conteo", async (Guid id, CapturarConteoLiquidacionRequest r, LiquidacionesHandler h, CancellationToken ct) =>
-            (await h.CapturarConteoAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Liquidar).Validar<CapturarConteoLiquidacionRequest>()
+            (await h.CapturarConteoAsync(id, r, ct)).AHttp()).RequireAuthorization(P.LiquidarProducto).Validar<CapturarConteoLiquidacionRequest>()
             .WithName("capturarConteoLiquidacion");
+        liquidaciones.MapPost("/{id:guid}/confirmar-producto", async (Guid id, CerrarLiquidacionRequest? r, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.ConfirmarProductoAsync(id, r ?? new CerrarLiquidacionRequest(), ct)).AHttp()).RequireAuthorization(P.LiquidarProducto)
+            .WithName("confirmarProductoLiquidacion");
+        liquidaciones.MapPost("/{id:guid}/revisar", async (Guid id, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.RevisarAsync(id, ct)).AHttp()).RequireAuthorization(P.RevisarLiquidacion)
+            .WithName("revisarLiquidacion");
+        liquidaciones.MapPost("/{id:guid}/regresar", async (Guid id, RegresarLiquidacionRequest r, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.RegresarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.RevisarLiquidacion)
+            .WithName("regresarLiquidacion");
         liquidaciones.MapPost("/{id:guid}/cerrar", async (Guid id, CerrarLiquidacionRequest? r, LiquidacionesHandler h, CancellationToken ct) =>
-            (await h.CerrarAsync(id, r ?? new CerrarLiquidacionRequest(false), ct)).AHttp()).RequireAuthorization(P.Liquidar)
+            (await h.CerrarAsync(id, r ?? new CerrarLiquidacionRequest(), ct)).AHttp()).RequireAuthorization(P.Liquidar)
             .WithName("cerrarLiquidacion");
+        liquidaciones.MapGet("/{id:guid}/gastos", async (Guid id, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.GastosAsync(id, ct)).AHttp()).RequireAuthorization(P.Liquidar)
+            .WithName("listarGastosLiquidacion");
+        liquidaciones.MapPost("/{id:guid}/gastos", async (Guid id, GastoLiquidacionRequest r, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.AgregarGastoAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Liquidar).Validar<GastoLiquidacionRequest>()
+            .WithName("agregarGastoLiquidacion");
+        liquidaciones.MapPut("/{id:guid}/gastos/{gastoId:guid}", async (Guid id, Guid gastoId, GastoLiquidacionRequest r, LiquidacionesHandler h,
+                CancellationToken ct) => (await h.ActualizarGastoAsync(id, gastoId, r, ct)).AHttp())
+            .RequireAuthorization(P.Liquidar).Validar<GastoLiquidacionRequest>()
+            .WithName("actualizarGastoLiquidacion");
+        liquidaciones.MapGet("/{id:guid}/hoja", async (Guid id, LiquidacionesHandler h, CancellationToken ct) =>
+            (await h.HojaAsync(id, ct)).AHttp()).RequireAuthorization(P.Ver)
+            .WithName("hojaLiquidacion");
 
         return api;
     }

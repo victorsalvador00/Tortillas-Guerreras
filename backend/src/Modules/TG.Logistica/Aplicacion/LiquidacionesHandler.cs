@@ -8,6 +8,7 @@ using TG.Logistica.Publico;
 using TG.Seguridad.Publico;
 using TG.SharedKernel.Api;
 using TG.SharedKernel.Datos;
+using TG.SharedKernel.Dominio;
 using TG.SharedKernel.Resultados;
 using TG.SharedKernel.Seguridad;
 using TG.Ventas.Publico;
@@ -21,7 +22,10 @@ public sealed record LiquidacionPartidaDto(
     string Unidad,
     string Lote,
     decimal Cargado,
+    decimal CargadoInicial,
+    decimal Recargado,
     decimal Vendido,
+    decimal ImporteVenta,
     decimal DevueltoClientesVendible,
     decimal DevueltoClientesNoVendible,
     decimal SobranteEsperado,
@@ -41,19 +45,54 @@ public sealed record LiquidacionDto(
     Guid? ChoferId,
     string? ChoferNombre,
     EstadoLiquidacion Estado,
+    FormatoLiquidacion Formato,
+    bool RequiereRevision,
     int Ventas,
     decimal TotalVendido,
     decimal VentasContadoEfectivo,
     decimal CobrosEfectivo,
+    decimal TotalGastos,
     decimal EfectivoEsperado,
     decimal? EfectivoEntregado,
     decimal? DiferenciaEfectivo,
+    decimal TotalCredito,
+    decimal TotalCobros,
+    decimal TotalTransferencias,
+    decimal TotalCheques,
+    decimal DiferenciaPrecios,
     int OperacionesPendientes,
+    DateTimeOffset? ProductoConfirmadoEn,
+    string? ProductoConfirmadoPor,
+    DateTimeOffset? RevisadaEn,
+    string? RevisadaPor,
     DateTimeOffset? CerradaEn,
-    Guid? CerradaPor,
+    Guid? CerradaPorId,
+    string? CerradaPor,
     bool CerradaForzada,
     string? Notas,
-    IReadOnlyList<LiquidacionPartidaDto> Partidas);
+    IReadOnlyList<LiquidacionPartidaDto> Partidas,
+    IReadOnlyList<LiquidacionGastoDto> Gastos);
+
+public sealed record LiquidacionGastoDto(Guid Id, string Concepto, decimal Importe, string? Comprobante, bool Autorizado,
+    DateTimeOffset CapturadoEn, string? CapturadoPor);
+
+public sealed record GastoLiquidacionRequest(string Concepto, decimal Importe, string? Comprobante, bool Autorizado);
+
+public sealed class GastoLiquidacionValidator : AbstractValidator<GastoLiquidacionRequest>
+{
+    public GastoLiquidacionValidator()
+    {
+        RuleFor(x => x.Concepto).NotEmpty().MaximumLength(200).WithMessage("Captura el concepto del gasto.");
+        RuleFor(x => x.Importe).GreaterThan(0).WithMessage("El importe debe ser mayor que cero.");
+        RuleFor(x => x.Comprobante).MaximumLength(200);
+    }
+}
+
+public sealed record CreditoHojaDto(string Folio, string Cliente, decimal Total);
+
+/// <summary>RN-LOG-22: lo que se imprime en la hoja de liquidación.</summary>
+public sealed record HojaLiquidacionDto(LiquidacionDto Liquidacion, IReadOnlyList<CreditoHojaDto> Creditos, string? FirmaAlmacen,
+    string? FirmaVendedor, string? FirmaSupervisor, string? FirmaLiquidaciones, DateTimeOffset GeneradaEn);
 
 public sealed record LiquidacionResumenDto(
     Guid Id,
@@ -64,6 +103,7 @@ public sealed record LiquidacionResumenDto(
     Guid? ChoferId,
     string? ChoferNombre,
     EstadoLiquidacion Estado,
+    FormatoLiquidacion Formato,
     decimal EfectivoEsperado,
     decimal? EfectivoEntregado,
     decimal? DiferenciaEfectivo,
@@ -88,11 +128,14 @@ public sealed class CapturarConteoLiquidacionValidator : AbstractValidator<Captu
     }
 }
 
-public sealed record CerrarLiquidacionRequest(bool Forzar);
+/// <summary><c>Forzar</c> aplica al confirmar producto (RN-LOG-09); <c>EfectivoEntregado</c> al cerrar el dinero.</summary>
+public sealed record CerrarLiquidacionRequest(bool Forzar = false, decimal? EfectivoEntregado = null);
+
+public sealed record RegresarLiquidacionRequest(string Nota);
 
 /// <summary>
-/// Liquidación del día de una ruta: cuadra producto (RN-LOG-06/07) y efectivo (RN-LOG-08) y deja el almacén de la
-/// ruta en cero. No se reabre (RN-LOG-10).
+/// Liquidación del día de una ruta por etapas (RN-LOG-20): almacén confirma el producto (RN-LOG-06/07, deja el almacén
+/// de la ruta en cero), el supervisor revisa y liquidaciones cierra el dinero (RN-LOG-08). No regresa (RN-LOG-10).
 /// </summary>
 public sealed class LiquidacionesHandler(
     LogisticaDbContext db,
@@ -141,41 +184,78 @@ public sealed class LiquidacionesHandler(
         var paginado = await consulta.OrderByDescending(l => l.FechaOperativa).ThenBy(l => l.RutaId).PaginarAsync(pagina, tamano, ct);
         var choferes = await seguridad.NombresUsuariosAsync(paginado.Items.Where(l => l.ChoferId != null).Select(l => l.ChoferId!.Value), ct);
         return paginado.Map(l => new LiquidacionResumenDto(l.Id, l.Folio, l.RutaId, rutas.GetValueOrDefault(l.RutaId) ?? "?",
-            l.FechaOperativa, l.ChoferId, l.ChoferId is { } ch ? choferes.GetValueOrDefault(ch) : null, l.Estado, l.EfectivoEsperado, l.EfectivoEntregado, l.DiferenciaEfectivo, l.CerradaEn));
+            l.FechaOperativa, l.ChoferId, l.ChoferId is { } ch ? choferes.GetValueOrDefault(ch) : null, l.Estado, l.Formato, l.EfectivoEsperado, l.EfectivoEntregado, l.DiferenciaEfectivo, l.CerradaEn));
     }
 
-    /// <summary>Detalle: si está abierta se calcula al momento (ventas y retornos del día); cerrada, lo guardado.</summary>
+    /// <summary>
+    /// Detalle: abierta, el producto se calcula al momento; desde <c>ProductoConfirmado</c>, lo guardado. El dinero se
+    /// calcula al momento hasta cerrar.
+    /// </summary>
     public async Task<Result<LiquidacionDto>> ObtenerAsync(Guid id, CancellationToken ct)
     {
-        var liquidacion = await db.Liquidaciones.AsNoTracking().Include(l => l.Partidas).FirstOrDefaultAsync(l => l.Id == id, ct);
+        var liquidacion = await db.Liquidaciones.AsNoTracking().Include(l => l.Partidas).Include(l => l.Gastos)
+            .FirstOrDefaultAsync(l => l.Id == id, ct);
+        return liquidacion is null ? NoEncontrada() : await ADtoAsync(liquidacion, ct);
+    }
+
+    private async Task<LiquidacionDto> ADtoAsync(Liquidacion liquidacion, CancellationToken ct)
+    {
+        var ruta = await db.Rutas.AsNoTracking().FirstAsync(r => r.Id == liquidacion.RutaId, ct);
+        var resumen = await ventas.ResumenRutaDiaAsync(liquidacion.RutaId, liquidacion.FechaOperativa, ct);
+        var abierta = liquidacion.Estado == EstadoLiquidacion.Abierta;
+        var cerrada = liquidacion.Estado == EstadoLiquidacion.Cerrada;
+        var partidas = abierta ? await CalcularPartidasAsync(liquidacion, ruta, resumen, ct) : liquidacion.Partidas;
+        var gastos = GastosAutorizados(liquidacion);
+        var efectivoEsperado = cerrada
+            ? liquidacion.EfectivoEsperado
+            : ReglasLogistica.EfectivoEsperado(resumen.VentasContadoEfectivo, resumen.CobrosEfectivo, gastos);
+        var pendientes = abierta ? await estadoSync.OperacionesPendientesAsync(ruta.Id, liquidacion.FechaOperativa, ct) : 0;
+        var productos = await catalogos.ObtenerProductosAsync(partidas.Select(p => p.ProductoId), ct);
+        var nombres = await seguridad.NombresUsuariosAsync(new[]
+        {
+            liquidacion.ChoferId, liquidacion.ProductoConfirmadoPor, liquidacion.RevisadaPor, liquidacion.CerradaPor,
+        }.Where(x => x is not null).Select(x => x!.Value).Concat(liquidacion.Gastos.Select(g => g.CapturadoPor)), ct);
+        string? Nombre(Guid? usuarioId) => usuarioId is { } u ? nombres.GetValueOrDefault(u) : null;
+        var requiereRevision = await catalogos.ObtenerParametroAsync(ClavesParametro.RequiereRevisionSupervisor, true, ct);
+        return new LiquidacionDto(liquidacion.Id, liquidacion.Folio, ruta.Id, ruta.Codigo, ruta.Nombre, liquidacion.FechaOperativa,
+            liquidacion.ChoferId, Nombre(liquidacion.ChoferId), liquidacion.Estado, liquidacion.Formato, requiereRevision,
+            resumen.Ventas, cerrada ? liquidacion.TotalVenta ?? resumen.TotalVendido : resumen.TotalVendido,
+            resumen.VentasContadoEfectivo, resumen.CobrosEfectivo, gastos, efectivoEsperado, liquidacion.EfectivoEntregado,
+            liquidacion.EfectivoEntregado is { } e ? ReglasLogistica.DiferenciaEfectivo(e, efectivoEsperado) : null,
+            cerrada ? liquidacion.TotalCredito ?? 0 : resumen.TotalCredito,
+            cerrada ? liquidacion.TotalCobros ?? 0 : resumen.CobrosTotal,
+            cerrada ? liquidacion.TotalTransferencias ?? 0 : resumen.VentasTransferencia + resumen.CobrosTransferencia,
+            cerrada ? liquidacion.TotalCheques ?? 0 : resumen.VentasCheque,
+            cerrada ? liquidacion.DiferenciaPrecios : resumen.DiferenciaPrecios,
+            pendientes, liquidacion.ProductoConfirmadoEn, Nombre(liquidacion.ProductoConfirmadoPor), liquidacion.RevisadaEn,
+            Nombre(liquidacion.RevisadaPor), liquidacion.CerradaEn, liquidacion.CerradaPor, Nombre(liquidacion.CerradaPor),
+            liquidacion.CerradaForzada, liquidacion.Notas,
+            partidas.OrderBy(p => productos.GetValueOrDefault(p.ProductoId)?.Sku).ThenBy(p => p.Lote).Select(p =>
+            {
+                var producto = productos.GetValueOrDefault(p.ProductoId);
+                return new LiquidacionPartidaDto(p.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?",
+                    producto?.UnidadBaseClave ?? string.Empty, p.Lote, p.Cargado, p.CargadoInicial, p.Recargado, p.Vendido,
+                    p.ImporteVenta, p.DevueltoClientesVendible, p.DevueltoClientesNoVendible, p.SobranteEsperado, p.CambiosEntregados,
+                    p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId);
+            }).ToList(),
+            liquidacion.Gastos.OrderBy(g => g.CapturadoEn).Select(g => new LiquidacionGastoDto(g.Id, g.Concepto, g.Importe, g.Comprobante,
+                g.Autorizado, g.CapturadoEn, Nombre(g.CapturadoPor))).ToList());
+    }
+
+    /// <summary>RN-LOG-22: datos de la hoja imprimible (formato, dinero, créditos por cliente y folio, gastos y firmas).</summary>
+    public async Task<Result<HojaLiquidacionDto>> HojaAsync(Guid id, CancellationToken ct)
+    {
+        var liquidacion = await db.Liquidaciones.AsNoTracking().Include(l => l.Partidas).Include(l => l.Gastos)
+            .FirstOrDefaultAsync(l => l.Id == id, ct);
         if (liquidacion is null)
         {
             return NoEncontrada();
         }
 
-        var ruta = await db.Rutas.AsNoTracking().FirstAsync(r => r.Id == liquidacion.RutaId, ct);
+        var dto = await ADtoAsync(liquidacion, ct);
         var resumen = await ventas.ResumenRutaDiaAsync(liquidacion.RutaId, liquidacion.FechaOperativa, ct);
-        var partidas = liquidacion.Estado == EstadoLiquidacion.Abierta
-            ? await CalcularPartidasAsync(liquidacion, ruta, resumen, ct)
-            : liquidacion.Partidas;
-        var efectivoEsperado = liquidacion.Estado == EstadoLiquidacion.Abierta ? resumen.EfectivoEsperado : liquidacion.EfectivoEsperado;
-        var pendientes = liquidacion.Estado == EstadoLiquidacion.Abierta ? await estadoSync.OperacionesPendientesAsync(ruta.Id, liquidacion.FechaOperativa, ct) : 0;
-        var productos = await catalogos.ObtenerProductosAsync(partidas.Select(p => p.ProductoId), ct);
-        var chofer = liquidacion.ChoferId is { } choferId
-            ? (await seguridad.NombresUsuariosAsync([choferId], ct)).GetValueOrDefault(choferId)
-            : null;
-        return new LiquidacionDto(liquidacion.Id, liquidacion.Folio, ruta.Id, ruta.Codigo, ruta.Nombre, liquidacion.FechaOperativa,
-            liquidacion.ChoferId, chofer, liquidacion.Estado, resumen.Ventas, resumen.TotalVendido, resumen.VentasContadoEfectivo, resumen.CobrosEfectivo,
-            efectivoEsperado, liquidacion.EfectivoEntregado,
-            liquidacion.EfectivoEntregado is { } e ? ReglasLogistica.DiferenciaEfectivo(e, efectivoEsperado) : null,
-            pendientes, liquidacion.CerradaEn, liquidacion.CerradaPor, liquidacion.CerradaForzada, liquidacion.Notas,
-            partidas.OrderBy(p => productos.GetValueOrDefault(p.ProductoId)?.Sku).ThenBy(p => p.Lote).Select(p =>
-            {
-                var producto = productos.GetValueOrDefault(p.ProductoId);
-                return new LiquidacionPartidaDto(p.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?",
-                    producto?.UnidadBaseClave ?? string.Empty, p.Lote, p.Cargado, p.Vendido, p.DevueltoClientesVendible,
-                    p.DevueltoClientesNoVendible, p.SobranteEsperado, p.CambiosEntregados, p.SobranteContado, p.Diferencia, p.DestinoSobrante, p.MotivoMermaId);
-            }).ToList());
+        return new HojaLiquidacionDto(dto, (resumen.Creditos ?? []).Select(c => new CreditoHojaDto(c.Folio, c.Cliente, c.Total)).ToList(),
+            dto.ProductoConfirmadoPor, dto.ChoferNombre, dto.RevisadaPor, dto.CerradaPor, reloj.GetUtcNow());
     }
 
     /// <summary>Guarda el sobrante contado y su destino por producto y lote, y el efectivo entregado.</summary>
@@ -189,7 +269,7 @@ public sealed class LiquidacionesHandler(
 
         if (liquidacion.Estado != EstadoLiquidacion.Abierta)
         {
-            return Cerrada();
+            return Transicion(liquidacion.Estado, "capturar el conteo de");
         }
 
         var motivos = await ValidarMotivosAsync(r.Partidas, ct);
@@ -218,11 +298,9 @@ public sealed class LiquidacionesHandler(
         }
 
         Guardar(liquidacion, calculadas);
-        liquidacion.EfectivoEsperado = resumen.EfectivoEsperado;
         if (r.EfectivoEntregado is { } efectivo)
         {
             liquidacion.EfectivoEntregado = efectivo;
-            liquidacion.DiferenciaEfectivo = ReglasLogistica.DiferenciaEfectivo(efectivo, resumen.EfectivoEsperado);
         }
 
         if (r.Notas is not null)
@@ -235,10 +313,10 @@ public sealed class LiquidacionesHandler(
     }
 
     /// <summary>
-    /// RN-LOG-07: diferencias → ajuste con motivo "Faltante de ruta" e incidencia; sobrante → reintegro a PT o merma;
-    /// el almacén de la ruta queda en cero. RN-LOG-08 efectivo. RN-LOG-09 pendientes de sincronizar.
+    /// RN-LOG-20 <c>Abierta → ProductoConfirmado</c>. RN-LOG-07: diferencias → ajuste con motivo "Faltante de ruta" e
+    /// incidencia; sobrante → reintegro a PT o merma; el almacén de la ruta queda en cero. RN-LOG-09 pendientes de sincronizar.
     /// </summary>
-    public async Task<Result<LiquidacionDto>> CerrarAsync(Guid id, CerrarLiquidacionRequest r, CancellationToken ct)
+    public async Task<Result<LiquidacionDto>> ConfirmarProductoAsync(Guid id, CerrarLiquidacionRequest r, CancellationToken ct)
     {
         var liquidacion = await db.Liquidaciones.Include(l => l.Partidas).FirstOrDefaultAsync(l => l.Id == id, ct);
         if (liquidacion is null)
@@ -248,7 +326,7 @@ public sealed class LiquidacionesHandler(
 
         if (liquidacion.Estado != EstadoLiquidacion.Abierta)
         {
-            return Cerrada();
+            return Transicion(liquidacion.Estado, "confirmar el producto de");
         }
 
         var ruta = await db.Rutas.AsNoTracking().FirstAsync(x => x.Id == liquidacion.RutaId, ct);
@@ -259,16 +337,11 @@ public sealed class LiquidacionesHandler(
             if (!r.Forzar || !usuario.TienePermiso(Permisos.Logistica.ForzarCierre))
             {
                 return new Error(ErroresLogistica.PendientesSync,
-                    $"El dispositivo de la ruta reportó {pendientes} operaciones sin sincronizar. Sincroniza antes de cerrar o fuerza el cierre con permiso.",
+                    $"El dispositivo de la ruta reportó {pendientes} operaciones sin sincronizar. Sincroniza antes de confirmar el producto o fuerza la confirmación con permiso.",
                     TipoError.Conflicto, Detalle: new { pendientes });
             }
 
             forzada = true;
-        }
-
-        if (liquidacion.EfectivoEntregado is null)
-        {
-            return Error.Campo(ErroresLogistica.SinConteo, "efectivoEntregado", "Captura el efectivo entregado antes de cerrar.");
         }
 
         var resumen = await ventas.ResumenRutaDiaAsync(liquidacion.RutaId, liquidacion.FechaOperativa, ct);
@@ -371,25 +444,12 @@ public sealed class LiquidacionesHandler(
                 }, c);
             }
 
-            liquidacion.EfectivoEsperado = resumen.EfectivoEsperado;
-            liquidacion.DiferenciaEfectivo = ReglasLogistica.DiferenciaEfectivo(liquidacion.EfectivoEntregado!.Value, resumen.EfectivoEsperado);
-            if (liquidacion.DiferenciaEfectivo != 0)
-            {
-                await incidencias.CrearAsync(TipoIncidencia.DiferenciaLiquidacion, "Liquidacion", liquidacion.Id, new
-                {
-                    liquidacion.Folio,
-                    ruta = ruta.Codigo,
-                    efectivoEsperado = liquidacion.EfectivoEsperado,
-                    efectivoEntregado = liquidacion.EfectivoEntregado,
-                    diferencia = liquidacion.DiferenciaEfectivo,
-                }, c);
-            }
-
-            // 3. Cierre.
+            // 3. Producto confirmado (V2-08: desde aquí el sobrante reintegrado está disponible en PT).
             Guardar(liquidacion, partidas);
-            liquidacion.Estado = EstadoLiquidacion.Cerrada;
-            liquidacion.CerradaEn = reloj.GetUtcNow();
-            liquidacion.CerradaPor = usuario.Id;
+            liquidacion.Estado = EstadoLiquidacion.ProductoConfirmado;
+            liquidacion.TotalVenta = resumen.TotalVendido;
+            liquidacion.ProductoConfirmadoEn = reloj.GetUtcNow();
+            liquidacion.ProductoConfirmadoPor = usuario.Id;
             liquidacion.CerradaForzada = forzada;
             var envios = await db.Envios.Where(e => e.RutaId == ruta.Id && e.FechaOperativa == liquidacion.FechaOperativa
                 && e.Estado == EstadoEnvio.EnRuta).ToListAsync(c);
@@ -405,6 +465,183 @@ public sealed class LiquidacionesHandler(
 
         return resultado.EsExito ? await ObtenerAsync(id, ct) : resultado.Error!;
     }
+
+    /// <summary>RN-LOG-20 <c>ProductoConfirmado → Revisada</c> (supervisor).</summary>
+    public async Task<Result<LiquidacionDto>> RevisarAsync(Guid id, CancellationToken ct)
+    {
+        var liquidacion = await db.Liquidaciones.FirstOrDefaultAsync(l => l.Id == id, ct);
+        if (liquidacion is null)
+        {
+            return NoEncontrada();
+        }
+
+        if (liquidacion.Estado != EstadoLiquidacion.ProductoConfirmado)
+        {
+            return Transicion(liquidacion.Estado, "revisar");
+        }
+
+        liquidacion.Estado = EstadoLiquidacion.Revisada;
+        liquidacion.RevisadaEn = reloj.GetUtcNow();
+        liquidacion.RevisadaPor = usuario.Id;
+        await db.SaveChangesAsync(ct);
+        return await ObtenerAsync(id, ct);
+    }
+
+    /// <summary>RN-LOG-21 <c>Revisada → ProductoConfirmado</c> con nota; el producto ya no cambia (RN-LOG-10).</summary>
+    public async Task<Result<LiquidacionDto>> RegresarAsync(Guid id, RegresarLiquidacionRequest r, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(r.Nota))
+        {
+            return Error.Campo("VAL-001", "nota", "Escribe por qué se regresa la liquidación.");
+        }
+
+        var liquidacion = await db.Liquidaciones.FirstOrDefaultAsync(l => l.Id == id, ct);
+        if (liquidacion is null)
+        {
+            return NoEncontrada();
+        }
+
+        if (liquidacion.Estado != EstadoLiquidacion.Revisada)
+        {
+            return Transicion(liquidacion.Estado, "regresar");
+        }
+
+        var nota = $"Regresada a revisión: {r.Nota.Trim()}";
+        liquidacion.Notas = liquidacion.Notas is null ? nota : $"{liquidacion.Notas}\n{nota}";
+        liquidacion.Estado = EstadoLiquidacion.ProductoConfirmado;
+        liquidacion.RevisadaEn = null;
+        liquidacion.RevisadaPor = null;
+        await db.SaveChangesAsync(ct);
+        return await ObtenerAsync(id, ct);
+    }
+
+    /// <summary>
+    /// RN-LOG-20 cierre del dinero (<c>Revisada</c>, o <c>ProductoConfirmado</c> sin revisión del supervisor). RN-LOG-08:
+    /// efectivo esperado = contado en efectivo + cobros en efectivo − gastos autorizados; diferencia ≠ 0 → incidencia.
+    /// Los totales de Ventas quedan como foto de solo lectura.
+    /// </summary>
+    public async Task<Result<LiquidacionDto>> CerrarAsync(Guid id, CerrarLiquidacionRequest r, CancellationToken ct)
+    {
+        var liquidacion = await db.Liquidaciones.Include(l => l.Gastos).FirstOrDefaultAsync(l => l.Id == id, ct);
+        if (liquidacion is null)
+        {
+            return NoEncontrada();
+        }
+
+        var requiereRevision = await catalogos.ObtenerParametroAsync(ClavesParametro.RequiereRevisionSupervisor, true, ct);
+        if (!ReglasLogistica.PuedeCerrar(liquidacion.Estado, requiereRevision))
+        {
+            return Transicion(liquidacion.Estado, "cerrar");
+        }
+
+        if (r.EfectivoEntregado is { } capturado)
+        {
+            if (capturado < 0)
+            {
+                return Error.Campo("VAL-001", "efectivoEntregado", "El efectivo entregado no puede ser negativo.");
+            }
+
+            liquidacion.EfectivoEntregado = capturado;
+        }
+
+        if (liquidacion.EfectivoEntregado is not { } entregado)
+        {
+            return Error.Campo(ErroresLogistica.SinConteo, "efectivoEntregado", "Captura el efectivo entregado antes de cerrar.");
+        }
+
+        var ruta = await db.Rutas.AsNoTracking().FirstAsync(x => x.Id == liquidacion.RutaId, ct);
+        var resumen = await ventas.ResumenRutaDiaAsync(liquidacion.RutaId, liquidacion.FechaOperativa, ct);
+        var resultado = await unitOfWork.EjecutarAsync(async c =>
+        {
+            liquidacion.TotalGastos = GastosAutorizados(liquidacion);
+            liquidacion.EfectivoEsperado = ReglasLogistica.EfectivoEsperado(resumen.VentasContadoEfectivo, resumen.CobrosEfectivo,
+                liquidacion.TotalGastos);
+            liquidacion.DiferenciaEfectivo = ReglasLogistica.DiferenciaEfectivo(entregado, liquidacion.EfectivoEsperado);
+            liquidacion.TotalVenta ??= resumen.TotalVendido;
+            liquidacion.TotalCredito = resumen.TotalCredito;
+            liquidacion.TotalCobros = resumen.CobrosTotal;
+            liquidacion.TotalTransferencias = resumen.VentasTransferencia + resumen.CobrosTransferencia;
+            liquidacion.TotalCheques = resumen.VentasCheque;
+            liquidacion.DiferenciaPrecios = resumen.DiferenciaPrecios;
+            if (liquidacion.DiferenciaEfectivo != 0)
+            {
+                await incidencias.CrearAsync(TipoIncidencia.DiferenciaLiquidacion, "Liquidacion", liquidacion.Id, new
+                {
+                    liquidacion.Folio,
+                    ruta = ruta.Codigo,
+                    efectivoEsperado = liquidacion.EfectivoEsperado,
+                    efectivoEntregado = liquidacion.EfectivoEntregado,
+                    gastos = liquidacion.TotalGastos,
+                    diferencia = liquidacion.DiferenciaEfectivo,
+                }, c);
+            }
+
+            liquidacion.Estado = EstadoLiquidacion.Cerrada;
+            liquidacion.CerradaEn = reloj.GetUtcNow();
+            liquidacion.CerradaPor = usuario.Id;
+            await db.SaveChangesAsync(c);
+            return Result.Exito();
+        }, ct);
+
+        return resultado.EsExito ? await ObtenerAsync(id, ct) : resultado.Error!;
+    }
+
+    /// <summary>Gastos de ruta: se capturan o corrigen hasta cerrar el dinero.</summary>
+    public async Task<Result<IReadOnlyList<LiquidacionGastoDto>>> GastosAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await ObtenerAsync(id, ct);
+        return resultado.EsExito ? Result<IReadOnlyList<LiquidacionGastoDto>>.Exito(resultado.Valor.Gastos) : resultado.Error!;
+    }
+
+    public async Task<Result<LiquidacionDto>> AgregarGastoAsync(Guid id, GastoLiquidacionRequest r, CancellationToken ct) =>
+        await EditarGastoAsync(id, null, r, ct);
+
+    public async Task<Result<LiquidacionDto>> ActualizarGastoAsync(Guid id, Guid gastoId, GastoLiquidacionRequest r, CancellationToken ct) =>
+        await EditarGastoAsync(id, gastoId, r, ct);
+
+    private async Task<Result<LiquidacionDto>> EditarGastoAsync(Guid id, Guid? gastoId, GastoLiquidacionRequest r, CancellationToken ct)
+    {
+        var liquidacion = await db.Liquidaciones.Include(l => l.Gastos).FirstOrDefaultAsync(l => l.Id == id, ct);
+        if (liquidacion is null)
+        {
+            return NoEncontrada();
+        }
+
+        if (liquidacion.Estado == EstadoLiquidacion.Cerrada)
+        {
+            return Cerrada();
+        }
+
+        LiquidacionGasto? gasto;
+        if (gastoId is null)
+        {
+            gasto = new LiquidacionGasto
+            {
+                LiquidacionId = liquidacion.Id, CapturadoPor = usuario.Id ?? Guid.Empty, CapturadoEn = reloj.GetUtcNow(),
+            };
+            liquidacion.Gastos.Add(gasto);
+            db.Entry(gasto).State = EntityState.Added;
+        }
+        else
+        {
+            gasto = liquidacion.Gastos.FirstOrDefault(g => g.Id == gastoId);
+            if (gasto is null)
+            {
+                return Error.NoEncontrado(ErroresLogistica.LiquidacionNoEncontrada, "El gasto no existe en esta liquidación.");
+            }
+        }
+
+        gasto.Concepto = r.Concepto.Trim();
+        gasto.Importe = Dinero.Redondear(r.Importe);
+        gasto.Comprobante = string.IsNullOrWhiteSpace(r.Comprobante) ? null : r.Comprobante.Trim();
+        gasto.Autorizado = r.Autorizado;
+        liquidacion.TotalGastos = GastosAutorizados(liquidacion);
+        await db.SaveChangesAsync(ct);
+        return await ObtenerAsync(id, ct);
+    }
+
+    private static decimal GastosAutorizados(Liquidacion liquidacion) =>
+        liquidacion.Gastos.Where(g => g.Autorizado).Sum(g => g.Importe);
 
     /// <summary>
     /// RN-LOG-06 por producto y lote: cargado (envíos del día), vendido (kardex de las ventas), devuelto vendible y no
@@ -439,9 +676,21 @@ public sealed class LiquidacionesHandler(
             .Where(e => e.RutaId == ruta.Id && e.FechaOperativa == liquidacion.FechaOperativa
                 && (e.Estado == EstadoEnvio.EnRuta || e.Estado == EstadoEnvio.Liquidado))
             .ToListAsync(ct);
-        foreach (var p in cargas.SelectMany(e => e.Partidas))
+        foreach (var carga in cargas)
         {
-            Partida(p.ProductoId, p.Lote).Cargado += p.CantidadBase;
+            foreach (var p in carga.Partidas)
+            {
+                var partida = Partida(p.ProductoId, p.Lote);
+                partida.Cargado += p.CantidadBase;
+                if (carga.Tipo == TipoEnvio.CargaInicial)
+                {
+                    partida.CargadoInicial += p.CantidadBase;
+                }
+                else
+                {
+                    partida.Recargado += p.CantidadBase;
+                }
+            }
         }
 
         foreach (var v in resumen.Vendido)
@@ -475,6 +724,22 @@ public sealed class LiquidacionesHandler(
             Partida(e.ProductoId, e.Lote);
         }
 
+        // Columna "Total $": el importe vendido del producto se reparte entre sus lotes según lo vendido.
+        foreach (var importe in resumen.ImportePorProducto ?? [])
+        {
+            var lotes = mapa.Values.Where(p => p.ProductoId == importe.ProductoId && p.Vendido > 0).OrderBy(p => p.Lote).ToList();
+            if (lotes.Count == 0)
+            {
+                lotes = [Partida(importe.ProductoId, string.Empty)];
+            }
+
+            var partes = ReglasLogistica.Repartir(importe.Importe, lotes.Count == 1 ? [1m] : lotes.Select(p => p.Vendido).ToList());
+            for (var k = 0; k < lotes.Count; k++)
+            {
+                lotes[k].ImporteVenta = partes[k];
+            }
+        }
+
         foreach (var p in mapa.Values)
         {
             p.SobranteEsperado = ReglasLogistica.SobranteEsperado(p.Cargado, p.Vendido, p.DevueltoClientesVendible, p.CambiosEntregados);
@@ -498,7 +763,10 @@ public sealed class LiquidacionesHandler(
             }
 
             guardada.Cargado = nueva.Cargado;
+            guardada.CargadoInicial = nueva.CargadoInicial;
+            guardada.Recargado = nueva.Recargado;
             guardada.Vendido = nueva.Vendido;
+            guardada.ImporteVenta = nueva.ImporteVenta;
             guardada.DevueltoClientesVendible = nueva.DevueltoClientesVendible;
             guardada.DevueltoClientesNoVendible = nueva.DevueltoClientesNoVendible;
             guardada.CambiosEntregados = nueva.CambiosEntregados;
@@ -534,4 +802,10 @@ public sealed class LiquidacionesHandler(
 
     private static Error Cerrada() =>
         Error.Conflicto(ErroresLogistica.LiquidacionCerrada, "La liquidación ya está cerrada; las correcciones se hacen con ajustes.");
+
+    /// <summary>RN-LOG-20: transición que no corresponde a la etapa actual (cerrada conserva LOG-007).</summary>
+    private static Error Transicion(EstadoLiquidacion estado, string accion) =>
+        estado == EstadoLiquidacion.Cerrada
+            ? Cerrada()
+            : Error.Conflicto(ErroresLogistica.TransicionInvalida, $"No se puede {accion} una liquidación en etapa {estado}.");
 }

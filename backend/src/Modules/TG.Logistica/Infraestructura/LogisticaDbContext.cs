@@ -102,7 +102,16 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.HasIndex(l => l.Folio).IsUnique().HasDatabaseName("ux_liquidaciones_folio");
             e.HasIndex(l => new { l.RutaId, l.FechaOperativa }).IsUnique().HasDatabaseName("ux_liquidaciones_ruta_fecha");
             e.Property(l => l.Estado).ComoTexto("liquidaciones");
+            e.Property(l => l.Formato).ComoTexto("liquidaciones");
             e.Property(l => l.EfectivoEsperado).Importe();
+            e.Property(l => l.TotalVenta).Importe();
+            e.Property(l => l.TotalCredito).Importe();
+            e.Property(l => l.TotalCobros).Importe();
+            e.Property(l => l.TotalTransferencias).Importe();
+            e.Property(l => l.TotalCheques).Importe();
+            e.Property(l => l.TotalGastos).Importe();
+            e.Property(l => l.DiferenciaPrecios).Importe();
+            e.HasMany(l => l.Gastos).WithOne().HasForeignKey(g => g.LiquidacionId).OnDelete(DeleteBehavior.Cascade);
             e.Property(l => l.EfectivoEntregado).Importe();
             e.Property(l => l.DiferenciaEfectivo).Importe();
             e.HasMany(l => l.Partidas).WithOne().HasForeignKey(p => p.LiquidacionId).OnDelete(DeleteBehavior.Cascade);
@@ -114,7 +123,10 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.ToTable("liquidaciones_partidas");
             e.HasIndex(p => new { p.LiquidacionId, p.ProductoId, p.Lote }).IsUnique().HasDatabaseName("ux_liquidaciones_partidas_producto_lote");
             e.Property(p => p.Cargado).Cantidad();
+            e.Property(p => p.CargadoInicial).Cantidad();
+            e.Property(p => p.Recargado).Cantidad();
             e.Property(p => p.Vendido).Cantidad();
+            e.Property(p => p.ImporteVenta).Importe();
             e.Property(p => p.DevueltoClientesVendible).Cantidad();
             e.Property(p => p.DevueltoClientesNoVendible).Cantidad();
             e.Property(p => p.CambiosEntregados).Cantidad();
@@ -122,6 +134,14 @@ public sealed class LogisticaDbContext(DbContextOptions<LogisticaDbContext> opti
             e.Property(p => p.SobranteContado).Cantidad();
             e.Property(p => p.Diferencia).Cantidad();
             e.Property(p => p.DestinoSobrante).ComoTexto("liquidaciones_partidas");
+        });
+
+        builder.Entity<LiquidacionGasto>(e =>
+        {
+            e.ToTable("liquidaciones_gastos");
+            e.Property(g => g.Concepto).HasMaxLength(200);
+            e.Property(g => g.Comprobante).HasMaxLength(200);
+            e.Property(g => g.Importe).Importe();
         });
 
         builder.MapearBitacora();

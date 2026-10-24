@@ -91,7 +91,7 @@ export function Shell() {
 
       <header
         role="banner"
-        className="flex h-[var(--tg-topbar-height)] shrink-0 items-center gap-2 bg-topbar px-2 text-topbar-ink sm:px-4"
+        className="flex h-[var(--tg-topbar-height)] shrink-0 items-center gap-2 bg-topbar px-2 text-topbar-ink sm:px-4 print:hidden"
       >
         <BotonIcono
           icono={!movil && contraido ? 'menu_open' : 'menu'}
@@ -152,7 +152,7 @@ export function Shell() {
         )}
         <aside
           className={cn(
-            'shrink-0 overflow-y-auto border-r border-outline-variant bg-[var(--tg-sidebar-bg)] py-2 [scrollbar-width:thin] transition-[width,transform] duration-150 motion-reduce:transition-none',
+            'shrink-0 overflow-y-auto border-r border-outline-variant bg-[var(--tg-sidebar-bg)] py-2 [scrollbar-width:thin] transition-[width,transform] duration-150 motion-reduce:transition-none print:hidden',
             movil
               ? 'fixed top-[var(--tg-topbar-height)] bottom-0 left-0 z-40 w-[var(--tg-sidebar-width)] shadow-xl'
               : mostrarContraido
@@ -229,7 +229,7 @@ export function Shell() {
           </nav>
         </aside>
 
-        <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto bg-page outline-none">
+        <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto bg-page outline-none print:overflow-visible print:bg-white">
           <Outlet />
         </main>
       </div>

@@ -111,15 +111,15 @@ internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos r
             : await db.Envios.AsNoTracking().Where(e => envioIds.Contains(e.Id)).ToDictionaryAsync(e => e.Id, e => e.Folio, ct);
 
     public Task<bool> LiquidacionCerradaAsync(Guid rutaId, DateOnly fecha, CancellationToken ct) =>
-        db.Liquidaciones.AnyAsync(l => l.RutaId == rutaId && l.FechaOperativa == fecha && l.Estado == EstadoLiquidacion.Cerrada, ct);
+        db.Liquidaciones.AnyAsync(l => l.RutaId == rutaId && l.FechaOperativa == fecha && l.Estado != EstadoLiquidacion.Abierta, ct);
 
     public Task<Result<RetornoRegistrado>> RegistrarRetornoAsync(RegistrarRetornoComando comando, CancellationToken ct) =>
         retornos.RegistrarAsync(comando, ct);
 
     public async Task<ResumenLogistica> ResumenTableroAsync(DateOnly fecha, CancellationToken ct)
     {
-        var abiertasHoy = await db.Liquidaciones.CountAsync(l => l.Estado == EstadoLiquidacion.Abierta && l.FechaOperativa == fecha, ct);
-        var atrasadas = await db.Liquidaciones.CountAsync(l => l.Estado == EstadoLiquidacion.Abierta && l.FechaOperativa < fecha, ct);
+        var abiertasHoy = await db.Liquidaciones.CountAsync(l => l.Estado != EstadoLiquidacion.Cerrada && l.FechaOperativa == fecha, ct);
+        var atrasadas = await db.Liquidaciones.CountAsync(l => l.Estado != EstadoLiquidacion.Cerrada && l.FechaOperativa < fecha, ct);
         var preparados = await db.Envios.CountAsync(e => e.Estado == EstadoEnvio.Preparado && e.FechaOperativa == fecha, ct);
         var enRuta = await db.Envios.CountAsync(e => e.Estado == EstadoEnvio.EnRuta, ct);
         var rutas = await db.Rutas.CountAsync(r => r.Activo, ct);

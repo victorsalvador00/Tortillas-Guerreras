@@ -32,14 +32,18 @@ import type {
   CerrarLiquidacionBody,
   ClienteRutaDto,
   ClientesRutaRequest,
+  ConfirmarProductoLiquidacionBody,
   EnvioDto,
+  GastoLiquidacionRequest,
   GenerarSugeridasDto,
   GenerarSugeridasRequest,
   GuardarEnvioRequest,
   GuardarRutaRequest,
   GuardarVehiculoRequest,
+  HojaLiquidacionDto,
   HttpValidationProblemDetails,
   LiquidacionDto,
+  LiquidacionGastoDto,
   ListarCambiosPendientesParams,
   ListarEnviosParams,
   ListarLiquidacionesParams,
@@ -51,6 +55,7 @@ import type {
   PaginadoOfLiquidacionResumenDto,
   PaginadoOfRetornoDto,
   RegistrarRetornoRequest,
+  RegresarLiquidacionRequest,
   RetornoDto,
   RutaDto,
   UsuarioResumen,
@@ -1945,6 +1950,180 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    export const confirmarProductoLiquidacion = (
+    id: string,
+    confirmarProductoLiquidacionBody: BodyType<ConfirmarProductoLiquidacionBody>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<LiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/confirmar-producto`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: confirmarProductoLiquidacionBody, signal
+    },
+      options);
+    }
+  
+
+
+export const getConfirmarProductoLiquidacionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmarProductoLiquidacion>>, TError,{id: string;data: BodyType<ConfirmarProductoLiquidacionBody>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmarProductoLiquidacion>>, TError,{id: string;data: BodyType<ConfirmarProductoLiquidacionBody>}, TContext> => {
+
+const mutationKey = ['confirmarProductoLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmarProductoLiquidacion>>, {id: string;data: BodyType<ConfirmarProductoLiquidacionBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  confirmarProductoLiquidacion(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmarProductoLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof confirmarProductoLiquidacion>>>
+    export type ConfirmarProductoLiquidacionMutationBody = BodyType<ConfirmarProductoLiquidacionBody>
+    export type ConfirmarProductoLiquidacionMutationError = ErrorType<unknown>
+
+    export const useConfirmarProductoLiquidacion = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmarProductoLiquidacion>>, TError,{id: string;data: BodyType<ConfirmarProductoLiquidacionBody>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmarProductoLiquidacion>>,
+        TError,
+        {id: string;data: BodyType<ConfirmarProductoLiquidacionBody>},
+        TContext
+      > => {
+
+      const mutationOptions = getConfirmarProductoLiquidacionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const revisarLiquidacion = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<LiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/revisar`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getRevisarLiquidacionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revisarLiquidacion>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof revisarLiquidacion>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['revisarLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revisarLiquidacion>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  revisarLiquidacion(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevisarLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof revisarLiquidacion>>>
+    
+    export type RevisarLiquidacionMutationError = ErrorType<unknown>
+
+    export const useRevisarLiquidacion = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revisarLiquidacion>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revisarLiquidacion>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevisarLiquidacionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const regresarLiquidacion = (
+    id: string,
+    regresarLiquidacionRequest: BodyType<RegresarLiquidacionRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<LiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/regresar`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: regresarLiquidacionRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getRegresarLiquidacionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof regresarLiquidacion>>, TError,{id: string;data: BodyType<RegresarLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof regresarLiquidacion>>, TError,{id: string;data: BodyType<RegresarLiquidacionRequest>}, TContext> => {
+
+const mutationKey = ['regresarLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof regresarLiquidacion>>, {id: string;data: BodyType<RegresarLiquidacionRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  regresarLiquidacion(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegresarLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof regresarLiquidacion>>>
+    export type RegresarLiquidacionMutationBody = BodyType<RegresarLiquidacionRequest>
+    export type RegresarLiquidacionMutationError = ErrorType<unknown>
+
+    export const useRegresarLiquidacion = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof regresarLiquidacion>>, TError,{id: string;data: BodyType<RegresarLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof regresarLiquidacion>>,
+        TError,
+        {id: string;data: BodyType<RegresarLiquidacionRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getRegresarLiquidacionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
     export const cerrarLiquidacion = (
     id: string,
     cerrarLiquidacionBody: BodyType<CerrarLiquidacionBody>,
@@ -2004,4 +2183,293 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    export const listarGastosLiquidacion = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<LiquidacionGastoDto[]>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/gastos`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarGastosLiquidacionQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/logistica/liquidaciones/${id}/gastos`
+    ] as const;
+    }
+
     
+export const getListarGastosLiquidacionQueryOptions = <TData = Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarGastosLiquidacionQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarGastosLiquidacion>>> = ({ signal }) => listarGastosLiquidacion(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarGastosLiquidacionQueryResult = NonNullable<Awaited<ReturnType<typeof listarGastosLiquidacion>>>
+export type ListarGastosLiquidacionQueryError = ErrorType<unknown>
+
+
+export function useListarGastosLiquidacion<TData = Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarGastosLiquidacion>>,
+          TError,
+          Awaited<ReturnType<typeof listarGastosLiquidacion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarGastosLiquidacion<TData = Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarGastosLiquidacion>>,
+          TError,
+          Awaited<ReturnType<typeof listarGastosLiquidacion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarGastosLiquidacion<TData = Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarGastosLiquidacion<TData = Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarGastosLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarGastosLiquidacionQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const agregarGastoLiquidacion = (
+    id: string,
+    gastoLiquidacionRequest: BodyType<GastoLiquidacionRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<LiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/gastos`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: gastoLiquidacionRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getAgregarGastoLiquidacionMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof agregarGastoLiquidacion>>, TError,{id: string;data: BodyType<GastoLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof agregarGastoLiquidacion>>, TError,{id: string;data: BodyType<GastoLiquidacionRequest>}, TContext> => {
+
+const mutationKey = ['agregarGastoLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof agregarGastoLiquidacion>>, {id: string;data: BodyType<GastoLiquidacionRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  agregarGastoLiquidacion(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AgregarGastoLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof agregarGastoLiquidacion>>>
+    export type AgregarGastoLiquidacionMutationBody = BodyType<GastoLiquidacionRequest>
+    export type AgregarGastoLiquidacionMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useAgregarGastoLiquidacion = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof agregarGastoLiquidacion>>, TError,{id: string;data: BodyType<GastoLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof agregarGastoLiquidacion>>,
+        TError,
+        {id: string;data: BodyType<GastoLiquidacionRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getAgregarGastoLiquidacionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const actualizarGastoLiquidacion = (
+    id: string,
+    gastoId: string,
+    gastoLiquidacionRequest: BodyType<GastoLiquidacionRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<LiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/gastos/${gastoId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: gastoLiquidacionRequest
+    },
+      options);
+    }
+  
+
+
+export const getActualizarGastoLiquidacionMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarGastoLiquidacion>>, TError,{id: string;gastoId: string;data: BodyType<GastoLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof actualizarGastoLiquidacion>>, TError,{id: string;gastoId: string;data: BodyType<GastoLiquidacionRequest>}, TContext> => {
+
+const mutationKey = ['actualizarGastoLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof actualizarGastoLiquidacion>>, {id: string;gastoId: string;data: BodyType<GastoLiquidacionRequest>}> = (props) => {
+          const {id,gastoId,data} = props ?? {};
+
+          return  actualizarGastoLiquidacion(id,gastoId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActualizarGastoLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof actualizarGastoLiquidacion>>>
+    export type ActualizarGastoLiquidacionMutationBody = BodyType<GastoLiquidacionRequest>
+    export type ActualizarGastoLiquidacionMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useActualizarGastoLiquidacion = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarGastoLiquidacion>>, TError,{id: string;gastoId: string;data: BodyType<GastoLiquidacionRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof actualizarGastoLiquidacion>>,
+        TError,
+        {id: string;gastoId: string;data: BodyType<GastoLiquidacionRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getActualizarGastoLiquidacionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const hojaLiquidacion = (
+    id: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<HojaLiquidacionDto>(
+      {url: `/api/v1/logistica/liquidaciones/${id}/hoja`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getHojaLiquidacionQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/logistica/liquidaciones/${id}/hoja`
+    ] as const;
+    }
+
+    
+export const getHojaLiquidacionQueryOptions = <TData = Awaited<ReturnType<typeof hojaLiquidacion>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getHojaLiquidacionQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof hojaLiquidacion>>> = ({ signal }) => hojaLiquidacion(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type HojaLiquidacionQueryResult = NonNullable<Awaited<ReturnType<typeof hojaLiquidacion>>>
+export type HojaLiquidacionQueryError = ErrorType<unknown>
+
+
+export function useHojaLiquidacion<TData = Awaited<ReturnType<typeof hojaLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof hojaLiquidacion>>,
+          TError,
+          Awaited<ReturnType<typeof hojaLiquidacion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHojaLiquidacion<TData = Awaited<ReturnType<typeof hojaLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof hojaLiquidacion>>,
+          TError,
+          Awaited<ReturnType<typeof hojaLiquidacion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHojaLiquidacion<TData = Awaited<ReturnType<typeof hojaLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useHojaLiquidacion<TData = Awaited<ReturnType<typeof hojaLiquidacion>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof hojaLiquidacion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getHojaLiquidacionQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+

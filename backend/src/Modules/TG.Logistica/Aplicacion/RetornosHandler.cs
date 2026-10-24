@@ -269,7 +269,7 @@ public sealed class ServicioRetornos(
 
                 // RN-SYN-06: si la liquidación del día ya se cerró, se aplica igual y se avisa.
                 if (await db.Liquidaciones.AnyAsync(l => l.RutaId == c.RutaId && l.FechaOperativa == c.FechaOperativa
-                        && l.Estado == EstadoLiquidacion.Cerrada, t))
+                        && l.Estado != EstadoLiquidacion.Abierta, t))
                 {
                     await incidencias.CrearAsync(TipoIncidencia.DiferenciaLiquidacion, "Retorno", retorno.Id,
                         new { motivo = "Retorno registrado después de cerrar la liquidación", retorno.Folio, ruta = ruta.Codigo }, t);

@@ -152,7 +152,7 @@ regenerado (definición de terminado).
   (RN-SYN-11). *Acepta:* RN-LOG-15 a 18, RN-INV-11, RN-SYN-11. Incluye sumar los cambios pendientes del día de
   visita a la demanda del plan sugerido (RN-PRO-13) y a las cargas sugeridas (RN-LOG-14), que T-8.7 y T-8.8
   dejaron fuera.
-- [ ] **T-8.10 Liquidación v0.2** *(ajusta T-4.6, T-4.7)*. Columnas nuevas, formato por canal, etapas con permisos,
+- [x] **T-8.10 Liquidación v0.2** *(ajusta T-4.6, T-4.7)*. Columnas nuevas, formato por canal, etapas con permisos,
   movimientos al confirmar producto, gastos, forma de pago `Cheque`, totales de dinero de solo lectura (créditos y
   cobros sin cambios en Ventas), diferencia de precios, hoja imprimible con firmas. *Lee:* `logistica.md`
   (RN-LOG-06 a 10, 19 a 23). *Acepta:* RN-LOG-06, 07, 08 modificadas, 19 a 23, y criterios v0.2 de liquidación.

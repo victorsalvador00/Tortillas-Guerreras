@@ -278,7 +278,7 @@ public sealed class EnviosHandler(
         var resultado = await unitOfWork.EjecutarAsync(async c =>
         {
             var liquidacion = await db.Liquidaciones.FirstOrDefaultAsync(l => l.RutaId == envio.RutaId && l.FechaOperativa == envio.FechaOperativa, c);
-            if (liquidacion is { Estado: EstadoLiquidacion.Cerrada })
+            if (liquidacion is not null && liquidacion.Estado != EstadoLiquidacion.Abierta)
             {
                 return Result.Falla(Error.Conflicto(ErroresLogistica.LiquidacionCerrada,
                     "La liquidación de la ruta para ese día ya está cerrada; programa la carga para otro día."));
@@ -314,8 +314,12 @@ public sealed class EnviosHandler(
 
             if (liquidacion is null)
             {
+                // RN-LOG-19: el formato se copia del canal de la ruta al abrirse.
+                var canalId = await db.Rutas.Where(r => r.Id == envio.RutaId).Select(r => r.CanalId).FirstAsync(c);
+                var canal = (await ventas.ListarCanalesAsync(c)).FirstOrDefault(x => x.Id == canalId);
                 liquidacion = new Liquidacion
                 {
+                    Formato = canal?.FormatoLiquidacion ?? FormatoLiquidacion.Completo,
                     Folio = await folios.SiguienteAsync(LogisticaDbContext.Esquema, "LIQ", c),
                     RutaId = envio.RutaId,
                     FechaOperativa = envio.FechaOperativa,

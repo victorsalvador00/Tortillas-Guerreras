@@ -56,4 +56,28 @@ public sealed class ReglasLogisticaTests
     [InlineData(5, 1, 0, 1)]   // solo una partida de 1 deja pendiente
     public void NuevoPendiente_LoRetiradoNoEntregado(decimal retirado, decimal conPendiente, decimal entregado, decimal esperado) =>
         ReglasLogistica.NuevoPendiente(retirado, conPendiente, entregado).ShouldBe(esperado);
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-08")]
+    public void EfectivoEsperado_RestaGastosAutorizados() =>
+        ReglasLogistica.EfectivoEsperado(1000m, 250.50m, 80m).ShouldBe(1170.50m);
+
+    [Theory]
+    [Trait("Regla", "RN-LOG-20")]
+    [InlineData(EstadoLiquidacion.Abierta, true, false)]
+    [InlineData(EstadoLiquidacion.Abierta, false, false)]
+    [InlineData(EstadoLiquidacion.ProductoConfirmado, true, false)]
+    [InlineData(EstadoLiquidacion.ProductoConfirmado, false, true)]
+    [InlineData(EstadoLiquidacion.Revisada, true, true)]
+    [InlineData(EstadoLiquidacion.Cerrada, false, false)]
+    public void PuedeCerrar_SegunEtapaYRevision(EstadoLiquidacion estado, bool requiereRevision, bool esperado) =>
+        ReglasLogistica.PuedeCerrar(estado, requiereRevision).ShouldBe(esperado);
+
+    [Fact]
+    public void Repartir_ProporcionalYElRedondeoAlUltimo()
+    {
+        ReglasLogistica.Repartir(100m, [1m, 1m, 1m]).ShouldBe([33.33m, 33.33m, 33.34m]);
+        ReglasLogistica.Repartir(50m, [3m, 1m]).ShouldBe([37.50m, 12.50m]);
+        ReglasLogistica.Repartir(10m, []).ShouldBeEmpty();
+    }
 }

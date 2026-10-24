@@ -230,7 +230,7 @@ export const datosRegistrarVenta = z.object({
   consecutivo: z.number().int().positive(),
   clienteId: z.string().uuid(),
   condicionPago: z.enum(['Contado', 'Credito']),
-  formaPago: z.enum(['Efectivo', 'Transferencia', 'Credito']),
+  formaPago: z.enum(['Efectivo', 'Transferencia', 'Credito', 'Cheque']),
   partidas: z
     .array(
       z.object({
@@ -250,7 +250,7 @@ export const datosEntregarPedido = z.object({
   folio: z.string(),
   consecutivo: z.number().int().positive(),
   pedidoId: z.string().uuid(),
-  formaPago: z.enum(['Efectivo', 'Transferencia', 'Credito']),
+  formaPago: z.enum(['Efectivo', 'Transferencia', 'Credito', 'Cheque']),
   partidas: z.array(z.object({ pedidoPartidaId: z.string().uuid(), cantidad: z.number().nonnegative() })).min(1),
   totalApp: z.number().nonnegative(),
   gps: gpsSync.nullable(),

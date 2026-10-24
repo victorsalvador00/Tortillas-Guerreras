@@ -14,4 +14,5 @@ export const FormaPago = {
   Efectivo: 'Efectivo',
   Transferencia: 'Transferencia',
   Credito: 'Credito',
+  Cheque: 'Cheque',
 } as const;

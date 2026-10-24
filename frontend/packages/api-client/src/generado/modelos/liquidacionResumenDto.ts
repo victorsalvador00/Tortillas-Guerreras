@@ -8,6 +8,7 @@
 import type { LiquidacionResumenDtoChoferId } from './liquidacionResumenDtoChoferId';
 import type { LiquidacionResumenDtoChoferNombre } from './liquidacionResumenDtoChoferNombre';
 import type { EstadoLiquidacion } from './estadoLiquidacion';
+import type { FormatoLiquidacion } from './formatoLiquidacion';
 import type { LiquidacionResumenDtoEfectivoEntregado } from './liquidacionResumenDtoEfectivoEntregado';
 import type { LiquidacionResumenDtoDiferenciaEfectivo } from './liquidacionResumenDtoDiferenciaEfectivo';
 import type { LiquidacionResumenDtoCerradaEn } from './liquidacionResumenDtoCerradaEn';
@@ -21,6 +22,7 @@ export interface LiquidacionResumenDto {
   choferId?: LiquidacionResumenDtoChoferId;
   choferNombre?: LiquidacionResumenDtoChoferNombre;
   estado: EstadoLiquidacion;
+  formato: FormatoLiquidacion;
   efectivoEsperado: number;
   efectivoEntregado?: LiquidacionResumenDtoEfectivoEntregado;
   diferenciaEfectivo?: LiquidacionResumenDtoDiferenciaEfectivo;

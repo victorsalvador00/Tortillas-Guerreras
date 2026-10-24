@@ -5,7 +5,9 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { CerrarLiquidacionRequestEfectivoEntregado } from './cerrarLiquidacionRequestEfectivoEntregado';
 
 export interface CerrarLiquidacionRequest {
-  forzar: boolean;
+  forzar?: boolean;
+  efectivoEntregado?: CerrarLiquidacionRequestEfectivoEntregado;
 }

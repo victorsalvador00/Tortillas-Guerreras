@@ -48,6 +48,9 @@ public enum FormaPago
     Efectivo,
     Transferencia,
     Credito,
+
+    /// <summary>v0.2: solo en ventas de contado; no suma al efectivo de la liquidación (RN-LOG-08).</summary>
+    Cheque,
 }
 
 public enum OrigenVenta
@@ -294,7 +297,21 @@ public sealed record ResumenRutaDia(
     decimal CobrosEfectivo,
     decimal EfectivoEsperado,
     int Ventas,
-    decimal TotalVendido);
+    decimal TotalVendido,
+    decimal TotalCredito = 0,
+    decimal CobrosTotal = 0,
+    decimal VentasTransferencia = 0,
+    decimal CobrosTransferencia = 0,
+    decimal VentasCheque = 0,
+    decimal DiferenciaPrecios = 0,
+    IReadOnlyList<ImporteProductoDia>? ImportePorProducto = null,
+    IReadOnlyList<CreditoDelDia>? Creditos = null);
+
+/// <summary>Importe con impuestos vendido de un producto en el día (columna "Total $" de la liquidación).</summary>
+public sealed record ImporteProductoDia(Guid ProductoId, decimal Importe);
+
+/// <summary>Venta a crédito del día (hoja de liquidación, RN-LOG-22).</summary>
+public sealed record CreditoDelDia(Guid VentaId, string Folio, Guid ClienteId, string Cliente, decimal Total);
 
 public sealed record ListaPrecioPartidaInfo(Guid ListaPrecioId, Guid ProductoId, Guid UnidadId, decimal PrecioUnitario,
     long VersionSync);

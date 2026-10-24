@@ -156,6 +156,26 @@ producto y efectivo.
 mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas,
 `LOG-026` la jornada (ruta y fecha) ya tiene otro chofer, `LOG-027` canal inexistente o inactivo.
 
+**Notas de implementación (T-8.10).**
+- Flujo: `PUT /conteo` solo en `Abierta` (`logistica.liquidar_producto`); `POST /confirmar-producto { forzar }` aplica RN-LOG-09,
+  exige conteo y genera los movimientos de RN-LOG-07 (ajustes, reintegro a `PT`, mermas, incidencia de producto), guarda
+  las partidas, pasa los envíos a `Liquidado` y toma la foto de `total_venta`. `POST /revisar` y `POST /regresar { nota }`
+  (la nota se agrega a `notas`). `POST /cerrar { efectivoEntregado? }` desde `Revisada` (o `ProductoConfirmado` si
+  `logistica.requiere_revision_supervisor = false`) calcula RN-LOG-08, guarda los totales de Ventas (crédito, cobros,
+  transferencias = ventas + cobros, cheques, diferencia de precios) y crea la incidencia de efectivo.
+- Una acción sobre una liquidación `Cerrada` sigue respondiendo `LOG-007`; las demás transiciones fuera de etapa, `LOG-021`.
+- Desde `ProductoConfirmado` el producto ya no cambia: las cargas nuevas de esa ruta y fecha y los retornos se rechazan como
+  con una liquidación cerrada.
+- Gastos: `GET/POST /liquidaciones/{id}/gastos` y `PUT /liquidaciones/{id}/gastos/{gastoId}` (`logistica.liquidar`), editables
+  hasta cerrar; quien captura marca `autorizado`. `total_gastos` = suma de los autorizados.
+- `FormaPago.Cheque` solo en ventas de contado; un cobro no se recibe con cheque (`VEN-005`).
+- "Total $" por partida = importe con impuestos vendido del producto (Ventas) repartido entre sus lotes según lo vendido.
+- Diferencia de precios: Σ (`precio_referencia` − precio) × cantidad de las partidas de ventas registradas del día cuyo precio
+  difiere de la referencia (la misma condición que genera `PrecioDistinto`).
+- `GET /liquidaciones/{id}/hoja` devuelve los datos de la hoja (liquidación, créditos del día por cliente y folio, nombres de
+  las 4 firmas); la web la imprime en `/logistica/liquidaciones/{id}/hoja` (sin librería de PDF).
+- Producto a cobro y cargos al chofer (incluido `FaltanteEfectivo`) quedan para T-8.11.
+
 **Notas de implementación (T-8.9).**
 - `ServicioRetornos` atiende web y app. En `CambioFisico` exige cliente no genérico (`LOG-019`); las partidas
   `Retirado` se tratan como una devolución (`RetornoCliente` y, si no son vendibles, `Merma`); cada partida
@@ -197,7 +217,7 @@ mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte c
 | PUT | **(v0.2)** `/rutas/{id}` acepta `canalId`; `PUT /rutas/{id}/clientes` valida canal (RN-LOG-31) | `logistica.configurar` |
 | POST | **(v0.2)** `/liquidaciones/{id}/confirmar-producto` | `logistica.liquidar_producto` |
 | POST | **(v0.2)** `/liquidaciones/{id}/revisar`, `/regresar` | `logistica.revisar_liquidacion` |
-| GET/POST/PUT | **(v0.2)** `/liquidaciones/{id}/gastos` | `logistica.liquidar` |
+| GET/POST/PUT | **(v0.2)** `/liquidaciones/{id}/gastos`, `PUT /liquidaciones/{id}/gastos/{gastoId}` | `logistica.liquidar` |
 | GET | **(v0.2)** `/liquidaciones/{id}/hoja` (PDF/HTML imprimible) | `logistica.ver` |
 | GET | **(v0.2)** `/cambios-pendientes?clienteId&rutaId&estado` | `logistica.ver` |
 | POST | **(v0.2)** `/cambios-pendientes/{id}/cancelar` | `logistica.cambios_cancelar` |

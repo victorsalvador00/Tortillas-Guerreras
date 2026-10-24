@@ -3,6 +3,7 @@ import { pantalla } from '@/app/rutas-base';
 import { CambiosPendientes } from './CambiosPendientes';
 import { CargaDetalle, CargaNueva, Cargas } from './Cargas';
 import { Rutas, Vehiculos } from './Configuracion';
+import { HojaLiquidacion } from './HojaLiquidacion';
 import { LiquidacionDetalle, Liquidaciones } from './Liquidaciones';
 import { RetornoNuevo, Retornos } from './Retornos';
 import { RutaDetalle } from './RutaDetalle';
@@ -14,6 +15,7 @@ export function rutasLogistica(): AnyRoute[] {
     pantalla('/logistica/cargas/$id', CargaDetalle, 'logistica.ver'),
     pantalla('/logistica/liquidaciones', Liquidaciones, 'logistica.ver'),
     pantalla('/logistica/liquidaciones/$id', LiquidacionDetalle, 'logistica.ver'),
+    pantalla('/logistica/liquidaciones/$id/hoja', HojaLiquidacion, 'logistica.ver'),
     pantalla('/logistica/retornos', Retornos, ['logistica.retornos', 'logistica.ver']),
     pantalla('/logistica/retornos/nuevo', RetornoNuevo, 'logistica.retornos'),
     pantalla('/logistica/cambios-pendientes', CambiosPendientes, 'logistica.ver'),

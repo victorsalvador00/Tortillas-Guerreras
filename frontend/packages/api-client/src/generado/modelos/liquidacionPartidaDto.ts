@@ -17,7 +17,10 @@ export interface LiquidacionPartidaDto {
   unidad: string;
   lote: string;
   cargado: number;
+  cargadoInicial: number;
+  recargado: number;
   vendido: number;
+  importeVenta: number;
   devueltoClientesVendible: number;
   devueltoClientesNoVendible: number;
   sobranteEsperado: number;

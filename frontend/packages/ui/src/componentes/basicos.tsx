@@ -171,6 +171,7 @@ const COLORES_ESTADO: Record<string, ColorEstado> = {
   Preparado: 'gris',
   Pendiente: 'gris',
   PorAprobar: 'amarillo',
+  ProductoConfirmado: 'amarillo',
   Abierto: 'azul',
   Abierta: 'azul',
   Autorizada: 'azul',
@@ -205,6 +206,7 @@ const COLORES_ESTADO: Record<string, ColorEstado> = {
 
 const ETIQUETAS_ESTADO: Record<string, string> = {
   PorAprobar: 'Por aprobar',
+  ProductoConfirmado: 'Producto confirmado',
   EnProceso: 'En proceso',
   EnRuta: 'En ruta',
   RecibidaParcial: 'Recibida parcial',

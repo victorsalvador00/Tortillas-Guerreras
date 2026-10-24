@@ -6661,6 +6661,125 @@
         }
       }
     },
+    "/api/v1/logistica/liquidaciones/{id}/confirmar-producto": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "confirmarProductoLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CerrarLiquidacionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/revisar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "revisarLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/regresar": {
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "regresarLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegresarLiquidacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logistica/liquidaciones/{id}/cerrar": {
       "post": {
         "tags": [
@@ -6701,6 +6820,180 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/gastos": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "listarGastosLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LiquidacionGastoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "agregarGastoLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GastoLiquidacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/gastos/{gastoId}": {
+      "put": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "actualizarGastoLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "gastoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GastoLiquidacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiquidacionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logistica/liquidaciones/{id}/hoja": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "hojaLiquidacion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HojaLiquidacionDto"
                 }
               }
             }
@@ -8730,13 +9023,18 @@
         }
       },
       "CerrarLiquidacionRequest": {
-        "required": [
-          "forzar"
-        ],
         "type": "object",
         "properties": {
           "forzar": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": false
+          },
+          "efectivoEntregado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -9985,6 +10283,26 @@
           }
         }
       },
+      "CreditoHojaDto": {
+        "required": [
+          "folio",
+          "cliente",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "folio": {
+            "type": "string"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "DestinoSobrante": {
         "enum": [
           "Reintegrar",
@@ -10502,7 +10820,9 @@
       "EstadoLiquidacion": {
         "enum": [
           "Abierta",
-          "Cerrada"
+          "Cerrada",
+          "ProductoConfirmado",
+          "Revisada"
         ]
       },
       "EstadoOrden": {
@@ -11066,7 +11386,8 @@
         "enum": [
           "Efectivo",
           "Transferencia",
-          "Credito"
+          "Credito",
+          "Cheque"
         ]
       },
       "FormatoLiquidacion": {
@@ -11074,6 +11395,32 @@
           "Completo",
           "Simplificado"
         ]
+      },
+      "GastoLiquidacionRequest": {
+        "required": [
+          "concepto",
+          "importe",
+          "autorizado"
+        ],
+        "type": "object",
+        "properties": {
+          "concepto": {
+            "type": "string"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "comprobante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "autorizado": {
+            "type": "boolean"
+          }
+        }
       },
       "GenerarSugeridasDto": {
         "required": [
@@ -12074,6 +12421,53 @@
           }
         }
       },
+      "HojaLiquidacionDto": {
+        "required": [
+          "liquidacion",
+          "creditos",
+          "generadaEn"
+        ],
+        "type": "object",
+        "properties": {
+          "liquidacion": {
+            "$ref": "#/components/schemas/LiquidacionDto"
+          },
+          "creditos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditoHojaDto"
+            }
+          },
+          "firmaAlmacen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firmaVendedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firmaSupervisor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firmaLiquidaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "generadaEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
@@ -12231,14 +12625,23 @@
           "rutaNombre",
           "fechaOperativa",
           "estado",
+          "formato",
+          "requiereRevision",
           "ventas",
           "totalVendido",
           "ventasContadoEfectivo",
           "cobrosEfectivo",
+          "totalGastos",
           "efectivoEsperado",
+          "totalCredito",
+          "totalCobros",
+          "totalTransferencias",
+          "totalCheques",
+          "diferenciaPrecios",
           "operacionesPendientes",
           "cerradaForzada",
-          "partidas"
+          "partidas",
+          "gastos"
         ],
         "type": "object",
         "properties": {
@@ -12279,6 +12682,12 @@
           "estado": {
             "$ref": "#/components/schemas/EstadoLiquidacion"
           },
+          "formato": {
+            "$ref": "#/components/schemas/FormatoLiquidacion"
+          },
+          "requiereRevision": {
+            "type": "boolean"
+          },
           "ventas": {
             "type": "integer",
             "format": "int32"
@@ -12292,6 +12701,10 @@
             "format": "double"
           },
           "cobrosEfectivo": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalGastos": {
             "type": "number",
             "format": "double"
           },
@@ -12313,9 +12726,55 @@
             ],
             "format": "double"
           },
+          "totalCredito": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCobros": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalTransferencias": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCheques": {
+            "type": "number",
+            "format": "double"
+          },
+          "diferenciaPrecios": {
+            "type": "number",
+            "format": "double"
+          },
           "operacionesPendientes": {
             "type": "integer",
             "format": "int32"
+          },
+          "productoConfirmadoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "productoConfirmadoPor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "revisadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "revisadaPor": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "cerradaEn": {
             "type": [
@@ -12324,12 +12783,18 @@
             ],
             "format": "date-time"
           },
-          "cerradaPor": {
+          "cerradaPorId": {
             "type": [
               "null",
               "string"
             ],
             "format": "uuid"
+          },
+          "cerradaPor": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "cerradaForzada": {
             "type": "boolean"
@@ -12345,6 +12810,54 @@
             "items": {
               "$ref": "#/components/schemas/LiquidacionPartidaDto"
             }
+          },
+          "gastos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiquidacionGastoDto"
+            }
+          }
+        }
+      },
+      "LiquidacionGastoDto": {
+        "required": [
+          "id",
+          "concepto",
+          "importe",
+          "autorizado",
+          "capturadoEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "concepto": {
+            "type": "string"
+          },
+          "importe": {
+            "type": "number",
+            "format": "double"
+          },
+          "comprobante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "autorizado": {
+            "type": "boolean"
+          },
+          "capturadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capturadoPor": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -12356,7 +12869,10 @@
           "unidad",
           "lote",
           "cargado",
+          "cargadoInicial",
+          "recargado",
           "vendido",
+          "importeVenta",
           "devueltoClientesVendible",
           "devueltoClientesNoVendible",
           "sobranteEsperado",
@@ -12385,7 +12901,19 @@
             "type": "number",
             "format": "double"
           },
+          "cargadoInicial": {
+            "type": "number",
+            "format": "double"
+          },
+          "recargado": {
+            "type": "number",
+            "format": "double"
+          },
           "vendido": {
+            "type": "number",
+            "format": "double"
+          },
+          "importeVenta": {
             "type": "number",
             "format": "double"
           },
@@ -12464,6 +12992,7 @@
           "rutaCodigo",
           "fechaOperativa",
           "estado",
+          "formato",
           "efectivoEsperado"
         ],
         "type": "object",
@@ -12501,6 +13030,9 @@
           },
           "estado": {
             "$ref": "#/components/schemas/EstadoLiquidacion"
+          },
+          "formato": {
+            "$ref": "#/components/schemas/FormatoLiquidacion"
           },
           "efectivoEsperado": {
             "type": "number",
@@ -16387,6 +16919,17 @@
             "format": "uuid"
           },
           "origen": {
+            "type": "string"
+          }
+        }
+      },
+      "RegresarLiquidacionRequest": {
+        "required": [
+          "nota"
+        ],
+        "type": "object",
+        "properties": {
+          "nota": {
             "type": "string"
           }
         }

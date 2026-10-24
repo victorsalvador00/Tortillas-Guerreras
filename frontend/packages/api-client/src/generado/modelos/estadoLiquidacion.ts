@@ -13,4 +13,6 @@ export type EstadoLiquidacion = typeof EstadoLiquidacion[keyof typeof EstadoLiqu
 export const EstadoLiquidacion = {
   Abierta: 'Abierta',
   Cerrada: 'Cerrada',
+  ProductoConfirmado: 'ProductoConfirmado',
+  Revisada: 'Revisada',
 } as const;

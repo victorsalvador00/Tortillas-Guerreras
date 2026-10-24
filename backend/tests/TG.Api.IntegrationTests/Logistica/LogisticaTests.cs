@@ -86,6 +86,14 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
     private async Task<LiquidacionPrueba> LiquidacionAsync(Guid id) =>
         await (await api.ClienteAsync()).GetOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}");
 
+    /// <summary>RN-LOG-20: confirma producto, revisa y cierra el dinero.</summary>
+    private static async Task<LiquidacionPrueba> CerrarCompletaAsync(HttpClient admin, Guid id, decimal? efectivo = null)
+    {
+        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/confirmar-producto", new { forzar = false });
+        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/revisar");
+        return await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/cerrar", new { efectivoEntregado = efectivo });
+    }
+
     // ───────────── Pruebas ─────────────
 
     [Fact]
@@ -312,9 +320,10 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
         conteo.Partidas.Single(p => p.Lote == lote).Diferencia.ShouldBe(4m);
 
         var ptAntes = await admin.ExistenciaAsync(await admin.AlmacenAsync("PT"), tortilla.Id, lote);
-        var cerrada = await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/cerrar", new { forzar = false });
+        // v0.2: el inventario se mueve al confirmar el producto, antes de cerrar el dinero.
+        var confirmada = await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/confirmar-producto", new { forzar = false });
 
-        cerrada.Estado.ShouldBe("Cerrada");
+        confirmada.Estado.ShouldBe("ProductoConfirmado");
         (await admin.ExistenciaAsync(ruta.AlmacenId, tortilla.Id)).ShouldBe(0m);
         (await admin.ExistenciaAsync(await admin.AlmacenAsync("PT"), tortilla.Id, lote)).ShouldBe(ptAntes + 44m);
         var kardex = await admin.GetOkAsync<PaginaPrueba<MovimientoPrueba>>(
@@ -329,6 +338,9 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
 
         var envio = await admin.GetOkAsync<EnvioPrueba>($"/api/v1/logistica/envios/{carga.Id}");
         envio.Estado.ShouldBe("Liquidado");
+        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/revisar");
+        (await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/cerrar", new { forzar = false }))
+            .Estado.ShouldBe("Cerrada");
     }
 
     [Fact]
@@ -344,10 +356,9 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
         liquidacion.EfectivoEsperado.ShouldBe(200m);
         await admin.PutOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/conteo", new
         {
-            efectivoEntregado = 150m,
             partidas = new[] { new { productoId = tortilla.Id, lote, sobranteContado = 0, destino = "Reintegrar" } },
         });
-        var cerrada = await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacion.Id}/cerrar", new { forzar = false });
+        var cerrada = await CerrarCompletaAsync(admin, liquidacion.Id, 150m);
 
         cerrada.DiferenciaEfectivo.ShouldBe(-50m);
         var incidencias = await admin.GetOkAsync<PaginaPrueba<JsonObject>>(
@@ -382,15 +393,16 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
             partidas = new[] { new { productoId = tortilla.Id, lote, sobranteContado = 5, destino = "Reintegrar" } },
         });
 
-        var logistica = await api.ClienteAsync("logistica");
-        var sinPermiso = await logistica.PostJsonAsync($"/api/v1/logistica/liquidaciones/{liquidacionId}/cerrar", new { forzar = true });
+        // v0.2: se valida al confirmar producto; almacén no tiene logistica.forzar_cierre.
+        var almacen = await api.ClienteAsync("almacen");
+        var sinPermiso = await almacen.PostJsonAsync($"/api/v1/logistica/liquidaciones/{liquidacionId}/confirmar-producto", new { forzar = true });
         await sinPermiso.DebeFallarAsync(HttpStatusCode.Conflict, ErroresLogistica.PendientesSync);
 
-        var sinForzar = await admin.PostJsonAsync($"/api/v1/logistica/liquidaciones/{liquidacionId}/cerrar", new { forzar = false });
+        var sinForzar = await admin.PostJsonAsync($"/api/v1/logistica/liquidaciones/{liquidacionId}/confirmar-producto", new { forzar = false });
         await sinForzar.DebeFallarAsync(HttpStatusCode.Conflict, ErroresLogistica.PendientesSync);
 
-        var forzada = await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacionId}/cerrar", new { forzar = true });
-        forzada.Estado.ShouldBe("Cerrada");
+        var forzada = await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{liquidacionId}/confirmar-producto", new { forzar = true });
+        forzada.Estado.ShouldBe("ProductoConfirmado");
     }
 
     [Fact]
@@ -406,7 +418,7 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
             efectivoEntregado = 0m,
             partidas = new[] { new { productoId = tortilla.Id, lote, sobranteContado = 4, destino = "Merma" } },
         });
-        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/cerrar", new { forzar = false });
+        await CerrarCompletaAsync(admin, id);
 
         var conteo = await admin.PutAsync($"/api/v1/logistica/liquidaciones/{id}/conteo", Contenido(new { efectivoEntregado = 1m, partidas = Array.Empty<object>() }));
         await conteo.DebeFallarAsync(HttpStatusCode.Conflict, ErroresLogistica.LiquidacionCerrada);
@@ -427,15 +439,20 @@ public sealed class LogisticaTests(ApiFixture api) : IClassFixture<ApiFixture>
     {
         var admin = await api.ClienteAsync();
         var ruta = await CrearRutaAsync();
-        var (_, _, carga) = await CargarAsync(ruta, 3);
+        var (tortilla, lote, carga) = await CargarAsync(ruta, 3);
         var id = carga.LiquidacionId!.Value;
 
+        var sinConteo = await admin.PostJsonAsync($"/api/v1/logistica/liquidaciones/{id}/confirmar-producto", new { forzar = false });
+        await sinConteo.DebeFallarAsync(HttpStatusCode.BadRequest, ErroresLogistica.SinConteo);
+
+        await admin.PutOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/conteo", new
+        {
+            partidas = new[] { new { productoId = tortilla.Id, lote, sobranteContado = 3, destino = "Reintegrar" } },
+        });
+        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/confirmar-producto", new { forzar = false });
+        await admin.PostOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/revisar");
         var sinEfectivo = await admin.PostJsonAsync($"/api/v1/logistica/liquidaciones/{id}/cerrar", new { forzar = false });
         await sinEfectivo.DebeFallarAsync(HttpStatusCode.BadRequest, ErroresLogistica.SinConteo);
-
-        await admin.PutOkAsync<LiquidacionPrueba>($"/api/v1/logistica/liquidaciones/{id}/conteo", new { efectivoEntregado = 0m, partidas = Array.Empty<object>() });
-        var sinConteo = await admin.PostJsonAsync($"/api/v1/logistica/liquidaciones/{id}/cerrar", new { forzar = false });
-        await sinConteo.DebeFallarAsync(HttpStatusCode.BadRequest, ErroresLogistica.SinConteo);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using TG.Logistica.Publico;
+using TG.Ventas.Publico;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Dominio;
 
@@ -127,15 +128,44 @@ public sealed class Liquidacion : EntidadAuditable, IConcurrencia
     public Guid? ChoferId { get; set; }
 
     public EstadoLiquidacion Estado { get; set; } = EstadoLiquidacion.Abierta;
+
+    /// <summary>RN-LOG-19: copiado del canal de la ruta al abrirse.</summary>
+    public FormatoLiquidacion Formato { get; set; } = FormatoLiquidacion.Completo;
+
     public decimal EfectivoEsperado { get; set; }
     public decimal? EfectivoEntregado { get; set; }
     public decimal? DiferenciaEfectivo { get; set; }
+    public decimal? TotalVenta { get; set; }
+    public decimal? TotalCredito { get; set; }
+    public decimal? TotalCobros { get; set; }
+    public decimal? TotalTransferencias { get; set; }
+    public decimal? TotalCheques { get; set; }
+    public decimal TotalGastos { get; set; }
+    public decimal DiferenciaPrecios { get; set; }
+    public Guid? ProductoConfirmadoPor { get; set; }
+    public DateTimeOffset? ProductoConfirmadoEn { get; set; }
+    public Guid? RevisadaPor { get; set; }
+    public DateTimeOffset? RevisadaEn { get; set; }
     public Guid? CerradaPor { get; set; }
     public DateTimeOffset? CerradaEn { get; set; }
     public bool CerradaForzada { get; set; }
     public string? Notas { get; set; }
     public uint Version { get; set; }
     public List<LiquidacionPartida> Partidas { get; set; } = [];
+    public List<LiquidacionGasto> Gastos { get; set; } = [];
+}
+
+/// <summary>Gasto de ruta (diésel, casetas, maniobras…); los autorizados se restan del efectivo esperado (RN-LOG-08).</summary>
+public sealed class LiquidacionGasto
+{
+    public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();
+    public Guid LiquidacionId { get; set; }
+    public string Concepto { get; set; } = string.Empty;
+    public decimal Importe { get; set; }
+    public string? Comprobante { get; set; }
+    public bool Autorizado { get; set; }
+    public Guid CapturadoPor { get; set; }
+    public DateTimeOffset CapturadoEn { get; set; }
 }
 
 [Bitacora(Documento = nameof(LiquidacionId))]
@@ -146,7 +176,15 @@ public sealed class LiquidacionPartida
     public Guid ProductoId { get; set; }
     public string Lote { get; set; } = string.Empty;
     public decimal Cargado { get; set; }
+
+    /// <summary>RN-LOG-06 (v0.2): <c>cargado = cargado_inicial + recargado</c>.</summary>
+    public decimal CargadoInicial { get; set; }
+
+    public decimal Recargado { get; set; }
     public decimal Vendido { get; set; }
+
+    /// <summary>Columna "Total $": importe con impuestos de lo vendido del producto, repartido entre lotes.</summary>
+    public decimal ImporteVenta { get; set; }
     public decimal DevueltoClientesVendible { get; set; }
     public decimal DevueltoClientesNoVendible { get; set; }
 
@@ -192,6 +230,28 @@ public static class ReglasLogistica
         Math.Max(0, Math.Min(retirado - entregadoNormal, retiradoDejarPendiente));
 
     public static decimal Diferencia(decimal contado, decimal esperado) => contado - esperado;
+
+    /// <summary>RN-LOG-08 (v0.2): ventas de contado en efectivo + cobros en efectivo − gastos autorizados.</summary>
+    public static decimal EfectivoEsperado(decimal ventasContadoEfectivo, decimal cobrosEfectivo, decimal gastosAutorizados) =>
+        Dinero.Redondear(ventasContadoEfectivo + cobrosEfectivo - gastosAutorizados);
+
+    /// <summary>RN-LOG-20: siguiente etapa válida para cerrar el dinero.</summary>
+    public static bool PuedeCerrar(EstadoLiquidacion estado, bool requiereRevision) =>
+        estado == EstadoLiquidacion.Revisada || (estado == EstadoLiquidacion.ProductoConfirmado && !requiereRevision);
+
+    /// <summary>Reparte un importe entre lotes en proporción a lo vendido; el redondeo va al último.</summary>
+    public static IReadOnlyList<decimal> Repartir(decimal importe, IReadOnlyList<decimal> pesos)
+    {
+        var total = pesos.Sum();
+        if (pesos.Count == 0)
+        {
+            return [];
+        }
+
+        var partes = pesos.Select(p => total == 0 ? 0 : Dinero.Redondear(importe * p / total)).ToList();
+        partes[^1] += Dinero.Redondear(importe - partes.Sum());
+        return partes;
+    }
 
     /// <summary>RN-LOG-08.</summary>
     public static decimal DiferenciaEfectivo(decimal entregado, decimal esperado) => Dinero.Redondear(entregado - esperado);

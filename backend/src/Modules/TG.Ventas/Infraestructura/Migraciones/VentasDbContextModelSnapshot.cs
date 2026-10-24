@@ -429,7 +429,7 @@ namespace TG.Ventas.Infraestructura.Migraciones
                         {
                             t.HasCheckConstraint("ck_cobros_estado", "estado IN ('Registrado', 'Cancelado')");
 
-                            t.HasCheckConstraint("ck_cobros_forma_pago", "forma_pago IN ('Efectivo', 'Transferencia', 'Credito')");
+                            t.HasCheckConstraint("ck_cobros_forma_pago", "forma_pago IN ('Efectivo', 'Transferencia', 'Credito', 'Cheque')");
                         });
                 });
 
@@ -1190,7 +1190,7 @@ namespace TG.Ventas.Infraestructura.Migraciones
 
                             t.HasCheckConstraint("ck_ventas_estado", "estado IN ('Registrada', 'Cancelada')");
 
-                            t.HasCheckConstraint("ck_ventas_forma_pago", "forma_pago IN ('Efectivo', 'Transferencia', 'Credito')");
+                            t.HasCheckConstraint("ck_ventas_forma_pago", "forma_pago IN ('Efectivo', 'Transferencia', 'Credito', 'Cheque')");
 
                             t.HasCheckConstraint("ck_ventas_origen", "origen IN ('App', 'Web')");
 

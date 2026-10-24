@@ -8,12 +8,19 @@
 import type { LiquidacionDtoChoferId } from './liquidacionDtoChoferId';
 import type { LiquidacionDtoChoferNombre } from './liquidacionDtoChoferNombre';
 import type { EstadoLiquidacion } from './estadoLiquidacion';
+import type { FormatoLiquidacion } from './formatoLiquidacion';
 import type { LiquidacionDtoEfectivoEntregado } from './liquidacionDtoEfectivoEntregado';
 import type { LiquidacionDtoDiferenciaEfectivo } from './liquidacionDtoDiferenciaEfectivo';
+import type { LiquidacionDtoProductoConfirmadoEn } from './liquidacionDtoProductoConfirmadoEn';
+import type { LiquidacionDtoProductoConfirmadoPor } from './liquidacionDtoProductoConfirmadoPor';
+import type { LiquidacionDtoRevisadaEn } from './liquidacionDtoRevisadaEn';
+import type { LiquidacionDtoRevisadaPor } from './liquidacionDtoRevisadaPor';
 import type { LiquidacionDtoCerradaEn } from './liquidacionDtoCerradaEn';
+import type { LiquidacionDtoCerradaPorId } from './liquidacionDtoCerradaPorId';
 import type { LiquidacionDtoCerradaPor } from './liquidacionDtoCerradaPor';
 import type { LiquidacionDtoNotas } from './liquidacionDtoNotas';
 import type { LiquidacionPartidaDto } from './liquidacionPartidaDto';
+import type { LiquidacionGastoDto } from './liquidacionGastoDto';
 
 export interface LiquidacionDto {
   id: string;
@@ -25,17 +32,31 @@ export interface LiquidacionDto {
   choferId?: LiquidacionDtoChoferId;
   choferNombre?: LiquidacionDtoChoferNombre;
   estado: EstadoLiquidacion;
+  formato: FormatoLiquidacion;
+  requiereRevision: boolean;
   ventas: number;
   totalVendido: number;
   ventasContadoEfectivo: number;
   cobrosEfectivo: number;
+  totalGastos: number;
   efectivoEsperado: number;
   efectivoEntregado?: LiquidacionDtoEfectivoEntregado;
   diferenciaEfectivo?: LiquidacionDtoDiferenciaEfectivo;
+  totalCredito: number;
+  totalCobros: number;
+  totalTransferencias: number;
+  totalCheques: number;
+  diferenciaPrecios: number;
   operacionesPendientes: number;
+  productoConfirmadoEn?: LiquidacionDtoProductoConfirmadoEn;
+  productoConfirmadoPor?: LiquidacionDtoProductoConfirmadoPor;
+  revisadaEn?: LiquidacionDtoRevisadaEn;
+  revisadaPor?: LiquidacionDtoRevisadaPor;
   cerradaEn?: LiquidacionDtoCerradaEn;
+  cerradaPorId?: LiquidacionDtoCerradaPorId;
   cerradaPor?: LiquidacionDtoCerradaPor;
   cerradaForzada: boolean;
   notas?: LiquidacionDtoNotas;
   partidas: LiquidacionPartidaDto[];
+  gastos: LiquidacionGastoDto[];
 }

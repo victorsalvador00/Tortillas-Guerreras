@@ -1,9 +1,14 @@
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import {
   esErrorApi,
   mensajeError,
+  useActualizarGastoLiquidacion,
+  useAgregarGastoLiquidacion,
   useCapturarConteoLiquidacion,
   useCerrarLiquidacion,
+  useConfirmarProductoLiquidacion,
+  useRegresarLiquidacion,
+  useRevisarLiquidacion,
   useListarLiquidaciones,
   useListarMotivosMerma,
   useObtenerLiquidacion,
@@ -21,6 +26,7 @@ import {
   Casilla,
   Dato,
   Datos,
+  Dialogo,
   DialogoConfirmacion,
   EtiquetaEstado,
   Selector,
@@ -79,7 +85,7 @@ export function Liquidaciones() {
   );
   return (
     <Pagina>
-      <EncabezadoPagina titulo="Liquidaciones" subtitulo="Cierre diario de cada ruta: producto y efectivo. Se abren al despachar la primera carga del día." />
+      <EncabezadoPagina titulo="Liquidaciones" subtitulo="Cierre diario de cada ruta: almacén confirma el producto, el supervisor revisa y liquidaciones cierra el dinero." />
       <BarraFiltros>
         <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => (setDesde(e.target.value), setPagina(1))} />
         <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => (setHasta(e.target.value), setPagina(1))} />
@@ -89,6 +95,8 @@ export function Liquidaciones() {
           vacio="Todos"
           opciones={[
             { valor: 'Abierta', etiqueta: 'Abierta' },
+            { valor: 'ProductoConfirmado', etiqueta: 'Producto confirmado' },
+            { valor: 'Revisada', etiqueta: 'Revisada' },
             { valor: 'Cerrada', etiqueta: 'Cerrada' },
           ]}
           value={estado}
@@ -160,16 +168,24 @@ export function LiquidacionDetalle() {
 function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto }) {
   const { tienePermiso } = useSesion();
   const abierta = l.estado === 'Abierta';
-  const editable = abierta && tienePermiso('logistica.liquidar');
+  const cerrada = l.estado === 'Cerrada';
+  const completo = l.formato === 'Completo';
+  // RN-LOG-20: cada etapa la opera un rol distinto.
+  const editable = abierta && tienePermiso('logistica.liquidar_producto');
+  const puedeRevisar = tienePermiso('logistica.revisar_liquidacion');
+  const puedeCerrar =
+    tienePermiso('logistica.liquidar') && (l.estado === 'Revisada' || (l.estado === 'ProductoConfirmado' && !l.requiereRevision));
   const puedeForzar = tienePermiso('logistica.forzar_cierre');
   const capturar = useCapturarConteoLiquidacion();
+  const confirmarProducto = useConfirmarProductoLiquidacion();
+  const revisar = useRevisarLiquidacion();
   const cerrar = useCerrarLiquidacion();
   const { data: motivos } = useListarMotivosMerma({ aplica: 'ruta', activo: true });
   const [capturas, setCapturas] = useState<Record<string, CapturaPartida>>(() => capturasIniciales(l.partidas));
   const [efectivo, setEfectivo] = useState(l.efectivoEntregado == null ? '' : String(l.efectivoEntregado));
   const [notas, setNotas] = useState(l.notas ?? '');
   const [modificado, setModificado] = useState(false);
-  const [confirmar, setConfirmar] = useState(false);
+  const [dialogo, setDialogo] = useState<'confirmar' | 'cerrar' | 'regresar' | null>(null);
   const [forzar, setForzar] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -185,13 +201,13 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
   const resumen = resumenCierre(l.partidas, capturas);
   const efectivoNum = efectivo.trim() === '' ? null : Number(efectivo);
   const difEfectivo = efectivoNum == null ? null : Math.round((efectivoNum - l.efectivoEsperado) * 100) / 100;
+  const totalImporte = l.partidas.reduce((s, p) => s + Math.round(p.importeVenta * 100), 0) / 100;
 
   const guardarConteo = async () => {
     setError(null);
     await capturar.mutateAsync({
       id: l.id,
       data: {
-        efectivoEntregado: efectivoNum,
         notas: notas || null,
         partidas: l.partidas
           .filter((p) => (capturas[llavePartida(p)]?.contado ?? '').trim() !== '')
@@ -210,44 +226,89 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
     setModificado(false);
   };
 
+  const ejecutar = async (accion: () => Promise<unknown>, mensaje: string) => {
+    setError(null);
+    try {
+      await accion();
+      toast.success(mensaje);
+    } catch (e) {
+      setError(mensajeError(e));
+    }
+  };
+
   return (
     <>
       <EncabezadoPagina
         titulo={`Liquidación ${l.folio}`}
-        subtitulo={`Ruta ${l.rutaCodigo} · ${l.rutaNombre} · ${formatoFecha(l.fechaOperativa)}${l.choferNombre ? ` · Chofer ${l.choferNombre}` : ''}`}
+        subtitulo={`Ruta ${l.rutaCodigo} · ${l.rutaNombre} · ${formatoFecha(l.fechaOperativa)}${l.choferNombre ? ` · Chofer ${l.choferNombre}` : ''} · Formato ${completo ? 'completo' : 'simplificado'}`}
         migas={[{ etiqueta: 'Logística' }, { etiqueta: 'Liquidaciones', a: '/logistica/liquidaciones' }, { etiqueta: l.folio }]}
-        acciones={<EtiquetaEstado estado={l.estado} />}
+        acciones={
+          <div className="flex items-center gap-2">
+            <Link to="/logistica/liquidaciones/$id/hoja" params={{ id: l.id }} className="text-sm font-medium text-primary">
+              Hoja imprimible
+            </Link>
+            <EtiquetaEstado estado={l.estado} />
+          </div>
+        }
       />
       <div className="flex flex-col gap-4">
         {error && <Aviso tipo="error">{error}</Aviso>}
         {abierta && l.operacionesPendientes > 0 && (
           <Aviso tipo="advertencia" titulo="Pendientes de sincronizar">
-            El teléfono de la ruta reportó {l.operacionesPendientes} operación(es) sin enviar. Pide al vendedor sincronizar antes de cerrar
-            (RN-LOG-09){puedeForzar ? '; si no es posible, puedes forzar el cierre.' : '.'}
+            El teléfono de la ruta reportó {l.operacionesPendientes} operación(es) sin enviar. Pide al vendedor sincronizar antes de confirmar el
+            producto (RN-LOG-09){puedeForzar ? '; si no es posible, puedes forzar la confirmación.' : '.'}
           </Aviso>
         )}
-        {l.cerradaForzada && <Aviso tipo="advertencia">Esta liquidación se cerró forzada con operaciones pendientes.</Aviso>}
+        {l.cerradaForzada && <Aviso tipo="advertencia">El producto de esta liquidación se confirmó forzado con operaciones pendientes.</Aviso>}
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <TarjetaIndicador icono="receipt" valor={l.ventas} titulo="Ventas del día" nota={formatoMoneda(l.totalVendido)} />
-          <TarjetaIndicador icono="payments" valor={formatoMoneda(l.ventasContadoEfectivo)} titulo="Ventas de contado" nota="En efectivo" />
-          <TarjetaIndicador icono="request_quote" valor={formatoMoneda(l.cobrosEfectivo)} titulo="Cobros en efectivo" />
-          <TarjetaIndicador icono="savings" valor={formatoMoneda(l.efectivoEsperado)} titulo="Efectivo esperado" nota="RN-LOG-08" />
-        </div>
+        <Tarjeta titulo="Etapas">
+          <Datos>
+            <Dato etiqueta="1. Producto (almacén)">
+              {l.productoConfirmadoEn ? `${formatoFechaHora(l.productoConfirmadoEn)} · ${l.productoConfirmadoPor ?? '—'}` : 'Pendiente'}
+            </Dato>
+            <Dato etiqueta="2. Revisión (supervisor)">
+              {l.revisadaEn
+                ? `${formatoFechaHora(l.revisadaEn)} · ${l.revisadaPor ?? '—'}`
+                : l.requiereRevision
+                  ? 'Pendiente'
+                  : 'No requerida'}
+            </Dato>
+            <Dato etiqueta="3. Dinero (liquidaciones)">{l.cerradaEn ? `${formatoFechaHora(l.cerradaEn)} · ${l.cerradaPor ?? '—'}` : 'Pendiente'}</Dato>
+          </Datos>
+        </Tarjeta>
 
-        <Tarjeta titulo="Producto" subtitulo="Sobrante esperado = cargado − vendido − cambios entregados + devuelto vendible. Lo no vendible ya salió como merma.">
+        <Tarjeta
+          titulo="Producto"
+          subtitulo={
+            completo
+              ? 'Sobrante esperado = carga + recarga − vendido − cambios entregados + devuelto vendible. Lo no vendible ya salió como merma.'
+              : 'Sobrante esperado = carga − vendido.'
+          }
+        >
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="h-12 border-b border-row-divider text-left text-13 text-muted">
                   <th className="px-3 font-medium">Producto</th>
-                  <th className="px-3 text-right font-medium">Cargado</th>
-                  <th className="px-3 text-right font-medium">Vendido</th>
-                  <th className="px-3 text-right font-medium">Dev. vendible</th>
-                  <th className="px-3 text-right font-medium">Dev. no vendible</th>
-                  <th className="px-3 text-right font-medium">Cambios</th>
+                  {completo ? (
+                    <>
+                      <th className="px-3 text-right font-medium">Carga</th>
+                      <th className="px-3 text-right font-medium">Recarga</th>
+                    </>
+                  ) : (
+                    <th className="px-3 text-right font-medium">Carga</th>
+                  )}
+                  <th className="px-3 text-right font-medium">Venta</th>
+                  <th className="px-3 text-right font-medium">Total $</th>
+                  {completo && (
+                    <>
+                      <th className="px-3 text-right font-medium">Dev. vendible</th>
+                      <th className="px-3 text-right font-medium">Dev. no vendible</th>
+                      <th className="px-3 text-right font-medium">Cambios</th>
+                    </>
+                  )}
                   <th className="px-3 text-right font-medium">Esperado</th>
-                  <th className="px-3 font-medium">Contado</th>
+                  <th className="px-3 font-medium">Sobrante</th>
                   <th className="px-3 font-medium">Destino del sobrante</th>
                   <th className="px-3 text-right font-medium">Diferencia</th>
                 </tr>
@@ -266,11 +327,23 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                           {p.lote ? ` · Lote ${p.lote}` : ''}
                         </span>
                       </td>
-                      <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cargado)}</td>
+                      {completo ? (
+                        <>
+                          <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cargadoInicial)}</td>
+                          <td className="px-3 text-right tabular-nums">{formatoCantidad(p.recargado)}</td>
+                        </>
+                      ) : (
+                        <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cargado)}</td>
+                      )}
                       <td className="px-3 text-right tabular-nums">{formatoCantidad(p.vendido)}</td>
-                      <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesVendible)}</td>
-                      <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesNoVendible)}</td>
-                      <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cambiosEntregados)}</td>
+                      <td className="px-3 text-right tabular-nums">{formatoMoneda(p.importeVenta)}</td>
+                      {completo && (
+                        <>
+                          <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesVendible)}</td>
+                          <td className="px-3 text-right tabular-nums">{formatoCantidad(p.devueltoClientesNoVendible)}</td>
+                          <td className="px-3 text-right tabular-nums">{formatoCantidad(p.cambiosEntregados)}</td>
+                        </>
+                      )}
                       <td className="px-3 text-right font-medium tabular-nums">
                         {formatoCantidad(p.sobranteEsperado)} {p.unidad}
                       </td>
@@ -321,15 +394,45 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                   );
                 })}
               </tbody>
+              {l.partidas.length > 0 && (
+                <tfoot>
+                  <tr className="h-10 font-medium">
+                    <td className="px-3" colSpan={completo ? 4 : 3}>
+                      Total
+                    </td>
+                    <td className="px-3 text-right tabular-nums">{formatoMoneda(totalImporte)}</td>
+                    <td colSpan={completo ? 7 : 4} />
+                  </tr>
+                </tfoot>
+              )}
             </table>
             {l.partidas.length === 0 && <p className="m-0 px-3 py-6 text-center text-muted">La ruta no tuvo carga este día.</p>}
           </div>
+          {editable && (
+            <Campo etiqueta="Notas (opcional)" className="mt-3" value={notas} onChange={(e) => (setNotas(e.target.value), setModificado(true))} />
+          )}
         </Tarjeta>
 
-        <Tarjeta titulo="Efectivo">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <TarjetaIndicador icono="receipt" valor={l.ventas} titulo="Ventas del día" nota={formatoMoneda(l.totalVendido)} />
+          <TarjetaIndicador icono="payments" valor={formatoMoneda(l.ventasContadoEfectivo)} titulo="Contado en efectivo" />
+          <TarjetaIndicador icono="request_quote" valor={formatoMoneda(l.cobrosEfectivo)} titulo="Cobros en efectivo" />
+          <TarjetaIndicador icono="savings" valor={formatoMoneda(l.efectivoEsperado)} titulo="Efectivo esperado" nota={`Menos gastos ${formatoMoneda(l.totalGastos)}`} />
+        </div>
+
+        <Tarjeta titulo="Dinero" subtitulo="Créditos, cobros, transferencias y cheques vienen de Ventas (solo lectura).">
           <div className="grid items-start gap-4 sm:grid-cols-3">
-            <Dato etiqueta="Esperado">{formatoMoneda(l.efectivoEsperado)}</Dato>
-            {editable ? (
+            <Dato etiqueta="Ventas a crédito">{formatoMoneda(l.totalCredito)}</Dato>
+            <Dato etiqueta="Cobros del día">{formatoMoneda(l.totalCobros)}</Dato>
+            <Dato etiqueta="Transferencias">{formatoMoneda(l.totalTransferencias)}</Dato>
+            <Dato etiqueta="Cheques">{formatoMoneda(l.totalCheques)}</Dato>
+            <Dato etiqueta="Diferencia de precios">
+              <span title="Σ (precio del cliente − precio cobrado) × cantidad; positivo = cobró de menos (RN-LOG-23)">
+                {formatoMoneda(l.diferenciaPrecios)}
+              </span>
+            </Dato>
+            <Dato etiqueta="Efectivo esperado">{formatoMoneda(l.efectivoEsperado)}</Dato>
+            {puedeCerrar ? (
               <Campo
                 etiqueta="Efectivo entregado"
                 type="number"
@@ -337,29 +440,23 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
                 inputMode="decimal"
                 prefijo="$"
                 value={efectivo}
-                onChange={(e) => (setEfectivo(e.target.value), setModificado(true))}
+                onChange={(e) => setEfectivo(e.target.value)}
               />
             ) : (
               <Dato etiqueta="Entregado">{formatoMoneda(l.efectivoEntregado)}</Dato>
             )}
             <Dato etiqueta="Diferencia">
-              <ImporteDiferencia valor={editable ? difEfectivo : l.diferenciaEfectivo} />
+              <ImporteDiferencia valor={puedeCerrar ? difEfectivo : l.diferenciaEfectivo} />
             </Dato>
-            {editable ? (
-              <Campo etiqueta="Notas (opcional)" className="sm:col-span-3" value={notas} onChange={(e) => (setNotas(e.target.value), setModificado(true))} />
-            ) : (
-              l.notas && <Dato etiqueta="Notas">{l.notas}</Dato>
+            {!editable && l.notas && (
+              <Dato etiqueta="Notas" className="sm:col-span-3">
+                <span className="whitespace-pre-line">{l.notas}</span>
+              </Dato>
             )}
           </div>
         </Tarjeta>
 
-        {!abierta && (
-          <Tarjeta>
-            <Datos>
-              <Dato etiqueta="Cerrada">{formatoFechaHora(l.cerradaEn)}</Dato>
-            </Datos>
-          </Tarjeta>
-        )}
+        <GastosLiquidacion liquidacion={l} editable={!cerrada && tienePermiso('logistica.liquidar')} />
 
         {editable && (
           <BarraAccion
@@ -381,24 +478,49 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
             >
               Guardar conteo
             </Boton>
-            <Boton icono="lock" disabled={resumen.sinContar > 0 || efectivoNum == null} onClick={() => setConfirmar(true)}>
-              Cerrar liquidación
+            <Boton icono="inventory" disabled={resumen.sinContar > 0} onClick={() => setDialogo('confirmar')}>
+              Confirmar producto
             </Boton>
+          </BarraAccion>
+        )}
+        {puedeRevisar && l.estado === 'ProductoConfirmado' && l.requiereRevision && (
+          <BarraAccion resumen="El producto ya está confirmado; revisa dinero, gastos y diferencias.">
+            <Boton
+              icono="fact_check"
+              cargando={revisar.isPending}
+              onClick={() => ejecutar(() => revisar.mutateAsync({ id: l.id }), `Liquidación ${l.folio} revisada.`)}
+            >
+              Marcar revisada
+            </Boton>
+          </BarraAccion>
+        )}
+        {(puedeCerrar || (puedeRevisar && l.estado === 'Revisada')) && (
+          <BarraAccion resumen={difEfectivo != null && difEfectivo !== 0 ? `Diferencia de efectivo ${formatoMoneda(difEfectivo)}` : 'Listo para cerrar el dinero.'}>
+            {puedeRevisar && l.estado === 'Revisada' && (
+              <Boton variante="secundario" icono="undo" onClick={() => setDialogo('regresar')}>
+                Regresar
+              </Boton>
+            )}
+            {puedeCerrar && (
+              <Boton icono="lock" disabled={efectivoNum == null || efectivoNum < 0} onClick={() => setDialogo('cerrar')}>
+                Cerrar liquidación
+              </Boton>
+            )}
           </BarraAccion>
         )}
       </div>
 
       <DialogoConfirmacion
-        abierto={confirmar}
-        onCambiar={setConfirmar}
-        titulo={`Cerrar ${l.folio}`}
-        textoConfirmar="Cerrar liquidación"
-        mensaje="Al cerrar se generan los movimientos y la liquidación ya no se puede reabrir (RN-LOG-10)."
+        abierto={dialogo === 'confirmar'}
+        onCambiar={(a) => !a && setDialogo(null)}
+        titulo={`Confirmar producto de ${l.folio}`}
+        textoConfirmar="Confirmar producto"
+        mensaje="Se generan los movimientos de inventario y el almacén de la ruta queda en cero. El producto ya no se puede corregir (RN-LOG-10)."
         alConfirmar={async () => {
           try {
             if (modificado) await guardarConteo();
-            await cerrar.mutateAsync({ id: l.id, data: { forzar } });
-            toast.success(`Liquidación ${l.folio} cerrada. El almacén de la ruta quedó en cero.`);
+            await confirmarProducto.mutateAsync({ id: l.id, data: { forzar } });
+            toast.success(`Producto de ${l.folio} confirmado. El almacén de la ruta quedó en cero.`);
           } catch (e) {
             if (esErrorApi(e)) throw new Error(e.message);
             throw e;
@@ -411,17 +533,215 @@ function FormularioLiquidacion({ liquidacion: l }: { liquidacion: LiquidacionDto
           {resumen.reproceso > 0 && <li>Reproceso (como merma): {formatoCantidad(resumen.reproceso)}</li>}
           {resumen.faltantes > 0 && <li>Ajuste por faltante de ruta: −{formatoCantidad(resumen.faltantes)} (con incidencia)</li>}
           {resumen.sobrantes > 0 && <li>Ajuste por sobrante: +{formatoCantidad(resumen.sobrantes)} (con incidencia)</li>}
-          {difEfectivo != null && difEfectivo !== 0 && <li>Diferencia de efectivo: {formatoMoneda(difEfectivo)} (con incidencia)</li>}
         </ul>
         {l.operacionesPendientes > 0 && puedeForzar && (
           <Casilla
-            etiqueta="Forzar el cierre"
+            etiqueta="Forzar la confirmación"
             descripcion={`Hay ${l.operacionesPendientes} operación(es) sin sincronizar; se aplicarán después con incidencia.`}
             checked={forzar}
             onChange={(e) => setForzar(e.target.checked)}
           />
         )}
       </DialogoConfirmacion>
+
+      <DialogoConfirmacion
+        abierto={dialogo === 'cerrar'}
+        onCambiar={(a) => !a && setDialogo(null)}
+        titulo={`Cerrar ${l.folio}`}
+        textoConfirmar="Cerrar liquidación"
+        mensaje={`Efectivo entregado ${formatoMoneda(efectivoNum)} contra ${formatoMoneda(l.efectivoEsperado)} esperado. La liquidación ya no se puede reabrir (RN-LOG-10).`}
+        alConfirmar={async () => {
+          try {
+            await cerrar.mutateAsync({ id: l.id, data: { efectivoEntregado: efectivoNum } });
+            toast.success(`Liquidación ${l.folio} cerrada.`);
+          } catch (e) {
+            if (esErrorApi(e)) throw new Error(e.message);
+            throw e;
+          }
+        }}
+      >
+        {difEfectivo != null && difEfectivo !== 0 && (
+          <p className="m-0 text-sm">Diferencia de efectivo: {formatoMoneda(difEfectivo)} (genera incidencia).</p>
+        )}
+      </DialogoConfirmacion>
+
+      {dialogo === 'regresar' && <DialogoRegresar liquidacion={l} onCerrar={() => setDialogo(null)} />}
     </>
+  );
+}
+
+/** RN-LOG-21: el supervisor regresa la liquidación con nota para corregir dinero o gastos. */
+function DialogoRegresar({ liquidacion: l, onCerrar }: { liquidacion: LiquidacionDto; onCerrar: () => void }) {
+  const regresar = useRegresarLiquidacion();
+  const [nota, setNota] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Dialogo
+      abierto
+      onCambiar={(a) => !a && onCerrar()}
+      titulo={`Regresar ${l.folio}`}
+      descripcion="Vuelve a «Producto confirmado» para corregir dinero o gastos. El producto ya no cambia."
+      acciones={
+        <>
+          <Boton variante="texto" onClick={onCerrar}>
+            Cancelar
+          </Boton>
+          <Boton
+            cargando={regresar.isPending}
+            disabled={nota.trim() === ''}
+            onClick={async () => {
+              setError(null);
+              try {
+                await regresar.mutateAsync({ id: l.id, data: { nota } });
+                toast.success(`Liquidación ${l.folio} regresada.`);
+                onCerrar();
+              } catch (err) {
+                setError(mensajeError(err));
+              }
+            }}
+          >
+            Regresar
+          </Boton>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        {error && <Aviso tipo="error">{error}</Aviso>}
+        <Campo etiqueta="Nota" value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Qué hay que corregir" />
+      </div>
+    </Dialogo>
+  );
+}
+
+interface CapturaGasto {
+  id?: string;
+  concepto: string;
+  importe: string;
+  comprobante: string;
+  autorizado: boolean;
+}
+
+/** Gastos de ruta; los autorizados se restan del efectivo esperado (RN-LOG-08). */
+function GastosLiquidacion({ liquidacion: l, editable }: { liquidacion: LiquidacionDto; editable: boolean }) {
+  const agregar = useAgregarGastoLiquidacion();
+  const actualizar = useActualizarGastoLiquidacion();
+  const [captura, setCaptura] = useState<CapturaGasto | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const guardar = async () => {
+    if (!captura) return;
+    setError(null);
+    const data = {
+      concepto: captura.concepto,
+      importe: Number(captura.importe),
+      comprobante: captura.comprobante || null,
+      autorizado: captura.autorizado,
+    };
+    try {
+      if (captura.id) await actualizar.mutateAsync({ id: l.id, gastoId: captura.id, data });
+      else await agregar.mutateAsync({ id: l.id, data });
+      toast.success('Gasto guardado.');
+      setCaptura(null);
+    } catch (err) {
+      setError(mensajeError(err));
+    }
+  };
+  return (
+    <Tarjeta
+      titulo="Gastos de ruta"
+      subtitulo={`Autorizados: ${formatoMoneda(l.totalGastos)}`}
+      acciones={
+        editable && (
+          <Boton variante="secundario" tamano="chico" icono="add" onClick={() => setCaptura({ concepto: '', importe: '', comprobante: '', autorizado: true })}>
+            Agregar gasto
+          </Boton>
+        )
+      }
+    >
+      {l.gastos.length === 0 ? (
+        <p className="m-0 text-sm text-muted">Sin gastos capturados.</p>
+      ) : (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="h-10 border-b border-row-divider text-left text-13 text-muted">
+              <th className="px-3 font-medium">Concepto</th>
+              <th className="px-3 font-medium">Comprobante</th>
+              <th className="px-3 text-right font-medium">Importe</th>
+              <th className="px-3 font-medium">Autorizado</th>
+              {editable && <th className="px-3" />}
+            </tr>
+          </thead>
+          <tbody>
+            {l.gastos.map((g) => (
+              <tr key={g.id} className="border-b border-row-divider">
+                <td className="px-3 py-2">{g.concepto}</td>
+                <td className="px-3">{g.comprobante ?? '—'}</td>
+                <td className="px-3 text-right tabular-nums">{formatoMoneda(g.importe)}</td>
+                <td className="px-3">{g.autorizado ? 'Sí' : 'No'}</td>
+                {editable && (
+                  <td className="px-3 text-right">
+                    <Boton
+                      variante="texto"
+                      tamano="chico"
+                      onClick={() =>
+                        setCaptura({ id: g.id, concepto: g.concepto, importe: String(g.importe), comprobante: g.comprobante ?? '', autorizado: g.autorizado })
+                      }
+                    >
+                      Editar
+                    </Boton>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {captura && (
+        <Dialogo
+          abierto
+          onCambiar={(a) => !a && setCaptura(null)}
+          titulo={captura.id ? 'Editar gasto' : 'Agregar gasto'}
+          acciones={
+            <>
+              <Boton variante="texto" onClick={() => setCaptura(null)}>
+                Cancelar
+              </Boton>
+              <Boton
+                cargando={agregar.isPending || actualizar.isPending}
+                disabled={captura.concepto.trim() === '' || !(Number(captura.importe) > 0)}
+                onClick={guardar}
+              >
+                Guardar
+              </Boton>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            {error && <Aviso tipo="error">{error}</Aviso>}
+            <Campo
+              etiqueta="Concepto"
+              value={captura.concepto}
+              onChange={(e) => setCaptura({ ...captura, concepto: e.target.value })}
+              placeholder="Diésel, casetas, maniobras…"
+            />
+            <Campo
+              etiqueta="Importe"
+              type="number"
+              step="0.01"
+              inputMode="decimal"
+              prefijo="$"
+              value={captura.importe}
+              onChange={(e) => setCaptura({ ...captura, importe: e.target.value })}
+            />
+            <Campo etiqueta="Comprobante (opcional)" value={captura.comprobante} onChange={(e) => setCaptura({ ...captura, comprobante: e.target.value })} />
+            <Casilla
+              etiqueta="Autorizado"
+              descripcion="Solo los gastos autorizados se restan del efectivo esperado."
+              checked={captura.autorizado}
+              onChange={(e) => setCaptura({ ...captura, autorizado: e.target.checked })}
+            />
+          </div>
+        </Dialogo>
+      )}
+    </Tarjeta>
   );
 }
