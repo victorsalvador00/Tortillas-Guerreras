@@ -49,6 +49,10 @@ internal static class LogisticaEndpoints
         var envios = grupo.MapGroup("/envios");
         envios.MapGet("/", (DateOnly? fecha, Guid? rutaId, EstadoEnvio? estado, int? pagina, int? tamano, EnviosHandler h, CancellationToken ct) =>
             h.ListarAsync(fecha, rutaId, estado, pagina, tamano, ct)).AlgunPermiso(P.Ver, P.Cargar).WithName("listarEnvios");
+        envios.MapGet("/sugeridos", (DateOnly? fecha, SugeridosHandler h, CancellationToken ct) => h.ObtenerAsync(fecha, ct))
+            .AlgunPermiso(P.Ver, P.Cargar).WithName("obtenerCargasSugeridas");
+        envios.MapPost("/sugeridos", (GenerarSugeridasRequest r, SugeridosHandler h, CancellationToken ct) => h.GenerarAsync(r, ct))
+            .RequireAuthorization(P.Cargar).WithName("generarCargasSugeridas");
         envios.MapGet("/{id:guid}", async (Guid id, EnviosHandler h, CancellationToken ct) => (await h.ObtenerAsync(id, ct)).AHttp())
             .AlgunPermiso(P.Ver, P.Cargar).WithName("obtenerEnvio");
         envios.MapPost("/", async (GuardarEnvioRequest r, EnviosHandler h, CancellationToken ct) =>

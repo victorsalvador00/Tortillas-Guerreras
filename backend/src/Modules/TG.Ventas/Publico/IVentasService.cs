@@ -166,6 +166,13 @@ public sealed record PedidoCapturado(Guid PedidoId, string Folio, bool Duplicado
 public sealed record DemandaPartidaInfo(Guid PedidoId, string Folio, Guid ClienteId, Guid CanalId, Guid? RutaId, bool EsRuta,
     EstadoPedido Estado, Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal CantidadBase, TipoPartidaPedido Tipo, string? Notas);
 
+/// <summary>Partida pendiente de entregar de un pedido sin carga (RN-LOG-14), en unidad base.</summary>
+public sealed record PartidaParaCargaInfo(Guid ProductoId, TipoPartidaPedido Tipo, decimal PendienteBase);
+
+/// <summary>Pedido <c>Confirmado</c>/<c>Asignado</c> sin carga para las cargas sugeridas (RN-LOG-14).</summary>
+public sealed record PedidoParaCargaInfo(Guid PedidoId, string Folio, Guid ClienteId, string Cliente, Guid? RutaId, DateOnly FechaEntrega,
+    IReadOnlyList<PartidaParaCargaInfo> Partidas);
+
 /// <summary>Celda del estimado: cantidad en la unidad indicada; 0 quita la partida.</summary>
 public sealed record CeldaPedidoRuta(Guid ProductoId, Guid UnidadId, decimal Cantidad);
 
@@ -337,6 +344,12 @@ public interface IVentasService
     /// </summary>
     Task<Result<Guid?>> GuardarPedidoRutaAsync(Guid rutaId, string rutaCodigo, DateOnly fechaEntrega, IReadOnlyList<CeldaPedidoRuta> celdas,
         CancellationToken ct);
+
+    /// <summary>
+    /// RN-LOG-11/14: pedidos <c>Confirmado</c>/<c>Asignado</c> sin carga con entrega (<c>fecha_entrega</c>, o <c>fecha</c>)
+    /// hasta <paramref name="hasta"/>, con lo pendiente de entregar de cada partida (incluye <c>CambioFisico</c>).
+    /// </summary>
+    Task<IReadOnlyList<PedidoParaCargaInfo>> PedidosParaCargaAsync(DateOnly hasta, CancellationToken ct);
 
     /// <summary>RN-VEN-13: confirma los pedidos <c>Capturado</c> indicados (los demás se ignoran). Todo o nada.</summary>
     Task<Result<int>> ConfirmarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, CancellationToken ct);

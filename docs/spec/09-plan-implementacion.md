@@ -144,13 +144,14 @@ regenerado (definición de terminado).
   pantalla de estimado por canal (con impresión), plan sugerido con "Crear órdenes", Plan del día visible en el
   menú, "Copiar receta". *Lee:* `produccion.md` (RN-PRO-11 a 14). *Acepta:* RN-PRO-11 a 14 y criterios v0.2 de
   producción.
-- [ ] **T-8.8 Cargas sugeridas** *(ajusta T-4.5)*. `GET/POST /envios/sugeridos`, botón en Cargas del día, incluye
+- [x] **T-8.8 Cargas sugeridas** *(ajusta T-4.5)*. `GET/POST /envios/sugeridos`, botón en Cargas del día, incluye
   pedidos y cambios pendientes del día de visita. *Lee:* `logistica.md` (RN-LOG-11, 14). *Acepta:* RN-LOG-14.
 - [ ] **T-8.9 Cambios físicos y cambios pendientes** *(ajusta T-4.6, T-5.1)*. Retorno `CambioFisico` con
   `sentido`, movimiento `SalidaCambio`, `cambios_pendientes`, saldar y cancelar; web: retorno de cambio y pantalla
   de pendientes; bajada de pendientes. *Lee:* `logistica.md` (RN-LOG-15 a 18), `inventario.md` (RN-INV-11), 05
   (RN-SYN-11). *Acepta:* RN-LOG-15 a 18, RN-INV-11, RN-SYN-11. Incluye sumar los cambios pendientes del día de
-  visita a la demanda del plan sugerido (RN-PRO-13), que T-8.7 dejó fuera.
+  visita a la demanda del plan sugerido (RN-PRO-13) y a las cargas sugeridas (RN-LOG-14), que T-8.7 y T-8.8
+  dejaron fuera.
 - [ ] **T-8.10 Liquidación v0.2** *(ajusta T-4.6, T-4.7)*. Columnas nuevas, formato por canal, etapas con permisos,
   movimientos al confirmar producto, gastos, forma de pago `Cheque`, totales de dinero de solo lectura (créditos y
   cobros sin cambios en Ventas), diferencia de precios, hoja imprimible con firmas. *Lee:* `logistica.md`

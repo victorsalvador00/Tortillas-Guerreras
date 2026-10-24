@@ -6065,6 +6065,64 @@
         }
       }
     },
+    "/api/v1/logistica/envios/sugeridos": {
+      "get": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "obtenerCargasSugeridas",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargasSugeridasDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Logística"
+        ],
+        "operationId": "generarCargasSugeridas",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerarSugeridasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerarSugeridasDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logistica/envios/{id}": {
       "get": {
         "tags": [
@@ -8271,6 +8329,130 @@
           "cantidadContada": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "CargaGeneradaDto": {
+        "required": [
+          "rutaId",
+          "rutaCodigo",
+          "envioId",
+          "folio",
+          "nueva",
+          "pedidos"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "envioId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "nueva": {
+            "type": "boolean"
+          },
+          "pedidos": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CargaOmitidaDto": {
+        "required": [
+          "rutaId",
+          "rutaCodigo",
+          "codigo",
+          "mensaje"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          }
+        }
+      },
+      "CargasSugeridasDto": {
+        "required": [
+          "fecha",
+          "rutas"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "rutas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargaSugeridaDto"
+            }
+          }
+        }
+      },
+      "CargaSugeridaDto": {
+        "required": [
+          "rutaId",
+          "rutaCodigo",
+          "rutaNombre",
+          "pedidos",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "rutaNombre": {
+            "type": "string"
+          },
+          "envioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "envioFolio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pedidos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PedidoSugeridoDto"
+            }
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaSugeridaDto"
+            }
           }
         }
       },
@@ -10629,6 +10811,49 @@
           "Completo",
           "Simplificado"
         ]
+      },
+      "GenerarSugeridasDto": {
+        "required": [
+          "generadas",
+          "omitidas"
+        ],
+        "type": "object",
+        "properties": {
+          "generadas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargaGeneradaDto"
+            }
+          },
+          "omitidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargaOmitidaDto"
+            }
+          }
+        }
+      },
+      "GenerarSugeridasRequest": {
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "rutaIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
       },
       "GrupoClienteDto": {
         "required": [
@@ -13942,6 +14167,40 @@
           }
         }
       },
+      "PartidaSugeridaDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "cantidadBase",
+          "cambioFisicoBase"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "cantidadBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "cambioFisicoBase": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "PartidaTraspasoRequest": {
         "required": [
           "productoId",
@@ -14244,6 +14503,31 @@
           "Cliente",
           "Ruta"
         ]
+      },
+      "PedidoSugeridoDto": {
+        "required": [
+          "pedidoId",
+          "folio",
+          "cliente",
+          "fechaEntrega"
+        ],
+        "type": "object",
+        "properties": {
+          "pedidoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "cliente": {
+            "type": "string"
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          }
+        }
       },
       "PedidoSync": {
         "required": [

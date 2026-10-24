@@ -402,6 +402,21 @@ public sealed class VentasService(
         return guardado.EsExito ? guardado.Valor.Id : guardado.Error!;
     }
 
+    public async Task<IReadOnlyList<PedidoParaCargaInfo>> PedidosParaCargaAsync(DateOnly hasta, CancellationToken ct)
+    {
+        var pedidos = await (from p in db.Pedidos.AsNoTracking().Include(p => p.Partidas)
+                             join c in db.Clientes.AsNoTracking() on p.ClienteId equals c.Id
+                             where p.EnvioId == null && (p.Estado == EstadoPedido.Confirmado || p.Estado == EstadoPedido.Asignado)
+                                 && (p.FechaEntrega ?? p.Fecha) <= hasta
+                             orderby p.Folio
+                             select new { p, c.Nombre }).ToListAsync(ct);
+        return pedidos.Select(x => new PedidoParaCargaInfo(x.p.Id, x.p.Folio, x.p.ClienteId, x.Nombre, x.p.RutaId, x.p.FechaEntrega ?? x.p.Fecha,
+                x.p.Partidas.Where(d => d.CantidadBase > d.CantidadEntregadaBase)
+                    .Select(d => new PartidaParaCargaInfo(d.ProductoId, d.Tipo, d.CantidadBase - d.CantidadEntregadaBase)).ToList()))
+            .Where(p => p.Partidas.Count > 0)
+            .ToList();
+    }
+
     public Task<Result<int>> ConfirmarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, CancellationToken ct) =>
         unitOfWork.EjecutarAsync(async t =>
         {

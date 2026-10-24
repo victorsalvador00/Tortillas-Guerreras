@@ -41,6 +41,7 @@ import { useMemo, useState } from 'react';
 import { BarraFiltros, SelectorProducto, TablaMovimientos } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
+import { DialogoCargasSugeridas } from './CargasSugeridas';
 import { SelectorRuta } from './comunes-logistica';
 
 const ESTADOS_ENVIO: EstadoEnvio[] = ['Preparado', 'EnRuta', 'Liquidado', 'Cancelado'];
@@ -56,6 +57,7 @@ export function Cargas() {
   const [rutaId, setRutaId] = useState('');
   const [estado, setEstado] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [sugeridas, setSugeridas] = useState(false);
   const { data, isLoading, isFetching } = useListarEnvios({
     fecha: fecha || undefined,
     rutaId: rutaId || undefined,
@@ -88,9 +90,14 @@ export function Cargas() {
         subtitulo="Cargas iniciales y recargas de cada ruta. Al despachar pasan del almacén PT a la camioneta."
         acciones={
           tienePermiso('logistica.cargar') && (
-            <Boton icono="add" onClick={() => navegar({ to: '/logistica/cargas/nueva' })}>
-              Nueva carga
-            </Boton>
+            <>
+              <Boton variante="secundario" icono="auto_awesome" onClick={() => setSugeridas(true)}>
+                Cargas sugeridas
+              </Boton>
+              <Boton icono="add" onClick={() => navegar({ to: '/logistica/cargas/nueva' })}>
+                Nueva carga
+              </Boton>
+            </>
           )
         }
       />
@@ -115,6 +122,7 @@ export function Cargas() {
         mensajeVacio="No hay cargas para esos filtros."
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
       />
+      {sugeridas && <DialogoCargasSugeridas fecha={fecha || fechaOperativa()} onCerrar={() => setSugeridas(false)} />}
     </Pagina>
   );
 }

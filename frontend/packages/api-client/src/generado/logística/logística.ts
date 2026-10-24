@@ -26,10 +26,13 @@ import type {
 
 import type {
   CapturarConteoLiquidacionRequest,
+  CargasSugeridasDto,
   CerrarLiquidacionBody,
   ClienteRutaDto,
   ClientesRutaRequest,
   EnvioDto,
+  GenerarSugeridasDto,
+  GenerarSugeridasRequest,
   GuardarEnvioRequest,
   GuardarRutaRequest,
   GuardarVehiculoRequest,
@@ -40,6 +43,7 @@ import type {
   ListarRetornosParams,
   ListarRutasParams,
   ListarVehiculosParams,
+  ObtenerCargasSugeridasParams,
   PaginadoOfEnvioDto,
   PaginadoOfLiquidacionResumenDto,
   PaginadoOfRetornoDto,
@@ -926,6 +930,151 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getCrearEnvioMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const obtenerCargasSugeridas = (
+    params?: ObtenerCargasSugeridasParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CargasSugeridasDto>(
+      {url: `/api/v1/logistica/envios/sugeridos`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getObtenerCargasSugeridasQueryKey = (params?: ObtenerCargasSugeridasParams,) => {
+    return [
+    `/api/v1/logistica/envios/sugeridos`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getObtenerCargasSugeridasQueryOptions = <TData = Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError = ErrorType<unknown>>(params?: ObtenerCargasSugeridasParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getObtenerCargasSugeridasQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof obtenerCargasSugeridas>>> = ({ signal }) => obtenerCargasSugeridas(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ObtenerCargasSugeridasQueryResult = NonNullable<Awaited<ReturnType<typeof obtenerCargasSugeridas>>>
+export type ObtenerCargasSugeridasQueryError = ErrorType<unknown>
+
+
+export function useObtenerCargasSugeridas<TData = Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError = ErrorType<unknown>>(
+ params: undefined |  ObtenerCargasSugeridasParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerCargasSugeridas>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerCargasSugeridas>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerCargasSugeridas<TData = Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError = ErrorType<unknown>>(
+ params?: ObtenerCargasSugeridasParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerCargasSugeridas>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerCargasSugeridas>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerCargasSugeridas<TData = Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError = ErrorType<unknown>>(
+ params?: ObtenerCargasSugeridasParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useObtenerCargasSugeridas<TData = Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError = ErrorType<unknown>>(
+ params?: ObtenerCargasSugeridasParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerCargasSugeridas>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getObtenerCargasSugeridasQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const generarCargasSugeridas = (
+    generarSugeridasRequest: BodyType<GenerarSugeridasRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<GenerarSugeridasDto>(
+      {url: `/api/v1/logistica/envios/sugeridos`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: generarSugeridasRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getGenerarCargasSugeridasMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarCargasSugeridas>>, TError,{data: BodyType<GenerarSugeridasRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof generarCargasSugeridas>>, TError,{data: BodyType<GenerarSugeridasRequest>}, TContext> => {
+
+const mutationKey = ['generarCargasSugeridas'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generarCargasSugeridas>>, {data: BodyType<GenerarSugeridasRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generarCargasSugeridas(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerarCargasSugeridasMutationResult = NonNullable<Awaited<ReturnType<typeof generarCargasSugeridas>>>
+    export type GenerarCargasSugeridasMutationBody = BodyType<GenerarSugeridasRequest>
+    export type GenerarCargasSugeridasMutationError = ErrorType<unknown>
+
+    export const useGenerarCargasSugeridas = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarCargasSugeridas>>, TError,{data: BodyType<GenerarSugeridasRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof generarCargasSugeridas>>,
+        TError,
+        {data: BodyType<GenerarSugeridasRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getGenerarCargasSugeridasMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

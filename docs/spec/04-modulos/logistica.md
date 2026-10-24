@@ -156,6 +156,17 @@ producto y efectivo.
 mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte con liquidaciones abiertas,
 `LOG-026` la jornada (ruta y fecha) ya tiene otro chofer, `LOG-027` canal inexistente o inactivo.
 
+**Notas de implementación (T-8.8).**
+- Pedidos considerados: `Confirmado`/`Asignado` sin carga con entrega (`fecha_entrega`, o `fecha`) ≤ la fecha (la
+  misma ventana de RN-LOG-11), con lo pendiente de entregar de cada partida (`Venta` y `CambioFisico`), vía
+  `IVentasService.PedidosParaCargaAsync`. La ruta es `pedido.ruta_id` o la ruta activa del cliente.
+- La carga nueva es `CargaInicial` desde `PT` con el chofer y vehículo predeterminados de la ruta y fecha operativa
+  = fecha elegida. Si ya hay carga inicial `Preparado` de la ruta y fecha, se suman las partidas (sin lote) y se
+  ligan los pedidos.
+- Cada ruta es una operación independiente: si falla (p. ej. `LOG-017` sin chofer) se reporta en `omitidas` y las
+  demás siguen.
+- Los **cambios pendientes** se agregan en T-8.9 (todavía no existen).
+
 ## Endpoints (`/api/v1/logistica`)
 | Método | Ruta | Permiso |
 |---|---|---|
@@ -166,7 +177,7 @@ mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte c
 | GET | `/liquidaciones?rutaId&fecha` | `logistica.ver` |
 | PUT | `/liquidaciones/{id}/conteo` | `logistica.liquidar` (**v0.2:** `logistica.liquidar_producto`) |
 | POST | `/liquidaciones/{id}/cerrar` | `logistica.liquidar` |
-| POST | **(v0.2)** `/envios/sugeridos?fechaEntrega` (genera), `GET` igual (previsualiza) | `logistica.cargar` |
+| GET/POST | **(v0.2)** `/envios/sugeridos` (`GET ?fecha` previsualiza; `POST { fecha, rutaIds? }` genera) | `logistica.ver` o `logistica.cargar` / `logistica.cargar` |
 | PUT | **(v0.2)** `/liquidaciones/{id}/conteo` agrega `cantidadACobro` por partida | `logistica.liquidar_producto` |
 | PUT | **(v0.2)** `/rutas/{id}` acepta `canalId`; `PUT /rutas/{id}/clientes` valida canal (RN-LOG-31) | `logistica.configurar` |
 | POST | **(v0.2)** `/liquidaciones/{id}/confirmar-producto` | `logistica.liquidar_producto` |
