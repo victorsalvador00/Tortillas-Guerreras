@@ -134,8 +134,9 @@ public sealed class PedidosHandler(
     /// Alta o corrección de un pedido <c>Capturado</c> (web o app). Las partidas con <c>Id</c> se actualizan en su lugar
     /// para que la bitácora guarde antes y después (RN-VEN-18).
     /// </summary>
+    /// <param name="rutaId">Ruta de un pedido nuevo de la web (estimado o copia); la app la trae en <paramref name="captura"/>.</param>
     internal async Task<Result<Pedido>> GuardarInternoAsync(Guid? id, GuardarPedidoRequest r, CapturaPedido? captura, Guid? idNuevo,
-        CancellationToken ct)
+        CancellationToken ct, Guid? rutaId = null)
     {
         var cliente = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == r.ClienteId && c.Activo, ct);
         if (cliente is null)
@@ -189,7 +190,7 @@ public sealed class PedidosHandler(
         var nuevo = pedido is null;
         if (pedido is null)
         {
-            var c = captura ?? new CapturaPedido(OrigenVenta.Web, null, usuario.Id ?? Guid.Empty, null, null, hoy);
+            var c = captura ?? new CapturaPedido(OrigenVenta.Web, null, usuario.Id ?? Guid.Empty, null, rutaId, hoy);
             pedido = new Pedido
             {
                 Id = idNuevo ?? SharedKernel.Dominio.Id.Nuevo(),

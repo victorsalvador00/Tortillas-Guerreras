@@ -139,7 +139,7 @@ regenerado (definición de terminado).
   de sync idempotente con permiso `ventas.pedidos_app` y validación de cliente en la ruta en Sincronización.
   *Lee:* `ventas.md` (RN-VEN-15 a 18), 05 (RN-SYN-10). *Acepta:* RN-VEN-15 a 18, RN-SYN-10;
   reenvío del mismo `op_id` no duplica el pedido.
-- [ ] **T-8.7 Estimado de producción y plan sugerido** *(ajusta T-3.3)*. Endpoints de `/produccion/estimado` y
+- [x] **T-8.7 Estimado de producción y plan sugerido** *(ajusta T-3.3)*. Endpoints de `/produccion/estimado` y
   `/plan-sugerido`, `IVentasService.DemandaPorFechaEntregaAsync`/`GuardarPedidoRutaAsync`/`ConfirmarPedidosAsync`,
   pantalla de estimado por canal (con impresión), plan sugerido con "Crear órdenes", Plan del día visible en el
   menú, "Copiar receta". *Lee:* `produccion.md` (RN-PRO-11 a 14). *Acepta:* RN-PRO-11 a 14 y criterios v0.2 de
@@ -149,7 +149,8 @@ regenerado (definición de terminado).
 - [ ] **T-8.9 Cambios físicos y cambios pendientes** *(ajusta T-4.6, T-5.1)*. Retorno `CambioFisico` con
   `sentido`, movimiento `SalidaCambio`, `cambios_pendientes`, saldar y cancelar; web: retorno de cambio y pantalla
   de pendientes; bajada de pendientes. *Lee:* `logistica.md` (RN-LOG-15 a 18), `inventario.md` (RN-INV-11), 05
-  (RN-SYN-11). *Acepta:* RN-LOG-15 a 18, RN-INV-11, RN-SYN-11.
+  (RN-SYN-11). *Acepta:* RN-LOG-15 a 18, RN-INV-11, RN-SYN-11. Incluye sumar los cambios pendientes del día de
+  visita a la demanda del plan sugerido (RN-PRO-13), que T-8.7 dejó fuera.
 - [ ] **T-8.10 Liquidación v0.2** *(ajusta T-4.6, T-4.7)*. Columnas nuevas, formato por canal, etapas con permisos,
   movimientos al confirmar producto, gastos, forma de pago `Cheque`, totales de dinero de solo lectura (créditos y
   cobros sin cambios en Ventas), diferencia de precios, hoja imprimible con firmas. *Lee:* `logistica.md`

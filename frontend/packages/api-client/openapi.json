@@ -3221,6 +3221,57 @@
         }
       }
     },
+    "/api/v1/produccion/recetas/{id}/copiar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "copiarReceta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopiarRecetaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecetaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/produccion/ordenes": {
       "get": {
         "tags": [
@@ -3647,6 +3698,232 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrdenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/estimado": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "obtenerEstimado",
+        "parameters": [
+          {
+            "name": "fechaEntrega",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "canalId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimadoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "guardarEstimado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarEstimadoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimadoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/estimado/confirmar": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "confirmarEstimado",
+        "parameters": [
+          {
+            "name": "fechaEntrega",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "canalId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoEstimadoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/estimado/usar-referencia": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "usarReferenciaEstimado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsarReferenciaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoEstimadoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/plan-sugerido": {
+      "get": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "obtenerPlanSugerido",
+        "parameters": [
+          {
+            "name": "fechaEntrega",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "incluirReferencia",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSugeridoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produccion/plan-sugerido/crear-ordenes": {
+      "post": {
+        "tags": [
+          "Producción"
+        ],
+        "operationId": "crearOrdenesPlanSugerido",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearOrdenesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrearOrdenesDto"
                 }
               }
             }
@@ -7504,6 +7781,12 @@
           }
         }
       },
+      "AccionPlan": {
+        "enum": [
+          "Producir",
+          "Comprar"
+        ]
+      },
       "ActualizarParametroRequest": {
         "required": [
           "valor"
@@ -7986,6 +8269,23 @@
             ]
           },
           "cantidadContada": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CeldaEstimadoDto": {
+        "required": [
+          "productoId",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
             "type": "number",
             "format": "double"
           }
@@ -8493,6 +8793,39 @@
           },
           "duplicado": {
             "type": "boolean"
+          }
+        }
+      },
+      "ColumnaEstimadoDto": {
+        "required": [
+          "productoId",
+          "encabezado",
+          "sku",
+          "producto",
+          "unidadId",
+          "unidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "encabezado": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
           }
         }
       },
@@ -9070,6 +9403,25 @@
           }
         }
       },
+      "CopiarRecetaRequest": {
+        "required": [
+          "productoDestinoId"
+        ],
+        "type": "object",
+        "properties": {
+          "productoDestinoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "factorRendimiento": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "CrearFacturaGlobalRequest": {
         "required": [
           "desde",
@@ -9115,6 +9467,59 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "CrearOrdenesDto": {
+        "required": [
+          "creadas",
+          "omitidas"
+        ],
+        "type": "object",
+        "properties": {
+          "creadas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrdenCreadaDto"
+            }
+          },
+          "omitidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrdenOmitidaDto"
+            }
+          }
+        }
+      },
+      "CrearOrdenesRequest": {
+        "required": [
+          "turno",
+          "partidas"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaOperativa": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "lineaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartidaCrearOrdenRequest"
+            }
           }
         }
       },
@@ -9724,6 +10129,62 @@
           "Cancelada"
         ]
       },
+      "EstimadoDto": {
+        "required": [
+          "fechaEntrega",
+          "canalId",
+          "canal",
+          "pedidoPor",
+          "fechaReferencia",
+          "columnas",
+          "filas",
+          "totales",
+          "pedidosCapturados"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "pedidoPor": {
+            "$ref": "#/components/schemas/PedidoPor"
+          },
+          "fechaReferencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "columnas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnaEstimadoDto"
+            }
+          },
+          "filas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilaEstimadoDto"
+            }
+          },
+          "totales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TotalEstimadoDto"
+            }
+          },
+          "pedidosCapturados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ExistenciaDto": {
         "required": [
           "almacenId",
@@ -10080,6 +10541,79 @@
           },
           "folio": {
             "type": "string"
+          }
+        }
+      },
+      "FilaEstimadoDto": {
+        "required": [
+          "rutaId",
+          "rutaCodigo",
+          "rutaNombre",
+          "editable",
+          "esReferencia",
+          "celdas",
+          "pedidoIds",
+          "capturados"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaCodigo": {
+            "type": "string"
+          },
+          "rutaNombre": {
+            "type": "string"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "esReferencia": {
+            "type": "boolean"
+          },
+          "celdas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CeldaEstimadoDto"
+            }
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pedidoIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "capturados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FilaGuardarEstimadoRequest": {
+        "required": [
+          "rutaId",
+          "celdas"
+        ],
+        "type": "object",
+        "properties": {
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celdas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CeldaEstimadoDto"
+            }
           }
         }
       },
@@ -10453,6 +10987,30 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "GuardarEstimadoRequest": {
+        "required": [
+          "fechaEntrega",
+          "canalId",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilaGuardarEstimadoRequest"
+            }
           }
         }
       },
@@ -12173,6 +12731,32 @@
           }
         }
       },
+      "OrdenCreadaDto": {
+        "required": [
+          "productoId",
+          "ordenId",
+          "folio",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ordenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "OrdenDto": {
         "required": [
           "id",
@@ -12344,6 +12928,26 @@
             "items": {
               "$ref": "#/components/schemas/MovimientoOrdenDto"
             }
+          }
+        }
+      },
+      "OrdenOmitidaDto": {
+        "required": [
+          "productoId",
+          "codigo",
+          "mensaje"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
           }
         }
       },
@@ -12952,6 +13556,23 @@
               "string"
             ],
             "format": "date"
+          }
+        }
+      },
+      "PartidaCrearOrdenRequest": {
+        "required": [
+          "productoId",
+          "cantidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -13828,6 +14449,96 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "PlanSugeridoDto": {
+        "required": [
+          "fechaEntrega",
+          "incluyeReferencia",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "incluyeReferencia": {
+            "type": "boolean"
+          },
+          "filas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanSugeridoFilaDto"
+            }
+          }
+        }
+      },
+      "PlanSugeridoFilaDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "unidad",
+          "decimales",
+          "accion",
+          "demanda",
+          "demandaEstimada",
+          "cargado",
+          "disponible",
+          "enOrdenes",
+          "faltante",
+          "tieneReceta"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "decimales": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "accion": {
+            "$ref": "#/components/schemas/AccionPlan"
+          },
+          "demanda": {
+            "type": "number",
+            "format": "double"
+          },
+          "demandaEstimada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cargado": {
+            "type": "number",
+            "format": "double"
+          },
+          "disponible": {
+            "type": "number",
+            "format": "double"
+          },
+          "enOrdenes": {
+            "type": "number",
+            "format": "double"
+          },
+          "faltante": {
+            "type": "number",
+            "format": "double"
+          },
+          "tieneReceta": {
+            "type": "boolean"
           }
         }
       },
@@ -15325,6 +16036,18 @@
           }
         }
       },
+      "ResultadoEstimadoDto": {
+        "required": [
+          "pedidos"
+        ],
+        "type": "object",
+        "properties": {
+          "pedidos": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ResultadoImportacionDto": {
         "required": [
           "entidad",
@@ -16254,6 +16977,34 @@
           "EntregaPedido"
         ]
       },
+      "TotalEstimadoDto": {
+        "required": [
+          "productoId",
+          "total",
+          "real"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "cajas": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "real": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "TraspasoDto": {
         "required": [
           "id",
@@ -16389,6 +17140,28 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "UsarReferenciaRequest": {
+        "required": [
+          "fechaEntrega",
+          "canalId",
+          "rutaId"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "canalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rutaId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

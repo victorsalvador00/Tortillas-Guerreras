@@ -24,6 +24,9 @@ export const MENU: SeccionMenu[] = [
   {
     etiqueta: 'Producción',
     opciones: [
+      { etiqueta: 'Estimado', ruta: '/produccion/estimado', icono: 'table_view', permiso: 'produccion.ver' },
+      { etiqueta: 'Plan sugerido', ruta: '/produccion/plan-sugerido', icono: 'checklist', permiso: 'produccion.ver' },
+      { etiqueta: 'Plan del día', ruta: '/produccion/plan', icono: 'calendar_today', permiso: 'produccion.ver' },
       { etiqueta: 'Órdenes de producción', ruta: '/produccion/ordenes', icono: 'factory', permiso: 'produccion.ver' },
       { etiqueta: 'Recetas', ruta: '/produccion/recetas', icono: 'cooking', permiso: 'produccion.ver' },
       { etiqueta: 'Líneas', ruta: '/produccion/lineas', icono: 'conveyor_belt', permiso: 'produccion.ver' },

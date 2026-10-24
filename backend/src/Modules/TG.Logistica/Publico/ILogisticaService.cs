@@ -47,6 +47,8 @@ public enum DestinoSobrante
     Reproceso,
 }
 
+public sealed record CargadoInfo(Guid RutaId, Guid ProductoId, decimal CantidadBase);
+
 public sealed record RutaInfo(Guid Id, string Codigo, string Nombre, Guid AlmacenId, Guid CanalId, Guid? VendedorId, Guid? VehiculoId,
     bool Activo, long VersionSync);
 
@@ -118,6 +120,12 @@ public interface ILogisticaService
     Task<IReadOnlyDictionary<Guid, string>> FoliosEnviosAsync(IReadOnlyCollection<Guid> envioIds, CancellationToken ct);
 
     Task<bool> LiquidacionCerradaAsync(Guid rutaId, DateOnly fecha, CancellationToken ct);
+
+    /// <summary>RN-PRO-11/13: lo cargado (cargas iniciales y recargas despachadas) en la fecha, por ruta y producto, en unidad base.</summary>
+    Task<IReadOnlyList<CargadoInfo>> CargadoPorFechaAsync(DateOnly fecha, CancellationToken ct);
+
+    /// <summary>Ruta activa de cada cliente (la primera asignación activa); los clientes sin ruta no aparecen.</summary>
+    Task<IReadOnlyDictionary<Guid, Guid>> RutasDeClientesAsync(IReadOnlyCollection<Guid> clienteIds, CancellationToken ct);
 
     Task<Result<RetornoRegistrado>> RegistrarRetornoAsync(RegistrarRetornoComando comando, CancellationToken ct);
 

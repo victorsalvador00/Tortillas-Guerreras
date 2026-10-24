@@ -9,6 +9,21 @@ namespace TG.Logistica.Aplicacion;
 
 internal sealed class LogisticaService(LogisticaDbContext db, ServicioRetornos retornos) : ILogisticaService
 {
+    public async Task<IReadOnlyList<CargadoInfo>> CargadoPorFechaAsync(DateOnly fecha, CancellationToken ct) =>
+        await db.Envios.AsNoTracking()
+            .Where(e => e.FechaOperativa == fecha && (e.Estado == EstadoEnvio.EnRuta || e.Estado == EstadoEnvio.Liquidado))
+            .SelectMany(e => e.Partidas.Select(p => new { e.RutaId, p.ProductoId, p.CantidadBase }))
+            .GroupBy(x => new { x.RutaId, x.ProductoId })
+            .Select(g => new CargadoInfo(g.Key.RutaId, g.Key.ProductoId, g.Sum(x => x.CantidadBase)))
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<Guid, Guid>> RutasDeClientesAsync(IReadOnlyCollection<Guid> clienteIds, CancellationToken ct) =>
+        clienteIds.Count == 0
+            ? new Dictionary<Guid, Guid>()
+            : (await db.RutasClientes.AsNoTracking().Where(rc => rc.Activo && clienteIds.Contains(rc.ClienteId))
+                    .Select(rc => new { rc.ClienteId, rc.RutaId }).ToListAsync(ct))
+                .GroupBy(x => x.ClienteId).ToDictionary(g => g.Key, g => g.Min(x => x.RutaId));
+
     public async Task<RutaInfo?> RutaDeChoferAsync(Guid usuarioId, DateOnly fecha, CancellationToken ct)
     {
         var rutaId = await RutaDeCargaAsync(db, usuarioId, fecha, ct);

@@ -26,6 +26,12 @@ import type {
 
 import type {
   CapturarConsumosRequest,
+  ConfirmarEstimadoParams,
+  CopiarRecetaRequest,
+  CrearOrdenesDto,
+  CrearOrdenesRequest,
+  EstimadoDto,
+  GuardarEstimadoRequest,
   GuardarLineaRequest,
   GuardarRecetaRequest,
   HttpValidationProblemDetails,
@@ -33,13 +39,18 @@ import type {
   ListarLineasParams,
   ListarOrdenesProduccionParams,
   ListarRecetasParams,
+  ObtenerEstimadoParams,
+  ObtenerPlanSugeridoParams,
   OrdenDto,
+  PlanSugeridoDto,
   PlanearOrdenRequest,
   RecetaDto,
   RegistrarMermaRequest,
   ReporteVariacionDto,
   ReporteVariacionProduccionParams,
-  TerminarOrdenRequest
+  ResultadoEstimadoDto,
+  TerminarOrdenRequest,
+  UsarReferenciaRequest
 } from '.././modelos';
 
 import { clienteApi } from '../../cliente';
@@ -655,6 +666,65 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getPublicarRecetaMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const copiarReceta = (
+    id: string,
+    copiarRecetaRequest: BodyType<CopiarRecetaRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<RecetaDto>(
+      {url: `/api/v1/produccion/recetas/${id}/copiar`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: copiarRecetaRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCopiarRecetaMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copiarReceta>>, TError,{id: string;data: BodyType<CopiarRecetaRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof copiarReceta>>, TError,{id: string;data: BodyType<CopiarRecetaRequest>}, TContext> => {
+
+const mutationKey = ['copiarReceta'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof copiarReceta>>, {id: string;data: BodyType<CopiarRecetaRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  copiarReceta(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CopiarRecetaMutationResult = NonNullable<Awaited<ReturnType<typeof copiarReceta>>>
+    export type CopiarRecetaMutationBody = BodyType<CopiarRecetaRequest>
+    export type CopiarRecetaMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useCopiarReceta = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copiarReceta>>, TError,{id: string;data: BodyType<CopiarRecetaRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof copiarReceta>>,
+        TError,
+        {id: string;data: BodyType<CopiarRecetaRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCopiarRecetaMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1288,6 +1358,410 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getTerminarOrdenProduccionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const obtenerEstimado = (
+    params: ObtenerEstimadoParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<EstimadoDto>(
+      {url: `/api/v1/produccion/estimado`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getObtenerEstimadoQueryKey = (params?: ObtenerEstimadoParams,) => {
+    return [
+    `/api/v1/produccion/estimado`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getObtenerEstimadoQueryOptions = <TData = Awaited<ReturnType<typeof obtenerEstimado>>, TError = ErrorType<unknown>>(params: ObtenerEstimadoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getObtenerEstimadoQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof obtenerEstimado>>> = ({ signal }) => obtenerEstimado(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ObtenerEstimadoQueryResult = NonNullable<Awaited<ReturnType<typeof obtenerEstimado>>>
+export type ObtenerEstimadoQueryError = ErrorType<unknown>
+
+
+export function useObtenerEstimado<TData = Awaited<ReturnType<typeof obtenerEstimado>>, TError = ErrorType<unknown>>(
+ params: ObtenerEstimadoParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerEstimado>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerEstimado>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerEstimado<TData = Awaited<ReturnType<typeof obtenerEstimado>>, TError = ErrorType<unknown>>(
+ params: ObtenerEstimadoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerEstimado>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerEstimado>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerEstimado<TData = Awaited<ReturnType<typeof obtenerEstimado>>, TError = ErrorType<unknown>>(
+ params: ObtenerEstimadoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useObtenerEstimado<TData = Awaited<ReturnType<typeof obtenerEstimado>>, TError = ErrorType<unknown>>(
+ params: ObtenerEstimadoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEstimado>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getObtenerEstimadoQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const guardarEstimado = (
+    guardarEstimadoRequest: BodyType<GuardarEstimadoRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<EstimadoDto>(
+      {url: `/api/v1/produccion/estimado`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: guardarEstimadoRequest
+    },
+      options);
+    }
+  
+
+
+export const getGuardarEstimadoMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarEstimado>>, TError,{data: BodyType<GuardarEstimadoRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof guardarEstimado>>, TError,{data: BodyType<GuardarEstimadoRequest>}, TContext> => {
+
+const mutationKey = ['guardarEstimado'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof guardarEstimado>>, {data: BodyType<GuardarEstimadoRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  guardarEstimado(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GuardarEstimadoMutationResult = NonNullable<Awaited<ReturnType<typeof guardarEstimado>>>
+    export type GuardarEstimadoMutationBody = BodyType<GuardarEstimadoRequest>
+    export type GuardarEstimadoMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useGuardarEstimado = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guardarEstimado>>, TError,{data: BodyType<GuardarEstimadoRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof guardarEstimado>>,
+        TError,
+        {data: BodyType<GuardarEstimadoRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getGuardarEstimadoMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const confirmarEstimado = (
+    params: ConfirmarEstimadoParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<ResultadoEstimadoDto>(
+      {url: `/api/v1/produccion/estimado/confirmar`, method: 'POST',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getConfirmarEstimadoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmarEstimado>>, TError,{params: ConfirmarEstimadoParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmarEstimado>>, TError,{params: ConfirmarEstimadoParams}, TContext> => {
+
+const mutationKey = ['confirmarEstimado'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmarEstimado>>, {params: ConfirmarEstimadoParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  confirmarEstimado(params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmarEstimadoMutationResult = NonNullable<Awaited<ReturnType<typeof confirmarEstimado>>>
+    
+    export type ConfirmarEstimadoMutationError = ErrorType<unknown>
+
+    export const useConfirmarEstimado = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmarEstimado>>, TError,{params: ConfirmarEstimadoParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmarEstimado>>,
+        TError,
+        {params: ConfirmarEstimadoParams},
+        TContext
+      > => {
+
+      const mutationOptions = getConfirmarEstimadoMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const usarReferenciaEstimado = (
+    usarReferenciaRequest: BodyType<UsarReferenciaRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<ResultadoEstimadoDto>(
+      {url: `/api/v1/produccion/estimado/usar-referencia`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: usarReferenciaRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getUsarReferenciaEstimadoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usarReferenciaEstimado>>, TError,{data: BodyType<UsarReferenciaRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof usarReferenciaEstimado>>, TError,{data: BodyType<UsarReferenciaRequest>}, TContext> => {
+
+const mutationKey = ['usarReferenciaEstimado'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usarReferenciaEstimado>>, {data: BodyType<UsarReferenciaRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usarReferenciaEstimado(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsarReferenciaEstimadoMutationResult = NonNullable<Awaited<ReturnType<typeof usarReferenciaEstimado>>>
+    export type UsarReferenciaEstimadoMutationBody = BodyType<UsarReferenciaRequest>
+    export type UsarReferenciaEstimadoMutationError = ErrorType<unknown>
+
+    export const useUsarReferenciaEstimado = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usarReferenciaEstimado>>, TError,{data: BodyType<UsarReferenciaRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usarReferenciaEstimado>>,
+        TError,
+        {data: BodyType<UsarReferenciaRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getUsarReferenciaEstimadoMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const obtenerPlanSugerido = (
+    params: ObtenerPlanSugeridoParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<PlanSugeridoDto>(
+      {url: `/api/v1/produccion/plan-sugerido`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getObtenerPlanSugeridoQueryKey = (params?: ObtenerPlanSugeridoParams,) => {
+    return [
+    `/api/v1/produccion/plan-sugerido`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getObtenerPlanSugeridoQueryOptions = <TData = Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError = ErrorType<unknown>>(params: ObtenerPlanSugeridoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getObtenerPlanSugeridoQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof obtenerPlanSugerido>>> = ({ signal }) => obtenerPlanSugerido(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ObtenerPlanSugeridoQueryResult = NonNullable<Awaited<ReturnType<typeof obtenerPlanSugerido>>>
+export type ObtenerPlanSugeridoQueryError = ErrorType<unknown>
+
+
+export function useObtenerPlanSugerido<TData = Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError = ErrorType<unknown>>(
+ params: ObtenerPlanSugeridoParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerPlanSugerido>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerPlanSugerido>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerPlanSugerido<TData = Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError = ErrorType<unknown>>(
+ params: ObtenerPlanSugeridoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerPlanSugerido>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerPlanSugerido>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useObtenerPlanSugerido<TData = Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError = ErrorType<unknown>>(
+ params: ObtenerPlanSugeridoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useObtenerPlanSugerido<TData = Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError = ErrorType<unknown>>(
+ params: ObtenerPlanSugeridoParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerPlanSugerido>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getObtenerPlanSugeridoQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const crearOrdenesPlanSugerido = (
+    crearOrdenesRequest: BodyType<CrearOrdenesRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<CrearOrdenesDto>(
+      {url: `/api/v1/produccion/plan-sugerido/crear-ordenes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: crearOrdenesRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCrearOrdenesPlanSugeridoMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>, TError,{data: BodyType<CrearOrdenesRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>, TError,{data: BodyType<CrearOrdenesRequest>}, TContext> => {
+
+const mutationKey = ['crearOrdenesPlanSugerido'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>, {data: BodyType<CrearOrdenesRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  crearOrdenesPlanSugerido(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CrearOrdenesPlanSugeridoMutationResult = NonNullable<Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>>
+    export type CrearOrdenesPlanSugeridoMutationBody = BodyType<CrearOrdenesRequest>
+    export type CrearOrdenesPlanSugeridoMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useCrearOrdenesPlanSugerido = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>, TError,{data: BodyType<CrearOrdenesRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof crearOrdenesPlanSugerido>>,
+        TError,
+        {data: BodyType<CrearOrdenesRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCrearOrdenesPlanSugeridoMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

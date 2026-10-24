@@ -8,6 +8,19 @@ using TG.SharedKernel.Resultados;
 
 namespace TG.Produccion.Aplicacion;
 
+/// <param name="FactorRendimiento">Multiplica el rendimiento (800 g → 450 g = 800/450); vacío = el mismo.</param>
+public sealed record CopiarRecetaRequest(Guid ProductoDestinoId, decimal? FactorRendimiento);
+
+public sealed class CopiarRecetaValidator : AbstractValidator<CopiarRecetaRequest>
+{
+    public CopiarRecetaValidator()
+    {
+        RuleFor(x => x.ProductoDestinoId).NotEmpty().WithMessage("Elige el producto destino.");
+        RuleFor(x => x.FactorRendimiento).GreaterThan(0).When(x => x.FactorRendimiento is not null)
+            .WithMessage("El factor debe ser mayor que cero.");
+    }
+}
+
 public static class ErroresProduccion
 {
     public static Error EstadoInvalido(string mensaje) => Error.Conflicto("PRO-001", mensaje);
@@ -231,6 +244,53 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
             NumeroVersion = siguiente,
             Nombre = origen.Nombre,
             RendimientoCantidad = origen.RendimientoCantidad,
+            MermaEsperadaPct = origen.MermaEsperadaPct,
+            Notas = origen.Notas,
+        };
+        copia.Componentes = origen.Componentes.Select(c => new RecetaComponente
+        {
+            RecetaId = copia.Id,
+            ProductoId = c.ProductoId,
+            UnidadId = c.UnidadId,
+            FactorABase = c.FactorABase,
+            Cantidad = c.Cantidad,
+            CantidadBase = c.CantidadBase,
+            Orden = c.Orden,
+        }).ToList();
+        db.Recetas.Add(copia);
+        await db.SaveChangesAsync(ct);
+        return await ObtenerAsync(copia.Id, ct);
+    }
+
+    /// <summary>
+    /// RN-PRO-14: copia la receta a otro producto como <c>Borrador</c> con los mismos componentes; el rendimiento se
+    /// multiplica por <paramref name="r"/>.FactorRendimiento si se indica (p. ej. 800 g → 450 g: 800/450).
+    /// </summary>
+    public async Task<Result<RecetaDto>> CopiarAsync(Guid id, CopiarRecetaRequest r, CancellationToken ct)
+    {
+        var origen = await db.Recetas.AsNoTracking().Include(x => x.Componentes).FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (origen is null)
+        {
+            return ErroresProduccion.RecetaNoEncontrada;
+        }
+
+        var destino = await catalogos.ObtenerProductoAsync(r.ProductoDestinoId, ct);
+        if (destino is not { EsProducible: true, Activo: true })
+        {
+            return ErroresProduccion.ProductoNoProducible;
+        }
+
+        if (origen.Componentes.Any(c => c.ProductoId == destino.Id))
+        {
+            return Error.Campo("PRO-018", "productoDestinoId", "El producto destino es componente de la receta.");
+        }
+
+        var copia = new Receta
+        {
+            ProductoId = destino.Id,
+            NumeroVersion = (await db.Recetas.Where(x => x.ProductoId == destino.Id).MaxAsync(x => (int?)x.NumeroVersion, ct) ?? 0) + 1,
+            Nombre = $"{destino.Nombre} (copia de {origen.Nombre})",
+            RendimientoCantidad = decimal.Round(origen.RendimientoCantidad * (r.FactorRendimiento ?? 1m), destino.UnidadBaseDecimales),
             MermaEsperadaPct = origen.MermaEsperadaPct,
             Notas = origen.Notas,
         };

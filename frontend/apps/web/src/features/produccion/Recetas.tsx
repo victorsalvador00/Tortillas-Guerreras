@@ -6,6 +6,7 @@ import {
   useActualizarReceta,
   useCrearReceta,
   useListarRecetas,
+  useCopiarReceta,
   useNuevaVersionReceta,
   useObtenerReceta,
   usePublicarReceta,
@@ -23,6 +24,7 @@ import {
   Campo,
   Dato,
   Datos,
+  Dialogo,
   DialogoConfirmacion,
   EtiquetaEstado,
   Selector,
@@ -292,6 +294,67 @@ export function RecetaNueva() {
   );
 }
 
+/** RN-PRO-14: copia la receta a otro producto como borrador; el rendimiento se multiplica por el factor. */
+function DialogoCopiarReceta({ recetaId, rendimiento, onCerrar }: { recetaId: string; rendimiento: number; onCerrar: () => void }) {
+  const navegar = useNavigate();
+  const copiar = useCopiarReceta();
+  const [producto, setProducto] = useState<ProductoDto | null>(null);
+  const [factor, setFactor] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const factorNum = factor ? Number(factor) : 1;
+
+  const enviar = async () => {
+    setError(null);
+    if (!producto) {
+      setError('Elige el producto destino.');
+      return;
+    }
+    try {
+      const nueva = await copiar.mutateAsync({ id: recetaId, data: { productoDestinoId: producto.id, factorRendimiento: factor ? factorNum : null } });
+      toast.success(`Borrador v${nueva.version} de ${nueva.sku} creado.`);
+      onCerrar();
+      await navegar({ to: '/produccion/recetas/$id', params: { id: nueva.id } });
+    } catch (err) {
+      setError(mensajeError(err));
+    }
+  };
+
+  return (
+    <Dialogo
+      abierto
+      onCambiar={(a) => !a && onCerrar()}
+      titulo="Copiar a otro producto"
+      descripcion="Se crea un borrador con los mismos componentes. Revísalo y publícalo."
+      acciones={
+        <>
+          <Boton variante="texto" onClick={onCerrar}>
+            Cancelar
+          </Boton>
+          <Boton cargando={copiar.isPending} onClick={enviar}>
+            Copiar
+          </Boton>
+        </>
+      }
+    >
+      <div className="grid gap-4">
+        {error && <Aviso tipo="error">{error}</Aviso>}
+        <SelectorProducto etiqueta="Producto destino" valor={producto?.id} producto={producto} filtro={{ esProducible: true }} onCambiar={setProducto} />
+        <Campo
+          etiqueta="Factor de rendimiento"
+          type="number"
+          step="any"
+          min={0}
+          inputMode="decimal"
+          placeholder="1"
+          value={factor}
+          onChange={(e) => setFactor(e.target.value)}
+          ayuda={`Rendimiento resultante: ${formatoCantidad(rendimiento * (factorNum > 0 ? factorNum : 1))}. Ej.: de 800 g a 450 g → 1.7778.`}
+        />
+      </div>
+    </Dialogo>
+  );
+}
+
 export function RecetaDetalle() {
   const { id } = useParams({ strict: false }) as { id: string };
   const navegar = useNavigate();
@@ -301,6 +364,7 @@ export function RecetaDetalle() {
   const publicar = usePublicarReceta();
   const nuevaVersion = useNuevaVersionReceta();
   const [confirmar, setConfirmar] = useState<'publicar' | 'version' | null>(null);
+  const [copiar, setCopiar] = useState(false);
   const [productos, setProductos] = useState<Record<string, ProductoDto> | null>(null);
   const editable = tienePermiso('produccion.recetas') && receta?.estado === 'Borrador';
 
@@ -362,6 +426,9 @@ export function RecetaDetalle() {
                         Nueva versión
                       </Boton>
                     )}
+                    <Boton variante="secundario" icono="file_copy" onClick={() => setCopiar(true)}>
+                      Copiar a otro producto
+                    </Boton>
                   </>
                 )
               }
@@ -421,6 +488,7 @@ export function RecetaDetalle() {
                 toast.success(`Receta v${receta.version} vigente.`);
               }}
             />
+            {copiar && <DialogoCopiarReceta recetaId={receta.id} rendimiento={receta.rendimientoCantidad} onCerrar={() => setCopiar(false)} />}
             <DialogoConfirmacion
               abierto={confirmar === 'version'}
               onCambiar={(a) => !a && setConfirmar(null)}

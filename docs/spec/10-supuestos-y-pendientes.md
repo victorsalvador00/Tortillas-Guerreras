@@ -47,6 +47,7 @@ sus Excel. Procedimiento (también disponible como comando `/actualizar-modelo`)
 | SUP-25 | Lo retirado en un cambio físico es `NoVendible` por defecto | Logística, App | Almacén | Abierto (v0.2) |
 | SUP-26 | Paquetes por caja propios de cada producto (deducidos de los formatos: 24 T-800 y HNA, 18 sopes, 15 tostadas, 30 mini, 36 flautas) | Catálogos | Cliente | Abierto (v0.2) |
 | SUP-27 | Los gastos de ruta se capturan en la liquidación como texto libre, sin catálogo de conceptos | Logística | Cliente | Abierto (v0.2) |
+| SUP-30 | Las columnas del estimado son los productos con demanda en la fecha (o en la referencia) más los que tienen precio en una lista activa del canal ("marcados para el canal") | Producción | Cliente | Abierto (v0.2) |
 | SUP-29 | Un pedido a un cliente de un canal que pide por ruta (DET) que no es el genérico se acepta como pedido por cliente (no se redirige al pedido global de la ruta) | Ventas | Cliente | Abierto (v0.2) |
 | SUP-28 | Una venta de la app con un producto exclusivo de otro cliente (catálogo desactualizado) se acepta con incidencia `ProductoExclusivo`, porque el producto ya se entregó | Ventas, Sync | Cliente | Abierto (v0.2) |
 

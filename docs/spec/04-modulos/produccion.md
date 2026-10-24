@@ -89,6 +89,24 @@ los dos depende de Producción, no hay ciclo).
 - Con 200 de demanda de T-800, 150 en `PT` vigentes y 0 órdenes, el plan sugiere 50; con una orden planeada de 30
   sugiere 20.
 
+**Notas de implementación (T-8.7).**
+- Sin tablas nuevas: el estimado y el plan leen `IVentasService.DemandaPorFechaEntregaAsync`,
+  `ILogisticaService.CargadoPorFechaAsync` (envíos `EnRuta`/`Liquidado` de la fecha) e
+  `IInventarioService.ExistenciasDeAlmacenAsync("PT")`. Producción referencia `Ventas` y `Logistica` (solo `Publico/`).
+- La fila de un pedido es `pedido.ruta_id` o, si no tiene, la ruta activa del cliente (`RutasDeClientesAsync`).
+- Columnas: productos vendibles con demanda (o en la referencia) + los de las listas de precio activas del canal
+  `[SUP-30]`; celdas en la unidad de venta predeterminada.
+- Solo los canales `pedido_por = Ruta` son editables desde el estimado (`PRO-015` en otro canal); el PUT crea o
+  corrige el pedido del genérico `GEN-{ruta}` (cantidad 0 quita la partida; sin partidas se cancela) y solo mientras
+  esté `Capturado` (`VEN-012`). Los pedidos de oficina a tiendas se capturan en Pedidos.
+- "Usar referencia" (`PRO-017` si la ruta ya tiene pedido o no hay referencia) copia los pedidos de la referencia
+  con la nueva fecha de entrega como `Capturado`.
+- Plan sugerido: la demanda incluye todos los pedidos de la fecha (tengan ruta o no); las órdenes abiertas cuentan
+  si su fecha operativa es ≤ la fecha de entrega. Los **cambios pendientes** se suman en T-8.9 (todavía no existen).
+  "Crear órdenes" redondea la cantidad hacia arriba a los decimales de la unidad base y devuelve creadas y omitidas.
+- Copiar receta: `PRO-005` si el destino no es producible; `PRO-018` si el destino es componente de la receta.
+- Errores nuevos: `PRO-014` canal inexistente, `PRO-015`, `PRO-016` ruta o producto inválido, `PRO-017`, `PRO-018`.
+
 ## Endpoints (`/api/v1/produccion`)
 | Método | Ruta | Permiso |
 |---|---|---|
@@ -103,6 +121,7 @@ los dos depende de Producción, no hay ciclo).
 | GET | `/reportes/variacion?desde&hasta&productoId` | `produccion.ver` |
 | GET/PUT | **(v0.2)** `/estimado?fechaEntrega&canalId` (cuadrícula RN-PRO-11; el PUT escribe pedidos vía `IVentasService`) | `produccion.ver` / `ventas.pedidos` |
 | POST | **(v0.2)** `/estimado/confirmar?fechaEntrega&canalId` (confirma los pedidos `Capturado` de la cuadrícula) | `ventas.pedidos` |
+| POST | **(v0.2)** `/estimado/usar-referencia` (`{ fechaEntrega, canalId, rutaId }`, RN-PRO-12) | `ventas.pedidos` |
 | GET | **(v0.2)** `/plan-sugerido?fechaEntrega&incluirReferencia` | `produccion.ver` |
 | POST | **(v0.2)** `/plan-sugerido/crear-ordenes` (`{ fechaOperativa, turno, lineaId?, partidas: [{ productoId, cantidad }] }`) | `produccion.planear` |
 | POST | **(v0.2)** `/recetas/{id}/copiar` (`{ productoDestinoId, factorRendimiento? }`) | `produccion.recetas` |

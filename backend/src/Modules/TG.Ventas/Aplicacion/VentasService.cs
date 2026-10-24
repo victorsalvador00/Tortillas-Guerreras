@@ -335,6 +335,108 @@ public sealed class VentasService(
         }
     }
 
+    // ───────────────────────────── Estimado (Producción) ─────────────────────────────
+
+    public async Task<IReadOnlyList<Guid>> ProductosDeCanalAsync(Guid canalId, CancellationToken ct) =>
+        await (from l in db.ListasPrecio.AsNoTracking()
+               join p in db.ListasPrecioPartidas.AsNoTracking() on l.Id equals p.ListaPrecioId
+               where l.CanalId == canalId && l.Activo
+               select p.ProductoId).Distinct().ToListAsync(ct);
+
+    public async Task<IReadOnlyList<DemandaPartidaInfo>> DemandaPorFechaEntregaAsync(DateOnly fechaEntrega, Guid? canalId,
+        CancellationToken ct) =>
+        await (from p in db.Pedidos.AsNoTracking()
+               join c in db.Clientes.AsNoTracking() on p.ClienteId equals c.Id
+               from x in p.Partidas
+               where p.FechaEntrega == fechaEntrega && p.Estado != EstadoPedido.Cancelado && (canalId == null || c.CanalId == canalId)
+               orderby p.Folio
+               select new DemandaPartidaInfo(p.Id, p.Folio, p.ClienteId, c.CanalId, p.RutaId, p.EsRuta, p.Estado, x.ProductoId,
+                   x.UnidadId, x.Cantidad, x.CantidadBase, x.Tipo, x.Notas))
+            .ToListAsync(ct);
+
+    public async Task<Result<Guid?>> GuardarPedidoRutaAsync(Guid rutaId, string rutaCodigo, DateOnly fechaEntrega,
+        IReadOnlyList<CeldaPedidoRuta> celdas, CancellationToken ct)
+    {
+        var codigo = $"GEN-{rutaCodigo}";
+        var generico = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Codigo == codigo && c.EsGenerico, ct);
+        if (generico is null)
+        {
+            return Error.NoEncontrado(ErroresVentas.ClienteNoEncontrado, $"La ruta {rutaCodigo} no tiene cliente genérico.");
+        }
+
+        var pedido = await db.Pedidos.AsNoTracking().Include(p => p.Partidas)
+            .FirstOrDefaultAsync(p => p.EsRuta && p.ClienteId == generico.Id && p.FechaEntrega == fechaEntrega
+                && p.Estado != EstadoPedido.Cancelado, ct);
+        if (pedido is not null && pedido.Estado != EstadoPedido.Capturado)
+        {
+            return Error.Conflicto(ErroresVentas.EstadoPedido, $"El pedido {pedido.Folio} de la ruta ya está {pedido.Estado}; no se edita.");
+        }
+
+        // Las celdas reemplazan la partida de Venta de su producto; lo demás del pedido se conserva.
+        var partidas = (pedido?.Partidas ?? [])
+            .Where(x => x.Tipo == TipoPartidaPedido.CambioFisico || celdas.All(c => c.ProductoId != x.ProductoId))
+            .Select(x => new PartidaPedidoRequest(x.ProductoId, x.UnidadId, x.Cantidad, x.Tipo, x.Notas, x.Id))
+            .ToList();
+        foreach (var celda in celdas.Where(c => c.Cantidad > 0))
+        {
+            var actual = pedido?.Partidas.FirstOrDefault(x => x.ProductoId == celda.ProductoId && x.Tipo == TipoPartidaPedido.Venta);
+            partidas.Add(new PartidaPedidoRequest(celda.ProductoId, celda.UnidadId, celda.Cantidad, TipoPartidaPedido.Venta,
+                actual?.Notas, actual?.Id));
+        }
+
+        if (partidas.Count == 0)
+        {
+            if (pedido is null)
+            {
+                return (Guid?)null;
+            }
+
+            await pedidos.CancelarAsync(pedido.Id, ct);
+            return (Guid?)null;
+        }
+
+        var solicitud = new GuardarPedidoRequest(generico.Id, fechaEntrega, pedido?.OrdenCompraCliente, pedido?.Notas, partidas);
+        var guardado = pedido is null
+            ? await pedidos.GuardarInternoAsync(null, solicitud, null, null, ct, rutaId)
+            : await pedidos.GuardarInternoAsync(pedido.Id, solicitud, null, null, ct);
+        return guardado.EsExito ? guardado.Valor.Id : guardado.Error!;
+    }
+
+    public Task<Result<int>> ConfirmarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, CancellationToken ct) =>
+        unitOfWork.EjecutarAsync(async t =>
+        {
+            var capturados = await db.Pedidos.AsNoTracking().Where(p => pedidoIds.Contains(p.Id) && p.Estado == EstadoPedido.Capturado)
+                .Select(p => p.Id).ToListAsync(t);
+            foreach (var id in capturados)
+            {
+                var confirmado = await pedidos.ConfirmarAsync(id, t);
+                if (!confirmado.EsExito)
+                {
+                    return Result<int>.Falla(confirmado.Error!);
+                }
+            }
+
+            return Result<int>.Exito(capturados.Count);
+        }, ct);
+
+    public Task<Result<int>> CopiarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, DateOnly fechaEntrega, CancellationToken ct) =>
+        unitOfWork.EjecutarAsync(async t =>
+        {
+            var origen = await db.Pedidos.AsNoTracking().Include(p => p.Partidas).Where(p => pedidoIds.Contains(p.Id)).ToListAsync(t);
+            foreach (var p in origen)
+            {
+                var solicitud = new GuardarPedidoRequest(p.ClienteId, fechaEntrega, p.OrdenCompraCliente, p.Notas,
+                    p.Partidas.Select(x => new PartidaPedidoRequest(x.ProductoId, x.UnidadId, x.Cantidad, x.Tipo, x.Notas)).ToList());
+                var copia = await pedidos.GuardarInternoAsync(null, solicitud, null, null, t, p.RutaId);
+                if (!copia.EsExito)
+                {
+                    return Result<int>.Falla(copia.Error!);
+                }
+            }
+
+            return Result<int>.Exito(origen.Count);
+        }, ct);
+
     // ───────────────────────────── Pedido desde la app ─────────────────────────────
 
     public async Task<Result<PedidoCapturado>> CapturarPedidoAsync(CapturarPedidoComando c, CancellationToken ct)

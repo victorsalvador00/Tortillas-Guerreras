@@ -162,6 +162,13 @@ public sealed record CapturarPedidoComando(Guid PedidoId, Guid OpId, Guid Client
 
 public sealed record PedidoCapturado(Guid PedidoId, string Folio, bool Duplicado);
 
+/// <summary>Partida de un pedido no cancelado para el estimado y el plan sugerido (RN-PRO-11/13).</summary>
+public sealed record DemandaPartidaInfo(Guid PedidoId, string Folio, Guid ClienteId, Guid CanalId, Guid? RutaId, bool EsRuta,
+    EstadoPedido Estado, Guid ProductoId, Guid UnidadId, decimal Cantidad, decimal CantidadBase, TipoPartidaPedido Tipo, string? Notas);
+
+/// <summary>Celda del estimado: cantidad en la unidad indicada; 0 quita la partida.</summary>
+public sealed record CeldaPedidoRuta(Guid ProductoId, Guid UnidadId, decimal Cantidad);
+
 public sealed record EntregarPedidoComando(
     OrigenVenta Origen,
     Guid PedidoId,
@@ -317,6 +324,25 @@ public interface IVentasService
 
     /// <summary>RN-VEN-08.</summary>
     Task<Result<VentaRegistrada>> EntregarPedidoAsync(EntregarPedidoComando comando, CancellationToken ct);
+
+    /// <summary>Productos con precio en las listas activas del canal (columnas del estimado, [SUP-30]).</summary>
+    Task<IReadOnlyList<Guid>> ProductosDeCanalAsync(Guid canalId, CancellationToken ct);
+
+    /// <summary>RN-PRO-11/13: partidas de los pedidos no cancelados con esa fecha de entrega (del canal, si se indica).</summary>
+    Task<IReadOnlyList<DemandaPartidaInfo>> DemandaPorFechaEntregaAsync(DateOnly fechaEntrega, Guid? canalId, CancellationToken ct);
+
+    /// <summary>
+    /// RN-VEN-16 / RN-PRO-11: crea o corrige el pedido global de la ruta (al genérico <c>GEN-ruta</c>) con las celdas del
+    /// estimado. Solo pedidos <c>Capturado</c> (VEN-012). Las partidas de otros productos y las de cambio físico se conservan.
+    /// </summary>
+    Task<Result<Guid?>> GuardarPedidoRutaAsync(Guid rutaId, string rutaCodigo, DateOnly fechaEntrega, IReadOnlyList<CeldaPedidoRuta> celdas,
+        CancellationToken ct);
+
+    /// <summary>RN-VEN-13: confirma los pedidos <c>Capturado</c> indicados (los demás se ignoran). Todo o nada.</summary>
+    Task<Result<int>> ConfirmarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, CancellationToken ct);
+
+    /// <summary>RN-PRO-12 "Usar referencia": copia los pedidos como <c>Capturado</c> con otra fecha de entrega. Todo o nada.</summary>
+    Task<Result<int>> CopiarPedidosAsync(IReadOnlyCollection<Guid> pedidoIds, DateOnly fechaEntrega, CancellationToken ct);
 
     /// <summary>RN-SYN-10, RN-VEN-15 a 18. Idempotente por <c>OpId</c> (y por el id del pedido).</summary>
     Task<Result<PedidoCapturado>> CapturarPedidoAsync(CapturarPedidoComando comando, CancellationToken ct);

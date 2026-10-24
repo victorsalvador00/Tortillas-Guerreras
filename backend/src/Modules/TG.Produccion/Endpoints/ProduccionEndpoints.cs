@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using TG.Produccion.Aplicacion;
 using TG.Produccion.Dominio;
 using TG.SharedKernel.Api;
+using TG.SharedKernel.Seguridad;
 using TG.SharedKernel.Tiempo;
 using P = TG.SharedKernel.Seguridad.Permisos.Produccion;
 
@@ -59,6 +60,28 @@ internal static class ProduccionEndpoints
             (await h.CapturarConsumosAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Operar).Validar<CapturarConsumosRequest>().WithName("capturarConsumosProduccion");
         ordenes.MapPost("/{id:guid}/terminar", async (Guid id, TerminarOrdenRequest r, OrdenesHandler h, CancellationToken ct) =>
             (await h.TerminarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Cerrar).Validar<TerminarOrdenRequest>().WithName("terminarOrdenProduccion");
+
+        recetas.MapPost("/{id:guid}/copiar", async (Guid id, CopiarRecetaRequest r, RecetasHandler h, CancellationToken ct) =>
+            (await h.CopiarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Recetas).Validar<CopiarRecetaRequest>().WithName("copiarReceta");
+
+        // v0.2: estimado y plan sugerido (RN-PRO-11 a 13).
+        var estimado = grupo.MapGroup("/estimado");
+        estimado.MapGet("/", async (DateOnly fechaEntrega, Guid canalId, EstimadoHandler h, CancellationToken ct) =>
+            (await h.ObtenerAsync(fechaEntrega, canalId, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("obtenerEstimado");
+        estimado.MapPut("/", async (GuardarEstimadoRequest r, EstimadoHandler h, CancellationToken ct) =>
+            (await h.GuardarAsync(r, ct)).AHttp()).RequireAuthorization(Permisos.Ventas.Pedidos).Validar<GuardarEstimadoRequest>()
+            .WithName("guardarEstimado");
+        estimado.MapPost("/confirmar", async (DateOnly fechaEntrega, Guid canalId, EstimadoHandler h, CancellationToken ct) =>
+            (await h.ConfirmarAsync(fechaEntrega, canalId, ct)).AHttp()).RequireAuthorization(Permisos.Ventas.Pedidos)
+            .WithName("confirmarEstimado");
+        estimado.MapPost("/usar-referencia", async (UsarReferenciaRequest r, EstimadoHandler h, CancellationToken ct) =>
+            (await h.UsarReferenciaAsync(r, ct)).AHttp()).RequireAuthorization(Permisos.Ventas.Pedidos).WithName("usarReferenciaEstimado");
+
+        var plan = grupo.MapGroup("/plan-sugerido");
+        plan.MapGet("/", (DateOnly fechaEntrega, bool? incluirReferencia, PlanSugeridoHandler h, CancellationToken ct) =>
+            h.ObtenerAsync(fechaEntrega, incluirReferencia ?? false, ct)).RequireAuthorization(P.Ver).WithName("obtenerPlanSugerido");
+        plan.MapPost("/crear-ordenes", (CrearOrdenesRequest r, PlanSugeridoHandler h, CancellationToken ct) => h.CrearOrdenesAsync(r, ct))
+            .RequireAuthorization(P.Planear).Validar<CrearOrdenesRequest>().WithName("crearOrdenesPlanSugerido");
 
         grupo.MapGet("/reportes/variacion", (DateOnly? desde, DateOnly? hasta, Guid? productoId, ReportesProduccionHandler h,
                 IFechaOperativa hoy, CancellationToken ct) =>
