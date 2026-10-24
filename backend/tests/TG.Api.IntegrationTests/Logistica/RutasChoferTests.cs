@@ -35,7 +35,12 @@ public sealed class RutasChoferTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     private sealed record ClientePull(Guid Id, bool EsGenerico, Guid ListaPrecioId);
 
-    private sealed record CambiosPull(List<ProductoPull> Productos, List<ClientePull> Clientes, List<PrecioPull> Precios);
+    private sealed record ConsumoPull(Guid ClienteId, Guid ProductoId, decimal PromedioBase);
+
+    private sealed record CanalPull(Guid Id, string Clave, string PedidoPor, string FormatoLiquidacion);
+
+    private sealed record CambiosPull(List<ProductoPull> Productos, List<ClientePull> Clientes, List<PrecioPull> Precios,
+        List<ConsumoPull>? ConsumosClientes = null, List<CanalPull>? Canales = null);
 
     private sealed record RespuestaPull(long Cursor, RutaPull? Ruta, CambiosPull Cambios, bool RutaCambiada);
 
@@ -261,6 +266,42 @@ public sealed class RutasChoferTests(ApiFixture api) : IClassFixture<ApiFixture>
         });
         rechazo.Resultados.Single().Codigo.ShouldBe("SYN-006");
         sinRutaId.ShouldNotBe(choferId);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-APP-09")]
+    public async Task Pull_TraeConsumoPromedioDelCliente_YElCanalDeLaRuta()
+    {
+        var admin = await api.ClienteAsync();
+        var (choferId, usuario) = await admin.CrearUsuarioChoferAsync();
+        var ruta = await CrearRutaAsync(choferId: choferId);
+        var (app, codigo, dispositivo) = await SesionAppAsync(usuario);
+        var pull = await app.GetOkAsync<RespuestaPull>("/api/v1/sync/pull?desde=0");
+        pull.Cambios.Canales!.Single().Id.ShouldBe(ruta.CanalId);
+        pull.Cambios.ConsumosClientes!.ShouldBeEmpty();
+
+        var generico = pull.Cambios.Clientes.Single(c => c.EsGenerico);
+        var salsa = pull.Cambios.Productos.Single(p => p.Sku == "RV-SALSA");
+        var precio = pull.Cambios.Precios.First(p => p.ListaPrecioId == generico.ListaPrecioId && p.ProductoId == salsa.Id);
+        var operaciones = Enumerable.Range(1, 2).Select(i =>
+        {
+            var op = Venta($"{ruta.Codigo}-{codigo}-{i:000000}", generico.Id, precio, DateTimeOffset.UtcNow);
+            return op;
+        }).ToArray();
+        foreach (var op in operaciones)
+        {
+            var push = await app.PostOkAsync<RespuestaPush>("/api/v1/sync/push", new
+            {
+                dispositivoId = dispositivo, loteId = Id.Nuevo(), versionApp = "1.0.0", operaciones = new[] { op },
+            });
+            push.Resultados.Single().Estado.ShouldBe("Aplicada", push.Resultados.Single().Codigo);
+        }
+
+        // Dos ventas de 1 unidad: el promedio es la cantidad base de una.
+        var despues = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}&rutaId={ruta.Id}");
+        var consumo = despues.Cambios.ConsumosClientes!.Single(c => c.ClienteId == generico.Id && c.ProductoId == salsa.Id);
+        consumo.PromedioBase.ShouldBeGreaterThan(0);
+        despues.Cambios.Canales!.Single().Id.ShouldBe(ruta.CanalId);
     }
 
     // ───────────── Migración ─────────────

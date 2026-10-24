@@ -17,26 +17,32 @@ export class RepositorioSync implements AlmacenSync {
       ultimoSync: e.ultimoSync,
       consecutivoFolio: e.consecutivoFolio,
       consecutivoVerificado: e.consecutivoVerificado,
+      rutaId: e.rutaId,
     };
   }
 
   async aplicarCambios(r: RespuestaPull): Promise<void> {
     db.transaction((tx) => {
       const c = r.cambios;
+      // RN-SYN-09: con la ruta nueva se borra lo de la anterior; la cola, las ventas locales y el consecutivo se quedan.
+      if (r.rutaCambiada) borrarColeccionesDeRuta(tx);
       for (const p of c.productos) {
         const fila = {
           id: p.id, sku: p.sku, nombre: p.nombre, tipo: p.tipo, unidadBaseId: p.unidadBaseId, unidadBaseClave: p.unidadBaseClave,
           unidadBaseDecimales: p.unidadBaseDecimales, manejaLote: p.manejaLote, tasaIva: p.tasaIva, tasaIeps: p.tasaIeps,
-          activo: p.activo, versionSync: p.versionSync,
+          activo: p.activo, versionSync: p.versionSync, nombreCorto: p.nombreCorto ?? null,
         };
         tx.insert(t.productos).values(fila).onConflictDoUpdate({ target: t.productos.id, set: fila }).run();
         tx.delete(t.productosUnidades).where(eq(t.productosUnidades.productoId, p.id)).run();
         for (const u of p.conversiones) {
-          tx.insert(t.productosUnidades).values({ productoId: p.id, ...u }).run();
+          tx.insert(t.productosUnidades)
+            .values({ productoId: p.id, ...u, usoTraslado: u.usoTraslado ?? false, predeterminadaTraslado: u.predeterminadaTraslado ?? false })
+            .run();
         }
       }
       for (const cl of c.clientes) {
-        tx.insert(t.clientes).values(cl).onConflictDoUpdate({ target: t.clientes.id, set: cl }).run();
+        const fila = { ...cl, grupoClienteId: cl.grupoClienteId ?? null };
+        tx.insert(t.clientes).values(fila).onConflictDoUpdate({ target: t.clientes.id, set: fila }).run();
       }
       for (const rc of c.rutasClientes) {
         tx.insert(t.rutasClientes).values(rc).onConflictDoUpdate({ target: t.rutasClientes.clienteId, set: rc }).run();
@@ -70,6 +76,32 @@ export class RepositorioSync implements AlmacenSync {
       for (const p of c.parametros) {
         tx.insert(t.parametros).values(p).onConflictDoUpdate({ target: t.parametros.clave, set: p }).run();
       }
+      for (const { activo, ...p } of c.preciosCliente ?? []) {
+        const llave = and(eq(t.preciosCliente.clienteId, p.clienteId), eq(t.preciosCliente.productoId, p.productoId), eq(t.preciosCliente.unidadId, p.unidadId));
+        if (!activo) {
+          tx.delete(t.preciosCliente).where(llave).run();
+          continue;
+        }
+        tx.insert(t.preciosCliente)
+          .values(p)
+          .onConflictDoUpdate({ target: [t.preciosCliente.clienteId, t.preciosCliente.productoId, t.preciosCliente.unidadId], set: p })
+          .run();
+      }
+      for (const x of c.productosExclusivos ?? []) {
+        tx.insert(t.productosExclusivos).values(x).onConflictDoUpdate({ target: t.productosExclusivos.id, set: x }).run();
+      }
+      for (const x of c.cambiosPendientes ?? []) {
+        tx.insert(t.cambiosPendientes).values(x).onConflictDoUpdate({ target: t.cambiosPendientes.id, set: x }).run();
+      }
+      // Consumos y canal viajan completos (no incrementales): se reemplazan.
+      if (c.consumosClientes) {
+        tx.delete(t.consumosClientes).run();
+        for (const x of c.consumosClientes) tx.insert(t.consumosClientes).values(x).run();
+      }
+      if (c.canales) {
+        tx.delete(t.canales).run();
+        for (const x of c.canales) tx.insert(t.canales).values(x).run();
+      }
 
       const el = c.eliminados ?? {};
       if (el.productos?.length) {
@@ -87,15 +119,24 @@ export class RepositorioSync implements AlmacenSync {
         tx.delete(t.pedidosPartidas).where(inArray(t.pedidosPartidas.pedidoId, el.pedidos)).run();
       }
       if (el.motivosMerma?.length) tx.delete(t.motivosMerma).where(inArray(t.motivosMerma.id, el.motivosMerma)).run();
+      if (el.productosExclusivos?.length) {
+        tx.delete(t.productosExclusivos).where(inArray(t.productosExclusivos.id, el.productosExclusivos)).run();
+      }
+      if (el.cambiosPendientes?.length) {
+        tx.delete(t.cambiosPendientes).where(inArray(t.cambiosPendientes.id, el.cambiosPendientes)).run();
+      }
 
       asegurarEstado(tx);
+      // Sin carga ni ruta predeterminada el servidor manda `ruta = null`: "No tienes ruta asignada hoy".
+      const ruta = r.ruta;
       tx.update(t.estadoDispositivo)
         .set({
           cursorSync: r.cursor,
           ultimoSync: r.fechaServidor,
-          ...(r.ruta
-            ? { rutaId: r.ruta.id, rutaCodigo: r.ruta.codigo, rutaNombre: r.ruta.nombre, almacenId: r.ruta.almacenId }
-            : {}),
+          rutaId: ruta?.id ?? null,
+          rutaCodigo: ruta?.codigo ?? null,
+          rutaNombre: ruta?.nombre ?? null,
+          almacenId: ruta?.almacenId ?? null,
         })
         .where(eq(t.estadoDispositivo.id, 1))
         .run();
@@ -141,6 +182,12 @@ export class RepositorioSync implements AlmacenSync {
   async registrarResultados(resultados: ResultadoOperacion[], ahora: string): Promise<void> {
     db.transaction((tx) => {
       for (const r of resultados) {
+        if (r.estado === 'Rechazada') {
+          const op = tx.select().from(t.operacionesPendientes).where(eq(t.operacionesPendientes.opId, r.opId)).get();
+          if (op?.tipo === 'CapturarPedido' && op.documentoId) {
+            tx.update(t.pedidosLocales).set({ estado: 'Rechazado' }).where(eq(t.pedidosLocales.id, op.documentoId)).run();
+          }
+        }
         tx.update(t.operacionesPendientes)
           .set({
             estado: r.estado === 'Rechazada' ? 'Rechazada' : 'Aplicada',
@@ -185,8 +232,29 @@ export class RepositorioSync implements AlmacenSync {
       db.delete(t.ventasLocales).where(lt(t.ventasLocales.creadaEn, antesDe)).run();
       db.delete(t.retornosLocales).where(lt(t.retornosLocales.creadaEn, antesDe)).run();
       db.delete(t.cobrosLocales).where(lt(t.cobrosLocales.creadaEn, antesDe)).run();
+      db.delete(t.cambiosLocales).where(lt(t.cambiosLocales.creadaEn, antesDe)).run();
+      const enviados = db
+        .select({ id: t.pedidosLocales.id })
+        .from(t.pedidosLocales)
+        .where(and(eq(t.pedidosLocales.estado, 'Enviado'), lt(t.pedidosLocales.creadoEn, antesDe)))
+        .all()
+        .map((p) => p.id);
+      if (enviados.length > 0) {
+        db.delete(t.pedidosLocalesPartidas).where(inArray(t.pedidosLocalesPartidas.pedidoId, enviados)).run();
+        db.delete(t.pedidosLocales).where(inArray(t.pedidosLocales.id, enviados)).run();
+      }
     }
     return viejas.length;
+  }
+}
+
+/** Colecciones que dependen de la ruta del alcance (RN-SYN-09). Catálogos, exclusivos y lo propio de la app se quedan. */
+function borrarColeccionesDeRuta(ex: Ejecutor) {
+  for (const tabla of [
+    t.clientes, t.rutasClientes, t.precios, t.preciosCliente, t.envios, t.enviosPartidas, t.pedidos, t.pedidosPartidas,
+    t.saldosClientes, t.cambiosPendientes, t.consumosClientes, t.canales,
+  ]) {
+    ex.delete(tabla).run();
   }
 }
 

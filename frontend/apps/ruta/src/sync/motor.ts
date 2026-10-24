@@ -53,6 +53,9 @@ function contarCambios(r: RespuestaPull): number {
     c.pedidos.length +
     c.motivosMerma.length +
     c.parametros.length +
+    (c.preciosCliente?.length ?? 0) +
+    (c.productosExclusivos?.length ?? 0) +
+    (c.cambiosPendientes?.length ?? 0) +
     Object.values(c.eliminados ?? {}).reduce((s, l) => s + (l?.length ?? 0), 0)
   );
 }
@@ -147,16 +150,21 @@ export class MotorSync {
     }
   }
 
-  /** Baja cambios con `version_sync > cursor` hasta que `hayMas` sea falso. Devuelve cuántos registros llegaron. */
+  /**
+   * Baja cambios con `version_sync > cursor` hasta que `hayMas` sea falso. Devuelve cuántos registros llegaron. Si el
+   * servidor responde `rutaCambiada` (RN-SYN-09) el cursor vuelve a 0 y se baja todo de la ruta nueva.
+   */
   async pull(): Promise<number> {
     let total = 0;
     for (let vuelta = 0; vuelta < 1000; vuelta++) {
-      const { cursor } = await this.o.almacen.leerEstado();
+      const { cursor, rutaId } = await this.o.almacen.leerEstado();
+      const ruta = rutaId ? `&rutaId=${rutaId}` : '';
       const respuesta = await this.conReintentos(() =>
-        this.o.http.get<RespuestaPull>(`/api/v1/sync/pull?desde=${cursor}&limite=${this.limitePull}`),
+        this.o.http.get<RespuestaPull>(`/api/v1/sync/pull?desde=${cursor}&limite=${this.limitePull}${ruta}`),
       );
       await this.o.almacen.aplicarCambios(respuesta);
       total += contarCambios(respuesta);
+      if (respuesta.rutaCambiada && cursor > 0) continue;
       if (!respuesta.hayMas) break;
     }
     return total;

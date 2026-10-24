@@ -28,6 +28,9 @@ export default function LayoutApp() {
         <Stack.Screen name="venta/[clienteId]" options={{ title: 'Nueva venta' }} />
         <Stack.Screen name="entrega/[pedidoId]" options={{ title: 'Entregar pedido' }} />
         <Stack.Screen name="retorno/[clienteId]" options={{ title: 'Retorno' }} />
+        <Stack.Screen name="pedido/[clienteId]" options={{ title: 'Nuevo pedido' }} />
+        <Stack.Screen name="pedidos" options={{ title: 'Pedidos' }} />
+        <Stack.Screen name="cambio/[clienteId]" options={{ title: 'Cambio físico' }} />
         <Stack.Screen name="ticket/[ventaId]" options={{ title: 'Ticket' }} />
         <Stack.Screen name="inventario" options={{ title: 'Inventario de camioneta' }} />
         <Stack.Screen name="pendientes" options={{ title: 'Pendientes' }} />

@@ -22,6 +22,8 @@ export const productos = sqliteTable('productos', {
   tasaIeps: real('tasa_ieps'),
   activo: bool('activo').notNull(),
   versionSync: integer('version_sync').notNull(),
+  /** (v0.2) Nombre para pantallas angostas. */
+  nombreCorto: text('nombre_corto'),
 });
 
 export const productosUnidades = sqliteTable(
@@ -34,6 +36,9 @@ export const productosUnidades = sqliteTable(
     decimales: integer('decimales').notNull(),
     usoVenta: bool('uso_venta').notNull(),
     predeterminadaVenta: bool('predeterminada_venta').notNull(),
+    /** (v0.2) RN-CAT-09: la caja baja aunque no sea unidad de venta. */
+    usoTraslado: bool('uso_traslado').notNull().default(false),
+    predeterminadaTraslado: bool('predeterminada_traslado').notNull().default(false),
   },
   (t) => [primaryKey({ columns: [t.productoId, t.unidadId] })],
 );
@@ -58,6 +63,8 @@ export const clientes = sqliteTable('clientes', {
   esGenerico: bool('es_generico').notNull(),
   activo: bool('activo').notNull(),
   versionSync: integer('version_sync').notNull(),
+  /** (v0.2) RN-VEN-14. */
+  grupoClienteId: text('grupo_cliente_id'),
 });
 
 export const rutasClientes = sqliteTable('rutas_clientes', {
@@ -114,6 +121,8 @@ export const pedidos = sqliteTable('pedidos', {
   envioId: text('envio_id'),
   envioFolio: text('envio_folio'),
   versionSync: integer('version_sync').notNull(),
+  /** (v0.2) RN-VEN-16: pedido global de la ruta. */
+  esRuta: bool('es_ruta').notNull().default(false),
 });
 
 export const pedidosPartidas = sqliteTable(
@@ -129,6 +138,8 @@ export const pedidosPartidas = sqliteTable(
     tasaIva: real('tasa_iva').notNull(),
     tasaIeps: real('tasa_ieps'),
     cantidadEntregadaBase: real('cantidad_entregada_base').notNull(),
+    /** (v0.2) RN-VEN-17: `CambioFisico` va a precio 0 y se entrega con un retorno. */
+    tipo: text('tipo', { enum: ['Venta', 'CambioFisico'] }).notNull().default('Venta'),
   },
   (t) => [index('ix_pedidos_partidas_pedido').on(t.pedidoId)],
 );
@@ -152,6 +163,62 @@ export const parametros = sqliteTable('parametros', {
   clave: text('clave').primaryKey(),
   valor: text('valor').notNull(),
   versionSync: integer('version_sync').notNull(),
+});
+
+// (v0.2)
+
+/** RN-VEN-12: precio especial; gana sobre la lista desde `vigenteDesde`. */
+export const preciosCliente = sqliteTable(
+  'precios_cliente',
+  {
+    clienteId: text('cliente_id').notNull(),
+    productoId: text('producto_id').notNull(),
+    unidadId: text('unidad_id').notNull(),
+    precioUnitario: real('precio_unitario').notNull(),
+    vigenteDesde: text('vigente_desde').notNull(),
+    versionSync: integer('version_sync').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.clienteId, t.productoId, t.unidadId] })],
+);
+
+/** RN-VEN-14: todos los registros activos, también de clientes de otras rutas. */
+export const productosExclusivos = sqliteTable('productos_exclusivos', {
+  id: text('id').primaryKey(),
+  productoId: text('producto_id').notNull(),
+  clienteId: text('cliente_id'),
+  grupoClienteId: text('grupo_cliente_id'),
+  versionSync: integer('version_sync').notNull(),
+});
+
+/** RN-LOG-16: cambios pendientes de los clientes de la ruta. */
+export const cambiosPendientes = sqliteTable('cambios_pendientes', {
+  id: text('id').primaryKey(),
+  clienteId: text('cliente_id').notNull(),
+  productoId: text('producto_id').notNull(),
+  cantidadBase: real('cantidad_base').notNull(),
+  cantidadSaldadaBase: real('cantidad_saldada_base').notNull(),
+  fechaOperativa: text('fecha_operativa').notNull(),
+  versionSync: integer('version_sync').notNull(),
+});
+
+/** RN-APP-09: promedio del cliente por producto (unidad base); se reemplaza completo en cada bajada. */
+export const consumosClientes = sqliteTable(
+  'consumos_clientes',
+  {
+    clienteId: text('cliente_id').notNull(),
+    productoId: text('producto_id').notNull(),
+    promedioBase: real('promedio_base').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.clienteId, t.productoId] })],
+);
+
+/** Canal de la ruta (RN-VEN-16: `pedidoPor`). */
+export const canales = sqliteTable('canales', {
+  id: text('id').primaryKey(),
+  clave: text('clave').notNull(),
+  nombre: text('nombre').notNull(),
+  formatoLiquidacion: text('formato_liquidacion').notNull(),
+  pedidoPor: text('pedido_por', { enum: ['Cliente', 'Ruta'] }).notNull(),
 });
 
 // ───────────────────────────── Propias de la app ─────────────────────────────
@@ -226,6 +293,55 @@ export const retornosLocales = sqliteTable('retornos_locales', {
   cantidadBase: real('cantidad_base').notNull(),
   condicion: text('condicion', { enum: ['Vendible', 'NoVendible'] }).notNull(),
   motivoMermaId: text('motivo_merma_id'),
+  fechaOperativa: text('fecha_operativa').notNull(),
+  creadaEn: text('creada_en').notNull(),
+});
+
+/**
+ * (v0.2) Pedidos capturados en la app. Un `Borrador` solo vive en el teléfono (RN-APP-11); al enviarlo se encola
+ * `CapturarPedido` y ya no se edita. `Rechazado` cuando el servidor rechaza la operación.
+ */
+export const pedidosLocales = sqliteTable('pedidos_locales', {
+  id: text('id').primaryKey(),
+  clienteId: text('cliente_id').notNull(),
+  fechaEntrega: text('fecha_entrega').notNull(),
+  ordenCompraCliente: text('orden_compra_cliente'),
+  notas: text('notas'),
+  esRuta: bool('es_ruta').notNull(),
+  estado: text('estado', { enum: ['Borrador', 'Enviado', 'Rechazado'] }).notNull(),
+  creadoEn: text('creado_en').notNull(),
+  enviadoEn: text('enviado_en'),
+});
+
+export const pedidosLocalesPartidas = sqliteTable(
+  'pedidos_locales_partidas',
+  {
+    id: text('id').primaryKey(),
+    pedidoId: text('pedido_id').notNull(),
+    productoId: text('producto_id').notNull(),
+    unidadId: text('unidad_id').notNull(),
+    unidadClave: text('unidad_clave').notNull(),
+    descripcion: text('descripcion').notNull(),
+    cantidad: real('cantidad').notNull(),
+    cantidadBase: real('cantidad_base').notNull(),
+    tipo: text('tipo', { enum: ['Venta', 'CambioFisico'] }).notNull(),
+    notas: text('notas'),
+  },
+  (t) => [index('ix_pedidos_locales_partidas_pedido').on(t.pedidoId)],
+);
+
+/** (v0.2) Una fila por partida de cambio físico (para inventario de camioneta y "Cambios entregados"). */
+export const cambiosLocales = sqliteTable('cambios_locales', {
+  id: text('id').primaryKey(),
+  retornoId: text('retorno_id').notNull(),
+  folio: text('folio').notNull(),
+  clienteId: text('cliente_id').notNull(),
+  productoId: text('producto_id').notNull(),
+  cantidadBase: real('cantidad_base').notNull(),
+  sentido: text('sentido', { enum: ['Retirado', 'Entregado'] }).notNull(),
+  condicion: text('condicion', { enum: ['Vendible', 'NoVendible'] }).notNull(),
+  motivoMermaId: text('motivo_merma_id'),
+  cambioPendienteId: text('cambio_pendiente_id'),
   fechaOperativa: text('fecha_operativa').notNull(),
   creadaEn: text('creada_en').notNull(),
 });

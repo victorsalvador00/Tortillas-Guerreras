@@ -7,6 +7,7 @@
  */
 import type { ProductoSyncTasaIeps } from './productoSyncTasaIeps';
 import type { ConversionSync } from './conversionSync';
+import type { ProductoSyncNombreCorto } from './productoSyncNombreCorto';
 
 export interface ProductoSync {
   id: string;
@@ -22,4 +23,5 @@ export interface ProductoSync {
   activo: boolean;
   versionSync: number;
   conversiones: ConversionSync[];
+  nombreCorto?: ProductoSyncNombreCorto;
 }

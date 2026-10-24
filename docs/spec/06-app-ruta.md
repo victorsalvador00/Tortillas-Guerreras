@@ -95,3 +95,32 @@ de Drizzle; los datos existentes se conservan.
 - Motor de sync puro en `src/sync/motor.ts` (probado con Vitest): push en lotes ≤ 200 por secuencia, reintentos 1-2-4 s ante red/5xx, rechazos visibles sin reintento, pull con `cursor`/`hayMas`, `ReportarEstado` al final de cada sincronización y `GET /sync/dispositivo` la primera vez (RN-SYN-08).
 - `ReportarEstado` se envía en un lote propio (no se guarda en `operaciones_pendientes`) y consume un número de `secuencia`.
 - Las actualizaciones OTA se revisan solo al abrir la app, antes de mostrar pantallas (RN-APP-08).
+
+## Implementación v0.2 (T-8.12)
+
+- Migración Drizzle `0002_v02`: tablas espejo `precios_cliente`, `productos_exclusivos`, `cambios_pendientes`,
+  `consumos_clientes`, `canales`; propias `pedidos_locales` + `pedidos_locales_partidas` y `cambios_locales`; columnas
+  `productos.nombre_corto`, `productos_unidades.uso_traslado/predeterminada_traslado`, `clientes.grupo_cliente_id`,
+  `pedidos.es_ruta`, `pedidos_partidas.tipo`. Al final pone `cursor_sync = 0`: la siguiente sincronización baja todo y
+  llena las columnas nuevas sin tocar la cola ni el consecutivo.
+- Bajada: `consumosClientes` y `canales` viajan completos y se reemplazan; los productos traen además la conversión de
+  traslado (aunque no sea de venta) para el desglose en cajas. La app manda `rutaId`; con `rutaCambiada` borra las
+  colecciones de la ruta (clientes, asignaciones, precios, especiales, cargas, pedidos, saldos, cambios pendientes,
+  consumos, canal) y repite la bajada desde 0. Si el servidor responde `ruta = null`, Mi día muestra "No tienes ruta
+  asignada hoy".
+- Reglas puras en `src/dominio/pedidos.ts` (probadas con Vitest): `precioVigente` (RN-VEN-12), `productoPermitido`
+  (RN-VEN-14), `siguienteDiaVisita` (RN-VEN-15, [SUP-31]), `alertasCantidad` (RN-APP-09: compara en unidad base
+  contra `factor × promedio` y la cantidad capturada contra el tope) y `pendientesCambio` (RN-LOG-16).
+- RN-APP-09 se revisa al confirmar el documento (venta, entrega, pedido o cambio): con alertas, el primer toque las
+  muestra y el segundo confirma; cambiar una cantidad vuelve a pedirlo. Pedidos: **Enviar** muestra primero el resumen
+  con las cantidades en grande y su equivalente en cajas.
+- Un pedido `Rechazado` se marca cuando el servidor rechaza su `CapturarPedido`; los enviados se borran con la
+  retención local (RN-APP-05).
+- El inventario de camioneta suma como devuelto lo retirado **vendible** en un cambio físico (RN-LOG-15: entra al
+  almacén de la ruta) y resta lo entregado (columna "Cambios").
+- "Pedido de la ruta" aparece en Mi día solo si el canal de la ruta es `pedido_por = Ruta`; usa el cliente genérico.
+  El cambio físico no se ofrece al genérico (`LOG-019`). Las partidas `CambioFisico` de un pedido no aparecen en
+  Entregar pedido (se entregan con Cambio físico, RN-VEN-17).
+- Los criterios en modo avión se cubren con el motor (`motor.test.ts`, cambio de ruta R51→R52) y con integración del
+  servidor (`SincronizacionTests`: 3 pedidos `Capturado` de origen App + un cambio pendiente en un lote); falta
+  probarlos en un teléfono real.

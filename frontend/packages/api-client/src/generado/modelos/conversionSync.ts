@@ -13,4 +13,6 @@ export interface ConversionSync {
   decimales: number;
   usoVenta: boolean;
   predeterminadaVenta: boolean;
+  usoTraslado?: boolean;
+  predeterminadaTraslado?: boolean;
 }

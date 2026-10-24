@@ -37,8 +37,9 @@ Devuelve cambios con `version_sync > desde` de las colecciones del alcance del d
 | **(v0.2)** preciosCliente | precios especiales de los clientes de la ruta; los desactivados llegan con `activo = false` (la app los borra); un cliente recién asignado baja completo |
 | **(v0.2)** productosExclusivos | **todos** los registros activos, también de clientes ajenos a la ruta (sin ellos la app no puede ocultar el producto a los demás); los desactivados van en `eliminados.productosExclusivos` |
 | **(v0.2)** cambios_pendientes | `Pendiente` de clientes de la ruta |
-| **(v0.2)** consumos_clientes | `IVentasService.ConsumosPromedioAsync` con las últimas `ruta.consumo_promedio_visitas` (8) ventas/entregas por cliente y producto (RN-APP-09); completo, no incremental |
-| **(v0.2)** canales | `formato_liquidacion`, `pedido_por` del canal de la ruta |
+| **(v0.2)** consumos_clientes | `IConsultasSyncVentas.ConsumosPromedioAsync` con las últimas `ruta.consumo_promedio_visitas` (8) ventas/entregas por cliente y producto (RN-APP-09); completo, no incremental. Forma: `consumosClientes: [{ clienteId, productoId, promedioBase }]` (unidad base) |
+| **(v0.2)** canales | `formato_liquidacion`, `pedido_por` del canal de la ruta; completo. Forma: `canales: [{ id, clave, nombre, formatoLiquidacion, pedidoPor }]` |
+| **(v0.2)** productos | además `nombreCorto` y, en `conversiones`, la unidad de traslado (`usoTraslado`, `predeterminadaTraslado`) aunque no sea de venta (RN-CAT-09) |
 
 ```json
 {

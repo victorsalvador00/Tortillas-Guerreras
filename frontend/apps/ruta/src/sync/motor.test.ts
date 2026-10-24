@@ -16,6 +16,7 @@ class AlmacenMemoria implements AlmacenSync {
   async aplicarCambios(r: RespuestaPull) {
     this.aplicados.push(r);
     this.estado.cursor = r.cursor;
+    if (r.ruta) this.estado.rutaId = r.ruta.id;
     this.estado.ultimoSync = r.fechaServidor;
   }
   async operacionesPorEnviar() {
@@ -212,11 +213,33 @@ describe('motor de sincronización', () => {
     const r = await crearMotor(almacen, servidor).sincronizar();
     expect(servidor.consultasPull).toEqual([
       '/api/v1/sync/pull?desde=0&limite=500',
-      '/api/v1/sync/pull?desde=500&limite=500',
-      '/api/v1/sync/pull?desde=900&limite=500',
+      '/api/v1/sync/pull?desde=500&limite=500&rutaId=r',
+      '/api/v1/sync/pull?desde=900&limite=500&rutaId=r',
     ]);
     expect(almacen.estado.cursor).toBe(950);
     expect(r.cambiosRecibidos).toBe(6);
+  });
+
+  it('Criterio 06 v0.2 / RN-SYN-09: si la carga es de otra ruta, sube lo de ayer y baja todo de la ruta nueva', async () => {
+    const almacen = new AlmacenMemoria();
+    almacen.estado.cursor = 700;
+    almacen.estado.rutaId = 'r51';
+    almacen.agregar(2);
+    const servidor = new ServidorFalso();
+    const r52 = { id: 'r52', codigo: 'R52', nombre: 'Ruta 52', almacenId: 'a52' };
+    servidor.paginas = [
+      { ...pagina(0, false), ruta: r52, rutaCambiada: true },
+      { ...pagina(800, false, 4), ruta: r52, rutaCambiada: true },
+    ];
+    const r = await crearMotor(almacen, servidor).sincronizar();
+    expect(servidor.lotes[0].operaciones).toHaveLength(2);
+    expect(servidor.consultasPull).toEqual([
+      '/api/v1/sync/pull?desde=700&limite=500&rutaId=r51',
+      '/api/v1/sync/pull?desde=0&limite=500&rutaId=r52',
+    ]);
+    expect(almacen.estado.cursor).toBe(800);
+    expect(r.cambiosRecibidos).toBe(4);
+    expect(r.pendientes).toBe(0);
   });
 
   it('RN-SYN-08: al reinstalar toma el último consecutivo del servidor', async () => {

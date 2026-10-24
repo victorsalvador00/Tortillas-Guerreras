@@ -1097,4 +1097,33 @@ public sealed class ConsultasSyncVentas(VentasDbContext db) : IConsultasSyncVent
             .ToDictionaryAsync(x => x.Key, x => x.Total, ct);
         return clienteIds.Distinct().ToDictionary(id => id, id => ventas.GetValueOrDefault(id) - cobros.GetValueOrDefault(id));
     }
+
+    private sealed record FilaConsumo(Guid ClienteId, Guid ProductoId, decimal PromedioBase, int Visitas);
+
+    public async Task<IReadOnlyList<ConsumoClienteInfo>> ConsumosPromedioAsync(IReadOnlyCollection<Guid> clienteIds, int visitas,
+        CancellationToken ct)
+    {
+        if (clienteIds.Count == 0 || visitas <= 0)
+        {
+            return [];
+        }
+
+        var ids = clienteIds.Distinct().ToArray();
+        // Cantidad por venta y producto; se numeran de la más reciente a la más antigua y se promedian las primeras N.
+        var filas = await db.Database.SqlQuery<FilaConsumo>($"""
+            SELECT cliente_id, producto_id, round(avg(cantidad), 4) AS promedio_base, count(*)::int AS visitas
+            FROM (
+                SELECT v.cliente_id, p.producto_id, sum(p.cantidad_base) AS cantidad,
+                       row_number() OVER (PARTITION BY v.cliente_id, p.producto_id
+                                          ORDER BY v.fecha_operativa DESC, v.fecha_hora_servidor DESC) AS n
+                FROM ventas.ventas v
+                JOIN ventas.ventas_partidas p ON p.venta_id = v.id
+                WHERE v.estado = 'Registrada' AND v.cliente_id = ANY({ids})
+                GROUP BY v.id, v.cliente_id, p.producto_id, v.fecha_operativa, v.fecha_hora_servidor
+            ) x
+            WHERE n <= {visitas}
+            GROUP BY cliente_id, producto_id
+            """).ToListAsync(ct);
+        return filas.Select(f => new ConsumoClienteInfo(f.ClienteId, f.ProductoId, f.PromedioBase, f.Visitas)).ToList();
+    }
 }

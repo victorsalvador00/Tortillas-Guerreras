@@ -70,7 +70,8 @@ Clientes, precios, pedidos y ventas (en ruta desde la app o desde la web).
 
 **Público para otros módulos (v0.2):** `IVentasService` agrega `DemandaPorFechaEntregaAsync(fecha, canalId?)`
 (partidas por ruta y producto, con tipo), `GuardarPedidoRutaAsync` (RN-VEN-16, para la cuadrícula del estimado) y
-`ConfirmarPedidosAsync(ids)`, que consume Producción (RN-PRO-11/13); `ConsumosPromedioAsync(clienteIds, n)`
+`ConfirmarPedidosAsync(ids)`, que consume Producción (RN-PRO-11/13); `ConsumosPromedioAsync(clienteIds, n)` (en
+`IConsultasSyncVentas`, junto a las demás consultas de la bajada)
 (promedio por cliente y producto de las últimas `ruta.consumo_promedio_visitas` ventas/entregas, para la bajada
 `consumos_clientes`, RN-APP-09), que consume Sincronización; y `CrearClienteGenericoAsync(ruta, canalId)`.
 El historial de un pedido se consulta en `/seguridad/bitacora?documentoId=` (RN-SEG-07).

@@ -53,12 +53,17 @@ export interface EstadoSyncLocal {
   consecutivoFolio: number;
   /** Ya se consultó `GET /sync/dispositivo` en esta instalación. */
   consecutivoVerificado: boolean;
+  /** Ruta que tiene la base local; el servidor avisa `rutaCambiada` si ya no es la del alcance (RN-SYN-09). */
+  rutaId?: string | null;
 }
 
 /** Almacenamiento local que usa el motor (implementado sobre SQLite + Drizzle en la app). */
 export interface AlmacenSync {
   leerEstado(): Promise<EstadoSyncLocal>;
-  /** Aplica la página de cambios y guarda el cursor en una sola transacción local. */
+  /**
+   * Aplica la página de cambios y guarda el cursor en una sola transacción local. Con `rutaCambiada` borra antes las
+   * colecciones de la ruta anterior (la cola y el consecutivo se conservan).
+   */
   aplicarCambios(respuesta: RespuestaPull): Promise<void>;
   /** Operaciones por enviar (Pendiente o Enviando sin respuesta), ordenadas por secuencia. */
   operacionesPorEnviar(): Promise<OperacionLocal[]>;

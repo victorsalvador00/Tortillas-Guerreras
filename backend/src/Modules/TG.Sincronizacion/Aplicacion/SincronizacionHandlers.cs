@@ -70,6 +70,7 @@ public sealed class PullHandler(
     ICatalogosService catalogos,
     ILogisticaService logistica,
     IConsultasSyncVentas ventas,
+    IVentasService ventasService,
     IFechaOperativa fechaOperativa,
     TimeProvider reloj)
 {
@@ -120,9 +121,10 @@ public sealed class PullHandler(
 
             productos.Add(new ProductoSync(p.Id, p.Sku, p.Nombre, p.Tipo, p.UnidadBaseId, p.UnidadBaseClave, p.UnidadBaseDecimales,
                 p.ManejaLote, p.TasaIva, p.TasaIeps, p.Activo, p.VersionSync,
-                p.Conversiones.Where(c => c.UsoVenta)
-                    .Select(c => new ConversionSync(c.UnidadId, c.UnidadClave, c.FactorABase, c.Decimales, c.UsoVenta, c.PredeterminadaVenta))
-                    .ToList()));
+                p.Conversiones.Where(c => c.UsoVenta || c.UsoTraslado)
+                    .Select(c => new ConversionSync(c.UnidadId, c.UnidadClave, c.FactorABase, c.Decimales, c.UsoVenta, c.PredeterminadaVenta,
+                        c.UsoTraslado, c.PredeterminadaTraslado))
+                    .ToList(), p.NombreCorto));
         }
 
         // Motivos y parámetros de ruta.
@@ -157,6 +159,8 @@ public sealed class PullHandler(
         var saldos = new List<SaldoClienteSync>();
         var preciosCliente = new List<PrecioClienteSync>();
         var cambiosPendientes = new List<CambioPendienteSync>();
+        var consumos = new List<ConsumoClienteSync>();
+        var canales = new List<CanalSync>();
 
         // RN-VEN-14: todos los registros (también de clientes fuera de la ruta) para ocultar el producto a los demás.
         var exclusivos = new List<ProductoExclusivoSync>();
@@ -274,10 +278,23 @@ public sealed class PullHandler(
             // Saldos de crédito: siempre completos [SUP-08].
             var saldosServidor = await ventas.SaldosClientesAsync(activos, ct);
             saldos.AddRange(saldosServidor.Select(s => new SaldoClienteSync(s.Key, s.Value)));
+
+            // RN-APP-09: consumo promedio, completo en cada bajada.
+            var visitas = await catalogos.ObtenerParametroAsync(ClavesParametro.ConsumoPromedioVisitas, 8, ct);
+            consumos.AddRange((await ventas.ConsumosPromedioAsync(activos, visitas, ct))
+                .Select(x => new ConsumoClienteSync(x.ClienteId, x.ProductoId, x.PromedioBase)));
+
+            // Canal de la ruta: decide pedido por cliente o de la ruta (RN-VEN-16).
+            var canal = (await ventasService.ListarCanalesAsync(ct)).FirstOrDefault(c => c.Id == ruta.CanalId);
+            if (canal is not null)
+            {
+                canales.Add(new CanalSync(canal.Id, canal.Clave, canal.Nombre, canal.FormatoLiquidacion.ToString(), canal.PedidoPor.ToString()));
+            }
         }
 
         var cambios = new CambiosSync(productos, clientes, rutasClientes, precios, envios, pedidos, saldos, motivos, parametros,
-            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value), preciosCliente, exclusivos, cambiosPendientes);
+            eliminados.ToDictionary(e => e.Key, e => (IReadOnlyList<Guid>)e.Value), preciosCliente, exclusivos, cambiosPendientes,
+            consumos, canales);
         return new RespuestaPull(maximo, false, reloj.GetUtcNow(),
             ruta is null ? null : new RutaSync(ruta.Id, ruta.Codigo, ruta.Nombre, ruta.AlmacenId), cambios, rutaCambiada);
     }

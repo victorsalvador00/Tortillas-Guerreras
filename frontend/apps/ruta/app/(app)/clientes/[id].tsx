@@ -1,4 +1,4 @@
-import { aCentavos, formatoCentavos, formatoFecha, formatoFechaHora } from '@tg/shared';
+import { aCentavos, formatoCantidad, formatoCentavos, formatoFecha, formatoFechaHora } from '@tg/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, View } from 'react-native';
@@ -10,7 +10,10 @@ import { useSync } from '@/servicios/sincronizacion';
 import { Aviso, Boton, Campo, Etiqueta, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
 import { useDatos } from '@/ui/useDatos';
 
-/** Cliente: datos, saldo [SUP-08], pedidos pendientes, historial y acciones (venta, entrega, retorno, cobro). */
+/**
+ * Cliente: datos, saldo [SUP-08], pedidos pendientes, cambios pendientes (RN-LOG-16), historial y acciones (venta,
+ * pedido, cambio físico, entrega, retorno, cobro).
+ */
 export default function Cliente() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { notificarCambio } = useSync();
@@ -88,6 +91,16 @@ export default function Cliente() {
       </Tarjeta>
 
       <Boton texto="Nueva venta" icono="add-shopping-cart" grande alPresionar={() => router.push(`/venta/${c.id}`)} />
+      <View style={estilos.fila}>
+        <View style={{ flex: 1 }}>
+          <Boton texto="Nuevo pedido" icono="playlist-add" variante="secundario" alPresionar={() => router.push(`/pedido/${c.id}`)} />
+        </View>
+        {!c.esGenerico && (
+          <View style={{ flex: 1 }}>
+            <Boton texto="Cambio físico" icono="swap-horiz" variante="secundario" alPresionar={() => router.push(`/cambio/${c.id}`)} />
+          </View>
+        )}
+      </View>
       <Boton texto="Retorno" icono="assignment-return" variante="secundario" alPresionar={() => router.push(`/retorno/${c.id}`)} />
       {c.condicionPago === 'Credito' && !cobrando && (
         <Boton texto="Registrar cobro" icono="request-quote" variante="secundario" alPresionar={() => setCobrando(true)} />
@@ -105,6 +118,26 @@ export default function Cliente() {
           />
           <Boton texto="Guardar cobro" alPresionar={cobrar} />
           <Boton texto="Cancelar" variante="texto" alPresionar={() => setCobrando(false)} />
+        </Tarjeta>
+      )}
+
+      {c.cambiosPendientes.length > 0 && (
+        <Tarjeta titulo="Cambios pendientes">
+          {c.cambiosPendientes.map((p) => (
+            <View key={p.id} style={estilos.filaEntre}>
+              <View style={{ flex: 1 }}>
+                <Texto negrita>{p.nombre}</Texto>
+                <Texto suave>
+                  {formatoCantidad(p.restante, 3)} {p.unidad} · desde {formatoFecha(p.fechaOperativa)}
+                </Texto>
+              </View>
+              <Boton
+                texto="Entregar"
+                variante="secundario"
+                alPresionar={() => router.push({ pathname: '/cambio/[clienteId]', params: { clienteId: c.id, pendienteId: p.id } })}
+              />
+            </View>
+          ))}
         </Tarjeta>
       )}
 

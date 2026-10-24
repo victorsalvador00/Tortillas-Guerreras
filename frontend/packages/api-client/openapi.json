@@ -9037,6 +9037,24 @@
             "items": {
               "$ref": "#/components/schemas/CambioPendienteSync"
             }
+          },
+          "consumosClientes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ConsumoClienteSync"
+            }
+          },
+          "canales": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CanalSync"
+            }
           }
         }
       },
@@ -9082,6 +9100,34 @@
           },
           "activo": {
             "type": "boolean"
+          }
+        }
+      },
+      "CanalSync": {
+        "required": [
+          "id",
+          "clave",
+          "nombre",
+          "formatoLiquidacion",
+          "pedidoPor"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "formatoLiquidacion": {
+            "type": "string"
+          },
+          "pedidoPor": {
+            "type": "string"
           }
         }
       },
@@ -10220,6 +10266,28 @@
           "NoVendible"
         ]
       },
+      "ConsumoClienteSync": {
+        "required": [
+          "clienteId",
+          "productoId",
+          "promedioBase"
+        ],
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "promedioBase": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "ConsumoDto": {
         "required": [
           "id",
@@ -10611,6 +10679,14 @@
           },
           "predeterminadaVenta": {
             "type": "boolean"
+          },
+          "usoTraslado": {
+            "type": "boolean",
+            "default": false
+          },
+          "predeterminadaTraslado": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -17006,6 +17082,12 @@
             "items": {
               "$ref": "#/components/schemas/ConversionSync"
             }
+          },
+          "nombreCorto": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

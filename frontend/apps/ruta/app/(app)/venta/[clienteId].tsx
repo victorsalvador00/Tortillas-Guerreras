@@ -1,27 +1,34 @@
-import { formatoCantidad, formatoCentavos } from '@tg/shared';
+import { fechaOperativa, formatoCantidad, formatoCentavos } from '@tg/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { cliente, parametro, productosParaVenta } from '@/db/consultas';
-import { confirmarVenta, type PartidaVentaApp } from '@/db/operaciones';
+import { cliente, parametro, productosParaVenta, referenciaCantidades } from '@/db/consultas';
+import { confirmarVenta, type FormaPagoApp, type PartidaVentaApp } from '@/db/operaciones';
 import { calcularVenta, validarExistencia } from '@/dominio/ventas';
 import { leerGps } from '@/servicios/gps';
 import { useSync } from '@/servicios/sincronizacion';
-import { Aviso, Boton, Campo, Cantidad, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
+import { AvisoCantidades, useCantidadesConfiables } from '@/ui/cantidades';
+import { Aviso, Boton, Campo, Cantidad, Etiqueta, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
 import { useDatos } from '@/ui/useDatos';
 
-type FormaPago = 'Efectivo' | 'Transferencia' | 'Credito';
+type FormaPago = FormaPagoApp;
 
 /**
- * Nueva venta: productos con existencia de la camioneta, cantidad, precio de lista, total en centavos (RN-APP-06) y
- * forma de pago. Confirmar toma el GPS (máx. 10 s, RN-APP-03) y guarda todo en una transacción (RN-APP-01).
+ * Nueva venta: productos con existencia de la camioneta, cantidad, precio (especial del cliente o de lista, RN-VEN-12),
+ * total en centavos (RN-APP-06) y forma de pago. Los exclusivos de otros clientes no aparecen (RN-VEN-14). Confirmar
+ * revisa cantidades (RN-APP-09), toma el GPS (máx. 10 s, RN-APP-03) y guarda todo en una transacción (RN-APP-01).
  */
 export default function NuevaVenta() {
   const { clienteId } = useLocalSearchParams<{ clienteId: string }>();
   const { notificarCambio, sincronizar } = useSync();
   const datos = useDatos(() => {
     const c = cliente(clienteId);
-    return { cliente: c, productos: c ? productosParaVenta(c.listaPrecioId) : [], permiteNegativo: parametro('ruta.permite_existencia_negativa', true) };
+    return {
+      cliente: c,
+      productos: c ? productosParaVenta(c, fechaOperativa()) : [],
+      permiteNegativo: parametro('ruta.permite_existencia_negativa', true),
+      referencia: referenciaCantidades(clienteId),
+    };
   });
   const c = datos.cliente;
   const [cantidades, setCantidades] = useState<Record<string, number>>({});
@@ -48,6 +55,7 @@ export default function NuevaVenta() {
     [datos.productos, cantidades, unidades],
   );
   const venta = calcularVenta(partidas);
+  const cantidadesConfiables = useCantidadesConfiables(partidas, datos.referencia);
   const existencias = useMemo(() => new Map(datos.productos.map((p) => [p.productoId, p.existencia])), [datos.productos]);
   const validacion = validarExistencia(venta.partidas, existencias, datos.permiteNegativo);
   const nombre = (id: string) => datos.productos.find((p) => p.productoId === id)?.nombre ?? '';
@@ -75,6 +83,7 @@ export default function NuevaVenta() {
       setConfirmandoFaltante(true);
       return;
     }
+    if (!cantidadesConfiables.revisar()) return;
     setGuardando(true);
     try {
       const gps = await leerGps();
@@ -112,9 +121,16 @@ export default function NuevaVenta() {
               Toca de nuevo para confirmar.
             </Aviso>
           )}
+          {cantidadesConfiables.pendiente && <AvisoCantidades alertas={cantidadesConfiables.alertas} />}
           {error && <Aviso tipo="rojo">{error}</Aviso>}
           <Boton
-            texto={guardando ? 'Tomando ubicación…' : confirmandoFaltante ? 'Confirmar de todos modos' : 'Confirmar venta'}
+            texto={
+              guardando
+                ? 'Tomando ubicación…'
+                : confirmandoFaltante || cantidadesConfiables.pendiente
+                  ? 'Confirmar de todos modos'
+                  : 'Confirmar venta'
+            }
             icono="check-circle"
             grande
             cargando={guardando}
@@ -132,6 +148,7 @@ export default function NuevaVenta() {
           opciones={[
             { valor: 'Efectivo', texto: 'Efectivo' },
             { valor: 'Transferencia', texto: 'Transferencia' },
+            { valor: 'Cheque', texto: 'Cheque' },
             ...(c.condicionPago === 'Credito' ? [{ valor: 'Credito' as const, texto: 'Crédito' }] : []),
           ]}
           valor={forma}
@@ -149,11 +166,12 @@ export default function NuevaVenta() {
           <Tarjeta key={p.productoId}>
             <View style={estilos.filaEntre}>
               <View style={{ flex: 1 }}>
-                <Texto negrita>{p.nombre}</Texto>
+                <Texto negrita>{p.nombreCorto}</Texto>
                 <Texto suave>
                   {formatoCentavos(Math.round((u.precio ?? 0) * 100))} / {u.clave} · hay {formatoCantidad(p.existencia, 3)} {p.unidadBase}
                 </Texto>
               </View>
+              {u.especial && <Etiqueta texto="Precio especial" color="verde" />}
             </View>
             {p.unidades.length > 1 && (
               <Opciones
@@ -167,6 +185,7 @@ export default function NuevaVenta() {
               decimales={u.decimales}
               alCambiar={(v) => {
                 setConfirmandoFaltante(false);
+                cantidadesConfiables.reiniciar();
                 setCantidades((s) => ({ ...s, [p.productoId]: v }));
               }}
             />

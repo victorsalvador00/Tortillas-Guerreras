@@ -18,6 +18,8 @@ import type { CambiosSyncEliminados } from './cambiosSyncEliminados';
 import type { CambiosSyncPreciosCliente } from './cambiosSyncPreciosCliente';
 import type { CambiosSyncProductosExclusivos } from './cambiosSyncProductosExclusivos';
 import type { CambiosSyncCambiosPendientes } from './cambiosSyncCambiosPendientes';
+import type { CambiosSyncConsumosClientes } from './cambiosSyncConsumosClientes';
+import type { CambiosSyncCanales } from './cambiosSyncCanales';
 
 export interface CambiosSync {
   productos: ProductoSync[];
@@ -33,4 +35,6 @@ export interface CambiosSync {
   preciosCliente?: CambiosSyncPreciosCliente;
   productosExclusivos?: CambiosSyncProductosExclusivos;
   cambiosPendientes?: CambiosSyncCambiosPendientes;
+  consumosClientes?: CambiosSyncConsumosClientes;
+  canales?: CambiosSyncCanales;
 }

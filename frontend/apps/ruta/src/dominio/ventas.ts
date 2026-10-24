@@ -71,28 +71,37 @@ export interface RetornoCamioneta extends MovimientoCamioneta {
   tipo: 'DevolucionCliente' | 'RechazoEntrega';
 }
 
+export interface CambioCamioneta extends MovimientoCamioneta {
+  sentido: 'Retirado' | 'Entregado';
+  condicion: 'Vendible' | 'NoVendible';
+}
+
 export interface LineaInventario {
   productoId: string;
   cargado: number;
   vendido: number;
   devuelto: number;
+  /** (v0.2) Entregado a cambio en cambios físicos. */
+  cambios: number;
   existencia: number;
 }
 
 /**
- * Inventario de camioneta local (06): carga recibida − ventas locales + retornos vendibles locales. Lo no vendible
- * sale como merma en el servidor (RN-LOG-04) y un rechazo de entrega no movió producto (RN-LOG-05).
+ * Inventario de camioneta local (06): carga recibida − ventas locales + retornos vendibles locales − cambios
+ * entregados. Lo no vendible sale como merma en el servidor (RN-LOG-04) y un rechazo de entrega no movió producto
+ * (RN-LOG-05). Lo retirado vendible en un cambio físico vuelve a la camioneta como una devolución (RN-LOG-15).
  */
 export function inventarioCamioneta(
   cargas: MovimientoCamioneta[],
   ventas: MovimientoCamioneta[],
   retornos: RetornoCamioneta[],
+  cambios: CambioCamioneta[] = [],
 ): Map<string, LineaInventario> {
   const lineas = new Map<string, LineaInventario>();
   const linea = (id: string) => {
     let l = lineas.get(id);
     if (!l) {
-      l = { productoId: id, cargado: 0, vendido: 0, devuelto: 0, existencia: 0 };
+      l = { productoId: id, cargado: 0, vendido: 0, devuelto: 0, cambios: 0, existencia: 0 };
       lineas.set(id, l);
     }
     return l;
@@ -105,7 +114,11 @@ export function inventarioCamioneta(
       linea(r.productoId).devuelto = r4(linea(r.productoId).devuelto + r.cantidadBase);
     }
   }
-  for (const l of lineas.values()) l.existencia = r4(l.cargado - l.vendido + l.devuelto);
+  for (const c of cambios) {
+    if (c.sentido === 'Entregado') linea(c.productoId).cambios = r4(linea(c.productoId).cambios + c.cantidadBase);
+    else if (c.condicion === 'Vendible') linea(c.productoId).devuelto = r4(linea(c.productoId).devuelto + c.cantidadBase);
+  }
+  for (const l of lineas.values()) l.existencia = r4(l.cargado - l.vendido + l.devuelto - l.cambios);
   return lineas;
 }
 

@@ -1,3 +1,4 @@
+import { fechaOperativa } from '@tg/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -25,7 +26,7 @@ export default function Retorno() {
   const { notificarCambio, sincronizar } = useSync();
   const datos = useDatos(() => {
     const c = cliente(clienteId);
-    return { cliente: c, productos: c ? productosParaVenta(c.listaPrecioId) : [], motivos: motivos('retorno') };
+    return { cliente: c, productos: c ? productosParaVenta(c, fechaOperativa()) : [], motivos: motivos('retorno') };
   });
   const c = datos.cliente;
   const [tipo, setTipo] = useState<'DevolucionCliente' | 'RechazoEntrega'>('DevolucionCliente');

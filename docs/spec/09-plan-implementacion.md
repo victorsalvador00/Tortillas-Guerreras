@@ -159,7 +159,7 @@ regenerado (definición de terminado).
 - [x] **T-8.11 Cobranza a choferes** *(nueva)*. Producto a cobro con sugerencia por antigüedad del lote,
   `cargos_chofer`, `cortes_chofer`, cancelaciones, exportación; pantallas Cuenta de choferes y Corte semanal; pestaña
   Cargos de la liquidación. *Lee:* `logistica.md` (RN-LOG-24 a 30). *Acepta:* RN-LOG-24 a 30.
-- [ ] **T-8.12 App de ruta v0.2** *(ajusta T-5.3, T-5.4)*. Migración Drizzle, colecciones nuevas, alcance por carga y
+- [x] **T-8.12 App de ruta v0.2** *(ajusta T-5.3, T-5.4)*. Migración Drizzle, colecciones nuevas, alcance por carga y
   `rutaCambiada`, pantallas Nuevo pedido / Pedido de la ruta / Pedidos / Cambio físico / cambios pendientes, forma de
   pago Cheque, precios especiales, productos exclusivos, cajas + paquetes, RN-APP-09. *Lee:* 06, 05.
   *Acepta:* RN-APP-09, 11 y criterios v0.2 de 06.

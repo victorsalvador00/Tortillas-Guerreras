@@ -451,6 +451,8 @@ public sealed record PrecioClienteInfo(Guid ClienteId, Guid ProductoId, Guid Uni
 
 public sealed record ProductoExclusivoInfo(Guid Id, Guid ProductoId, Guid? ClienteId, Guid? GrupoClienteId, bool Activo, long VersionSync);
 
+public sealed record ConsumoClienteInfo(Guid ClienteId, Guid ProductoId, decimal PromedioBase, int Visitas);
+
 public interface IConsultasSyncVentas
 {
     /// <summary>RN-VEN-12: precios especiales (activos e inactivos) de los clientes, cambiados después de <paramref name="desde"/>.</summary>
@@ -474,6 +476,12 @@ public interface IConsultasSyncVentas
 
     /// <summary>Saldo de crédito por cliente [SUP-08].</summary>
     Task<IReadOnlyDictionary<Guid, decimal>> SaldosClientesAsync(IReadOnlyCollection<Guid> clienteIds, CancellationToken ct);
+
+    /// <summary>
+    /// RN-APP-09: cantidad promedio (unidad base) por cliente y producto en las últimas <paramref name="visitas"/> ventas o
+    /// entregas registradas que lo incluyen.
+    /// </summary>
+    Task<IReadOnlyList<ConsumoClienteInfo>> ConsumosPromedioAsync(IReadOnlyCollection<Guid> clienteIds, int visitas, CancellationToken ct);
 }
 
 public static class ErroresVentas

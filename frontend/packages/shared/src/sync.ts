@@ -15,6 +15,9 @@ export interface ConversionSync {
   decimales: number;
   usoVenta: boolean;
   predeterminadaVenta: boolean;
+  /** RN-CAT-09: la unidad de traslado (caja) baja aunque no sea de venta. */
+  usoTraslado?: boolean;
+  predeterminadaTraslado?: boolean;
 }
 
 export interface ProductoSync {
@@ -31,6 +34,7 @@ export interface ProductoSync {
   activo: boolean;
   versionSync: number;
   conversiones: ConversionSync[];
+  nombreCorto?: string | null;
 }
 
 export interface ClienteSync {
@@ -176,6 +180,22 @@ export interface CambioPendienteSync {
   versionSync: number;
 }
 
+/** RN-APP-09: promedio en unidad base; viaja completo en cada bajada. */
+export interface ConsumoClienteSync {
+  clienteId: string;
+  productoId: string;
+  promedioBase: number;
+}
+
+/** Canal de la ruta del alcance (RN-VEN-16); viaja completo. */
+export interface CanalSync {
+  id: string;
+  clave: string;
+  nombre: string;
+  formatoLiquidacion: 'Completo' | 'Simplificado';
+  pedidoPor: 'Cliente' | 'Ruta';
+}
+
 export interface CambiosSync {
   productos: ProductoSync[];
   clientes: ClienteSync[];
@@ -191,6 +211,8 @@ export interface CambiosSync {
   productosExclusivos: ProductoExclusivoSync[];
   /** RN-SYN-11: cambios pendientes de los clientes de la ruta (los saldados o cancelados llegan en `eliminados`). */
   cambiosPendientes?: CambioPendienteSync[];
+  consumosClientes?: ConsumoClienteSync[];
+  canales?: CanalSync[];
   /** Ids que la app debe borrar por colección (inactivos o fuera de alcance). `rutasClientes` usa el `clienteId`. */
   eliminados: Partial<Record<'productos' | 'clientes' | 'rutasClientes' | 'envios' | 'pedidos' | 'motivosMerma' | 'productosExclusivos' | 'cambiosPendientes', string[]>>;
 }
@@ -202,6 +224,8 @@ export interface RespuestaPull {
   fechaServidor: string;
   ruta: { id: string; codigo: string; nombre: string; almacenId: string } | null;
   cambios: CambiosSync;
+  /** RN-SYN-09: la ruta del alcance ya no es la que la app tiene; bajar todo de nuevo con `desde = 0`. */
+  rutaCambiada?: boolean;
 }
 
 /** GET /api/v1/sync/dispositivo — al reinstalar recupera el consecutivo de folio (RN-SYN-08). */

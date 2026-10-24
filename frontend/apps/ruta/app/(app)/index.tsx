@@ -1,18 +1,27 @@
 import { fechaOperativa, formatoCentavos, formatoCantidad, formatoFechaHora, formatoFechaLarga } from '@tg/shared';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { estadoDispositivo, resumenDia } from '@/db/consultas';
+import { canalRuta, cargas, clienteGenerico, estadoDispositivo, resumenDia } from '@/db/consultas';
 import { useSesion } from '@/servicios/contextoSesion';
 import { useSync } from '@/servicios/sincronizacion';
 import { Aviso, Boton, Etiqueta, Indicador, Pantalla, Tarjeta, Texto, estilos } from '@/ui/componentes';
 import { useDatos } from '@/ui/useDatos';
 
-/** Mi día: ruta, fecha, carga, totales, efectivo esperado, pendientes y botón Sincronizar (06). */
+/**
+ * Mi día: ruta (la de la carga asignada, RN-SYN-09), cargas del día, totales, efectivo esperado, pedidos por enviar,
+ * cambios entregados, pendientes y botón Sincronizar (06).
+ */
 export default function MiDia() {
   const { perfil, salir } = useSesion();
   const { sincronizar, sincronizando, ultimo, conRed } = useSync();
   const hoy = fechaOperativa();
-  const { resumen, estado } = useDatos(() => ({ resumen: resumenDia(hoy), estado: estadoDispositivo() }));
+  const { resumen, estado, cargasDia, canal, generico } = useDatos(() => ({
+    resumen: resumenDia(hoy),
+    estado: estadoDispositivo(),
+    cargasDia: cargas(),
+    canal: canalRuta(),
+    generico: clienteGenerico(),
+  }));
 
   return (
     <Pantalla alRefrescar={sincronizar} refrescando={sincronizando}>
@@ -31,7 +40,24 @@ export default function MiDia() {
         </View>
       </Tarjeta>
 
-      {!estado.rutaId && <Aviso tipo="amarillo">Sincroniza para descargar tu ruta, clientes, precios y carga del día.</Aviso>}
+      {!estado.rutaId &&
+        (estado.ultimoSync ? (
+          <Aviso tipo="amarillo">No tienes ruta asignada hoy. Pide a tu supervisor que te asigne una carga.</Aviso>
+        ) : (
+          <Aviso tipo="amarillo">Sincroniza para descargar tu ruta, clientes, precios y carga del día.</Aviso>
+        ))}
+      {cargasDia.length > 0 && (
+        <Tarjeta titulo="Cargas">
+          {cargasDia.map((e) => (
+            <View key={e.id} style={estilos.filaEntre}>
+              <Texto>
+                {e.folio} · {e.tipo === 'Recarga' ? 'Recarga' : 'Carga inicial'}
+              </Texto>
+              <Etiqueta texto={e.estado === 'EnRuta' ? 'En ruta' : e.estado} color={e.estado === 'EnRuta' ? 'verde' : 'gris'} />
+            </View>
+          ))}
+        </Tarjeta>
+      )}
       {ultimo?.error && <Aviso tipo={ultimo.requiereLogin ? 'amarillo' : 'rojo'}>{ultimo.error}</Aviso>}
       {resumen.rechazadas > 0 && (
         <Tarjeta alPresionar={() => router.push('/pendientes')}>
@@ -44,6 +70,8 @@ export default function MiDia() {
         <Indicador icono="receipt" valor={String(resumen.ventas)} titulo="Ventas de hoy" />
         <Indicador icono="payments" valor={formatoCentavos(resumen.totalVendido)} titulo="Total vendido" />
         <Indicador icono="account-balance-wallet" valor={formatoCentavos(resumen.efectivoEsperado)} titulo="Efectivo esperado" tono="verde" />
+        <Indicador icono="playlist-add" valor={String(resumen.pedidosPorEnviar)} titulo="Pedidos por enviar" tono={resumen.pedidosPorEnviar ? 'amarillo' : undefined} />
+        <Indicador icono="swap-horiz" valor={String(resumen.cambiosEntregados)} titulo="Cambios entregados" />
       </View>
 
       <Tarjeta titulo="Sincronización" accion={<Etiqueta texto={`${resumen.pendientes} por enviar`} color={resumen.pendientes ? 'amarillo' : 'verde'} />}>
@@ -52,6 +80,15 @@ export default function MiDia() {
       </Tarjeta>
 
       <Boton texto="Clientes de hoy" icono="groups" grande alPresionar={() => router.push('/clientes')} />
+      {canal?.pedidoPor === 'Ruta' && generico && (
+        <Boton
+          texto="Pedido de la ruta"
+          icono="grid-on"
+          variante="secundario"
+          alPresionar={() => router.push({ pathname: '/pedido/[clienteId]', params: { clienteId: generico.id, ruta: '1' } })}
+        />
+      )}
+      <Boton texto="Pedidos" icono="assignment" variante="secundario" alPresionar={() => router.push('/pedidos')} />
       <Boton texto="Inventario de camioneta" icono="inventory" variante="secundario" alPresionar={() => router.push('/inventario')} />
       <Boton texto="Pendientes" icono="pending-actions" variante="secundario" alPresionar={() => router.push('/pendientes')} />
       <Boton texto="Cerrar sesión" variante="texto" alPresionar={salir} />

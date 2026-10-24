@@ -58,7 +58,7 @@ describe('venta en ruta', () => {
         { productoId: 't', cantidadBase: 9, condicion: 'Vendible', tipo: 'RechazoEntrega' },
       ],
     );
-    expect(inv.get('t')).toEqual({ productoId: 't', cargado: 300, vendido: 260, devuelto: 2, existencia: 42 });
+    expect(inv.get('t')).toEqual({ productoId: 't', cargado: 300, vendido: 260, devuelto: 2, cambios: 0, existencia: 42 });
   });
 
   it('RN-APP-02: no permite vender más de la existencia si la ruta no permite negativos', () => {

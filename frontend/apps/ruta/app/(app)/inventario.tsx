@@ -6,7 +6,7 @@ import { Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
 import { useColores } from '@/ui/tema';
 import { useDatos } from '@/ui/useDatos';
 
-/** Inventario de camioneta: cargado, vendido, devuelto y existencia actual por producto (06). */
+/** Inventario de camioneta: cargado, vendido, devuelto, cambios y existencia actual por producto, en cajas + paquetes (06). */
 export default function Inventario() {
   const c = useColores();
   const { sincronizar, sincronizando } = useSync();
@@ -25,10 +25,12 @@ export default function Inventario() {
               {formatoCantidad(l.existencia, 3)} {l.unidad}
             </Texto>
           </View>
+          {l.cajas && <Texto suave>= {l.cajas}</Texto>}
           <View style={estilos.filaEntre}>
             <Texto suave>Cargado {formatoCantidad(l.cargado, 3)}</Texto>
             <Texto suave>Vendido {formatoCantidad(l.vendido, 3)}</Texto>
             <Texto suave>Devuelto {formatoCantidad(l.devuelto, 3)}</Texto>
+            <Texto suave>Cambios {formatoCantidad(l.cambios, 3)}</Texto>
           </View>
         </Tarjeta>
       ))}

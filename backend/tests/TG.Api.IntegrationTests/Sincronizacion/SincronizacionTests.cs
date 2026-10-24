@@ -7,6 +7,8 @@ using TG.Api.IntegrationTests.Infraestructura;
 using TG.Inventario.Infraestructura;
 using TG.Inventario.Publico;
 using TG.SharedKernel.Dominio;
+using TG.Ventas.Infraestructura;
+using TG.Ventas.Publico;
 
 namespace TG.Api.IntegrationTests.Sincronizacion;
 
@@ -379,5 +381,50 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
         var pendiente = pull.Cambios.CambiosPendientes!.ShouldHaveSingleItem();
         pendiente["clienteId"]!.GetValue<Guid>().ShouldBe(cliente.Id);
         pendiente["cantidadBase"]!.GetValue<decimal>().ShouldBe(2m);
+    }
+    [Fact]
+    [Trait("Regla", "RN-SYN-10")]
+    [Trait("Criterio", "06-v0.2-modo-avion")]
+    public async Task Push_TresPedidosYUnCambioFisicoCapturadosSinRed_QuedanCapturadosDeOrigenApp_YUnPendiente()
+    {
+        var s = await SesionAppAsync();
+        var (_, cliente, producto, _) = await DatosRutaAsync(s);
+        var entrega = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2));
+        var pedidoIds = Enumerable.Range(0, 3).Select(_ => Id.Nuevo()).ToList();
+        var operaciones = pedidoIds.Select((pedidoId, i) => (object)new
+        {
+            opId = Id.Nuevo(), secuencia = i + 1, tipo = "CapturarPedido", creadaEn = DateTimeOffset.UtcNow,
+            datos = new
+            {
+                pedidoId, clienteId = cliente.Id, fechaEntrega = entrega, ordenCompraCliente = (string?)null, esRuta = false,
+                notas = (string?)null, gps = (object?)null,
+                partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 2m + i, tipo = "Venta", notas = (string?)null } },
+            },
+        }).Append(new
+        {
+            opId = Id.Nuevo(), secuencia = 4, tipo = "RegistrarRetorno", creadaEn = DateTimeOffset.UtcNow,
+            datos = new
+            {
+                retornoId = Id.Nuevo(), folio = Folio(s, 461), consecutivo = 461, tipo = "CambioFisico",
+                clienteId = cliente.Id, ventaId = (Guid?)null, pedidoId = (Guid?)null,
+                partidas = new object[]
+                {
+                    new { productoId = producto.Id, cantidad = 2m, condicion = "NoVendible", motivoMermaId = (Guid?)null, sentido = "Retirado", dejarPendiente = true },
+                },
+                gps = (object?)null,
+            },
+        }).ToArray();
+
+        var push = await s.Cliente.PostOkAsync<RespuestaPush>("/api/v1/sync/push",
+            new { dispositivoId = s.DispositivoId, loteId = Id.Nuevo(), versionApp = "1.0.0", operaciones });
+        push.Resultados.Count.ShouldBe(4);
+        push.Resultados.ShouldAllBe(r => r.Estado == "Aplicada");
+
+        var pedidos = await api.ConScopeAsync(sp => sp.GetRequiredService<VentasDbContext>().Pedidos.AsNoTracking()
+            .Where(p => pedidoIds.Contains(p.Id)).ToListAsync());
+        pedidos.Count.ShouldBe(3);
+        pedidos.ShouldAllBe(p => p.Estado == EstadoPedido.Capturado && p.Origen == OrigenVenta.App);
+        var pull = await s.Cliente.GetOkAsync<RespuestaPull>("/api/v1/sync/pull?desde=0");
+        pull.Cambios.CambiosPendientes!.ShouldContain(p => p["clienteId"]!.GetValue<Guid>() == cliente.Id && p["cantidadBase"]!.GetValue<decimal>() == 2m);
     }
 }

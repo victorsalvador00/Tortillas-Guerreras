@@ -2,23 +2,28 @@ import { formatoCantidad, formatoCentavos, formatoFecha } from '@tg/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { cliente, pedido } from '@/db/consultas';
-import { confirmarEntrega } from '@/db/operaciones';
+import { cliente, pedido, referenciaCantidades } from '@/db/consultas';
+import { confirmarEntrega, type FormaPagoApp } from '@/db/operaciones';
 import { calcularVenta, textoCarga } from '@/dominio/ventas';
 import { leerGps } from '@/servicios/gps';
 import { useSync } from '@/servicios/sincronizacion';
+import { AvisoCantidades, useCantidadesConfiables } from '@/ui/cantidades';
 import { Aviso, Boton, Cantidad, Opciones, Pantalla, Tarjeta, Texto, Vacio, estilos } from '@/ui/componentes';
 import { useDatos } from '@/ui/useDatos';
 
-type FormaPago = 'Efectivo' | 'Transferencia' | 'Credito';
+type FormaPago = FormaPagoApp;
 
-/** Entregar pedido: partidas con cantidades a entregar (por defecto lo pendiente) y confirmar tomando GPS (RN-VEN-08). */
+/**
+ * Entregar pedido: partidas con cantidades a entregar (por defecto lo pendiente) y confirmar tomando GPS (RN-VEN-08).
+ * Los precios del pedido ya los puso el servidor (especial o lista). Las partidas de cambio se entregan con Cambio
+ * físico (RN-VEN-17).
+ */
 export default function Entrega() {
   const { pedidoId } = useLocalSearchParams<{ pedidoId: string }>();
   const { notificarCambio, sincronizar } = useSync();
   const datos = useDatos(() => {
     const p = pedido(pedidoId);
-    return { pedido: p, cliente: p ? cliente(p.clienteId) : null };
+    return { pedido: p, cliente: p ? cliente(p.clienteId) : null, referencia: referenciaCantidades(p?.clienteId ?? '') };
   });
   const p = datos.pedido;
   const c = datos.cliente;
@@ -39,6 +44,7 @@ export default function Entrega() {
     [p, cantidades],
   );
   const total = calcularVenta(partidas).total;
+  const cantidadesConfiables = useCantidadesConfiables(partidas, datos.referencia);
 
   if (!p || !c) return <Vacio texto="El pedido ya no está asignado a tu ruta." />;
 
@@ -51,6 +57,7 @@ export default function Entrega() {
       setError('No puedes entregar más de lo pendiente del pedido.');
       return;
     }
+    if (!cantidadesConfiables.revisar()) return;
     setGuardando(true);
     try {
       const gps = await leerGps();
@@ -76,8 +83,15 @@ export default function Entrega() {
               {formatoCentavos(total)}
             </Texto>
           </View>
+          {cantidadesConfiables.pendiente && <AvisoCantidades alertas={cantidadesConfiables.alertas} />}
           {error && <Aviso tipo="rojo">{error}</Aviso>}
-          <Boton texto="Confirmar entrega" icono="check-circle" grande cargando={guardando} alPresionar={confirmar} />
+          <Boton
+            texto={cantidadesConfiables.pendiente ? 'Confirmar de todos modos' : 'Confirmar entrega'}
+            icono="check-circle"
+            grande
+            cargando={guardando}
+            alPresionar={confirmar}
+          />
         </>
       }
     >
@@ -99,6 +113,7 @@ export default function Entrega() {
             opciones={[
               { valor: 'Efectivo', texto: 'Efectivo' },
               { valor: 'Transferencia', texto: 'Transferencia' },
+              { valor: 'Cheque', texto: 'Cheque' },
             ]}
             valor={forma}
             alCambiar={setForma}
@@ -106,6 +121,12 @@ export default function Entrega() {
         )}
         {credito && <Texto suave>Cliente a crédito: la entrega se registra a crédito.</Texto>}
       </Tarjeta>
+      {p.cambios.length > 0 && (
+        <Aviso tipo="azul">
+          El pedido trae cambios ({p.cambios.map((x) => `${x.nombre} ${formatoCantidad(x.cantidad)}`).join(', ')}): entrégalos con Cambio
+          físico desde el cliente.
+        </Aviso>
+      )}
       {p.partidas.map((x) => (
         <Tarjeta key={x.id}>
           <Texto negrita>{x.nombre}</Texto>
@@ -115,7 +136,10 @@ export default function Entrega() {
           <Cantidad
             valor={cantidades[x.id] ?? 0}
             decimales={3}
-            alCambiar={(v) => setCantidades((s) => ({ ...s, [x.id]: v }))}
+            alCambiar={(v) => {
+              cantidadesConfiables.reiniciar();
+              setCantidades((s) => ({ ...s, [x.id]: v }));
+            }}
           />
         </Tarjeta>
       ))}

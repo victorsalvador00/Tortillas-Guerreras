@@ -5,11 +5,11 @@ namespace TG.Sincronizacion.Aplicacion;
 // Contrato de 05-sincronizacion-offline.md; mismas formas que frontend/packages/shared/src/sync.ts (camelCase).
 
 public sealed record ConversionSync(Guid UnidadId, string UnidadClave, decimal FactorABase, int Decimales, bool UsoVenta,
-    bool PredeterminadaVenta);
+    bool PredeterminadaVenta, bool UsoTraslado = false, bool PredeterminadaTraslado = false);
 
 public sealed record ProductoSync(Guid Id, string Sku, string Nombre, string Tipo, Guid UnidadBaseId, string UnidadBaseClave,
     int UnidadBaseDecimales, bool ManejaLote, decimal TasaIva, decimal? TasaIeps, bool Activo, long VersionSync,
-    IReadOnlyList<ConversionSync> Conversiones);
+    IReadOnlyList<ConversionSync> Conversiones, string? NombreCorto = null);
 
 public sealed record ClienteSync(Guid Id, string Codigo, string Nombre, string CanalClave, Guid ListaPrecioId,
     string CondicionPago, int DiasCredito, decimal? LimiteCredito, bool RequiereFactura, string? Rfc, string? RazonSocial,
@@ -51,6 +51,12 @@ public sealed record ParametroSync(string Clave, string Valor, long VersionSync)
 public sealed record CambioPendienteSync(Guid Id, Guid ClienteId, Guid ProductoId, decimal CantidadBase, decimal CantidadSaldadaBase,
     DateOnly FechaOperativa, long VersionSync);
 
+/// <summary>RN-APP-09: promedio (unidad base) del cliente por producto; viaja completo.</summary>
+public sealed record ConsumoClienteSync(Guid ClienteId, Guid ProductoId, decimal PromedioBase);
+
+/// <summary>Canal de la ruta del alcance (RN-VEN-16, RN-LOG-19); viaja completo.</summary>
+public sealed record CanalSync(Guid Id, string Clave, string Nombre, string FormatoLiquidacion, string PedidoPor);
+
 public sealed record CambiosSync(
     IReadOnlyList<ProductoSync> Productos,
     IReadOnlyList<ClienteSync> Clientes,
@@ -64,7 +70,9 @@ public sealed record CambiosSync(
     IReadOnlyDictionary<string, IReadOnlyList<Guid>> Eliminados,
     IReadOnlyList<PrecioClienteSync>? PreciosCliente = null,
     IReadOnlyList<ProductoExclusivoSync>? ProductosExclusivos = null,
-    IReadOnlyList<CambioPendienteSync>? CambiosPendientes = null);
+    IReadOnlyList<CambioPendienteSync>? CambiosPendientes = null,
+    IReadOnlyList<ConsumoClienteSync>? ConsumosClientes = null,
+    IReadOnlyList<CanalSync>? Canales = null);
 
 public sealed record RutaSync(Guid Id, string Codigo, string Nombre, Guid AlmacenId);
 
