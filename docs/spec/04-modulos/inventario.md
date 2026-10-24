@@ -48,6 +48,12 @@ public interface IInventarioService
 - **RN-INV-10** Mientras un conteo está `Abierto`, el almacén admite movimientos; la cantidad del
   sistema se toma al momento de capturar cada partida.
 
+### Cambios v0.2
+- **RN-INV-11** `SalidaCambio` es una salida (−) de un almacén `Ruta` con documento `Retorno` (cambio físico). Usa el
+  costo promedio vigente, respeta FEFO (RN-INV-07) y, como venta en ruta, puede dejar negativo el almacén de ruta con
+  incidencia `ExistenciaNegativaRuta` (RN-INV-03). Los reportes de mermas no la cuentan como merma; el reporte de
+  cambios la muestra junto con lo retirado.
+
 ## Endpoints (`/api/v1/inventario`)
 | Método | Ruta | Permiso |
 |---|---|---|

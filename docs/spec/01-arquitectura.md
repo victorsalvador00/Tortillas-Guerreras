@@ -34,12 +34,12 @@
 
 | Módulo | Esquema | Responsabilidad | Usa (vía `Publico/`) |
 |---|---|---|---|
-| Seguridad | `seguridad` | Usuarios, roles, permisos, dispositivos, tokens | — |
+| Seguridad | `seguridad` | Usuarios, roles, permisos, dispositivos, tokens. **(v0.2)** Bitácora | — |
 | Catalogos | `catalogos` | Unidades, productos, conversiones, impuestos, motivos, parámetros | — |
 | Compras | `compras` | Proveedores, órdenes de compra, recepciones | Catalogos, Inventario |
-| Produccion | `produccion` | Recetas, líneas, órdenes de producción, consumos, mermas | Catalogos, Inventario |
+| Produccion | `produccion` | Recetas, líneas, órdenes de producción, consumos, mermas. **(v0.2)** Estimado y plan sugerido | Catalogos, Inventario. **(v0.2)** Ventas, Logistica |
 | Inventario | `inventario` | Almacenes, kardex, existencias, costo promedio, conteos, traspasos | Catalogos |
-| Logistica | `logistica` | Vehículos, rutas, clientes por ruta, envíos (cargas), retornos, liquidaciones | Catalogos, Inventario, Ventas, Seguridad |
+| Logistica | `logistica` | Vehículos, rutas, clientes por ruta, envíos (cargas), retornos, liquidaciones. **(v0.2)** Cambios pendientes, cargos y cortes de chofer | Catalogos, Inventario, Ventas, Seguridad |
 | Ventas | `ventas` | Canales, listas de precio, clientes, pedidos, ventas, cobros, incidencias | Catalogos, Inventario |
 | Facturacion | `facturacion` | Emisor, solicitudes de autofactura, facturas, factura global, outbox | Ventas, Catalogos |
 | Sincronizacion | `sync` | Endpoints push/pull, idempotencia, enrutamiento de operaciones a módulos | Todos (solo `Publico/`) |
@@ -48,7 +48,8 @@ Inversiones de dependencia para evitar ciclos: Catálogos define `IConsultaInven
 Inventario, RN-CAT-01/02/05); Logística define `IEstadoSincronizacionRuta` (RN-LOG-09). El tablero y los reportes
 viven en el host (`TG.Api`) con consultas Dapper de solo lectura entre esquemas.
 
-Regla de dependencias: no hay ciclos. `Inventario` y `Catalogos` no dependen de nadie más.
+Regla de dependencias: no hay ciclos. **(v0.2)** Producción ahora lee Ventas y Logística; ni Ventas ni Logística
+dependen de Producción. `Inventario` y `Catalogos` no dependen de nadie más.
 `Logistica` usa `Ventas` para leer clientes y ventas de la ruta en la liquidación.
 
 ## Estructura interna de un módulo
@@ -74,6 +75,8 @@ TG.Inventario/
 - **Outbox:** tabla `facturacion.outbox` (y genérica `sync.outbox_eventos` si se necesita). Hangfire
   procesa con reintentos exponenciales.
 - **Auditoría:** columnas `creado_en/por`, `actualizado_en/por` llenadas por un interceptor de EF.
+  **(v0.2)** Además, un interceptor del SharedKernel escribe el historial de cambios de las entidades marcadas con
+  `[Bitacora]` en `seguridad.bitacora`, en la misma transacción (RN-SEG-06, decisión V2-10).
   Operaciones de la app agregan `dispositivo_id`, `fecha_hora_dispositivo` y GPS.
 - **Errores:** `ProblemDetails` (RFC 9457) con `codigo` de negocio (`INV-001`) y `errores` por campo.
 - **Versionado de API:** prefijo `/api/v1`. OpenAPI con `Microsoft.AspNetCore.OpenApi` + Scalar.

@@ -42,7 +42,26 @@ estos campos extra en el usuario:
 `revocado_en null`, `reemplazado_por uuid null`.
 
 Roles por defecto `[SUP-01]`: Administrador, Direccion, Compras, Produccion, Almacen, Logistica,
-Vendedor, Facturacion, Supervisor.
+Vendedor, Facturacion, Supervisor. **(v0.2)** Se agregan **Captura** (valida pedidos y captura estimados en
+oficina) y **Liquidaciones** (recibe el dinero y cierra la liquidación). "Vendedor" es el chofer/operador de ruta.
+
+**bitacora (v0.2)** — historial de cambios (RN-SEG-06). Solo inserciones.
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| fecha_hora | timestamptz | |
+| esquema, tabla | text | `ventas`, `pedidos_partidas` |
+| entidad_id | uuid | id del registro |
+| documento_id | uuid null | registro padre (pedido de la partida) para consultar todo un documento |
+| accion | text | `Alta`, `Cambio`, `Baja` |
+| cambios | jsonb | `{ "cantidad": [100, 80] }` (antes, después); en `Alta` solo después |
+| usuario_id | uuid null | |
+| dispositivo_id | uuid null | si vino de la app |
+| origen | text | `Web`, `App`, `Sistema` |
+
+Índices `ix_bitacora_tabla_entidad` (`tabla`, `entidad_id`, `fecha_hora`), `ix_bitacora_documento`,
+`ix_bitacora_usuario_fecha`.
 
 ---
 
@@ -81,6 +100,9 @@ Vendedor, Facturacion, Supervisor.
 | tasa_ieps | numeric(9,6) null | botanas de alta densidad calórica 8 % `[SUP-03]` |
 | codigo_barras | text null | |
 | stock_minimo | numeric(18,4) null | alerta en tablero |
+| nombre_corto | text null | **(v0.2)** máx. 15 caracteres ("T-800", "HNA", "FIT BLANCA"); encabezados de cuadrículas, app y liquidación. Vacío = `sku` |
+| aplica_producto_a_cobro | boolean | **(v0.2)** la devolución fuera de tolerancia se carga al chofer (RN-LOG-24). Por defecto `false` |
+| dias_tolerancia_devolucion | integer null | **(v0.2)** antigüedad máxima del lote devuelto sin cargo; nulo = parámetro `logistica.dias_tolerancia_devolucion` `[SUP-19]` |
 | activo | boolean | |
 | version_sync | bigint | baja a la app si `es_vendible` |
 
@@ -95,6 +117,8 @@ Vendedor, Facturacion, Supervisor.
 | uso_venta | boolean | |
 | uso_produccion | boolean | |
 | predeterminada_venta | boolean | máximo una por producto |
+| uso_traslado | boolean | **(v0.2)** unidad para surtir y cargar (caja) |
+| predeterminada_traslado | boolean | **(v0.2)** máximo una por producto; con ella se muestran "N cajas + M paquetes" (RN-CAT-09) |
 
 **motivos_merma**: `id`, `clave UX`, `nombre`, `aplica_produccion bool`, `aplica_almacen bool`,
 `aplica_ruta bool`, `aplica_retorno bool`, `activo`.
@@ -263,7 +287,8 @@ Los ajustes manuales no tienen tabla propia: son movimientos con `documento_tipo
 
 Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`,
 `SalidaConsumo`, `Merma`, `TraspasoSalida`, `TraspasoEntrada`, `Venta`, `RetornoCliente`,
-`AjusteEntrada`, `AjusteSalida`.
+`AjusteEntrada`, `AjusteSalida`, **`SalidaCambio` (v0.2)**: producto nuevo que se entrega al cliente a cambio
+de producto retirado, sin venta (RN-INV-11).
 
 **traspasos** (entre almacenes no-ruta): `id`, `folio TR-`, `almacen_origen_id`,
 `almacen_destino_id`, `fecha_operativa`, `estado` (`Registrado`, `Cancelado`), partidas
@@ -284,11 +309,12 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | Columna | Tipo | Notas |
 |---|---|---|
 | id | uuid PK | |
-| codigo | text UX | `R01` (se usa en folios) |
+| codigo | text UX | `R01` (se usa en folios). **(v0.2)** Códigos del cliente sin guion: `R1`–`R14` autoservicio, `R51`… detalle, `R101`… institucional, `R151`… CEDIS |
 | nombre | text | |
 | almacen_id | uuid | almacén tipo `Ruta` |
-| vendedor_id | uuid null | usuario con rol Vendedor |
-| vehiculo_id | uuid null | |
+| canal_id | uuid | **(v0.2)** canal de la ruta (`ventas.canales`); define formato de liquidación y si aplica producto a cobro |
+| vendedor_id | uuid null | usuario con rol Vendedor. **(v0.2)** = *chofer predeterminado*: se propone al crear la carga (RN-LOG-12) |
+| vehiculo_id | uuid null | **(v0.2)** vehículo predeterminado; se propone al crear la carga |
 | activo | boolean | |
 | version_sync | bigint | |
 | xmin | concurrencia | el código no se cambia después de crear la ruta |
@@ -305,6 +331,8 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | fecha_operativa | date | |
 | ruta_id | uuid | |
 | tipo | text | `CargaInicial`, `Recarga` |
+| chofer_id | uuid | **(v0.2)** usuario con rol Vendedor que lleva la carga (RN-LOG-12). Migración: se llena con `rutas.vendedor_id` |
+| vehiculo_id | uuid null | **(v0.2)** |
 | almacen_origen_id | uuid | normalmente `PT` |
 | almacen_destino_id | uuid | almacén de la ruta |
 | estado | text | `Preparado`, `EnRuta`, `Liquidado`, `Cancelado` |
@@ -324,7 +352,7 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | id | uuid PK | generado por la app si viene de ruta |
 | folio | text UX | `R01-D03-000045` (app) o `RET-000001` (web) |
 | op_id | uuid UX null | idempotencia de sync |
-| tipo | text | `DevolucionCliente`, `RechazoEntrega` |
+| tipo | text | `DevolucionCliente`, `RechazoEntrega`, **`CambioFisico` (v0.2)** |
 | ruta_id | uuid | |
 | cliente_id | uuid null | |
 | venta_id | uuid null | venta original si aplica |
@@ -337,7 +365,27 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | notas | text null | índice único filtrado `ux_retornos_op_id` |
 
 **retornos_partidas**: `id`, `retorno_id`, `producto_id`, `lote`, `cantidad_base`,
-`condicion` (`Vendible`, `NoVendible`), `motivo_merma_id null`.
+`condicion` (`Vendible`, `NoVendible`), `motivo_merma_id null`,
+**`sentido` (v0.2)** (`Retirado` = entra a la camioneta, `Entregado` = sale de la camioneta a cambio; en
+`DevolucionCliente`/`RechazoEntrega` siempre `Retirado`), **`cambio_pendiente_id uuid null` (v0.2)** (partida
+`Entregado` que salda un pendiente).
+
+**cambios_pendientes (v0.2)** — cambios que se le deben a un cliente (RN-LOG-16).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| cliente_id | uuid | |
+| ruta_id | uuid | ruta donde se generó |
+| producto_id | uuid | |
+| cantidad_base | numeric(18,4) | lo que se quedó a deber |
+| cantidad_saldada_base | numeric(18,4) | acumulado de entregas posteriores |
+| retorno_origen_id | uuid | retorno `CambioFisico` que lo generó |
+| fecha_operativa | date | |
+| estado | text | `Pendiente`, `Saldado`, `Cancelado` |
+| cancelado_por, cancelado_en, motivo_cancelacion | null | cancelar requiere `logistica.cambios_cancelar` |
+| version_sync | bigint | baja a la app de la ruta del cliente |
+| xmin | concurrencia | índice `ix_cambios_pendientes_cliente_estado` |
 
 **liquidaciones**
 
@@ -347,11 +395,22 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 | folio | text UX | `LIQ-000001` |
 | ruta_id | uuid | |
 | fecha_operativa | date | UX (ruta_id, fecha_operativa) |
-| estado | text | `Abierta`, `Cerrada` |
-| efectivo_esperado | numeric(18,2) | ventas contado + cobros en efectivo |
+| chofer_id | uuid | **(v0.2)** chofer de las cargas del día (RN-LOG-13) |
+| formato | text | **(v0.2)** `Completo`, `Simplificado` (copiado del canal de la ruta al abrirse, RN-LOG-19) |
+| estado | text | `Abierta`, `Cerrada`. **(v0.2)** `Abierta` → `ProductoConfirmado` → `Revisada` → `Cerrada` (RN-LOG-20) |
+| efectivo_esperado | numeric(18,2) | ventas contado + cobros en efectivo. **(v0.2)** − gastos autorizados (RN-LOG-08) |
 | efectivo_entregado | numeric(18,2) null | |
 | diferencia_efectivo | numeric(18,2) null | |
-| cerrada_por, cerrada_en | | |
+| total_venta | numeric(18,2) null | **(v0.2)** snapshot al confirmar producto |
+| total_credito | numeric(18,2) null | **(v0.2)** ventas a crédito del día (solo lectura, de Ventas) |
+| total_cobros | numeric(18,2) null | **(v0.2)** cobros del día por forma de pago (solo lectura, de Ventas) |
+| total_transferencias | numeric(18,2) null | **(v0.2)** ventas y cobros con forma de pago `Transferencia` (solo lectura) |
+| total_cheques | numeric(18,2) null | **(v0.2)** ventas con forma de pago `Cheque` (los cobros no cambian) |
+| total_gastos | numeric(18,2) | **(v0.2)** suma de `liquidaciones_gastos` autorizados |
+| diferencia_precios | numeric(18,2) | **(v0.2)** Σ (precio de lista − precio cobrado) × cantidad de las ventas con `PrecioDistinto` (RN-LOG-23) |
+| producto_confirmado_por, producto_confirmado_en | uuid, timestamptz null | **(v0.2)** almacén |
+| revisada_por, revisada_en | uuid, timestamptz null | **(v0.2)** supervisor |
+| cerrada_por, cerrada_en | | liquidaciones (caja) |
 | cerrada_forzada | boolean | cerrada con pendientes de sincronizar (RN-LOG-09) |
 | notas | text null | |
 | xmin | concurrencia | |
@@ -359,15 +418,74 @@ Tipos de movimiento: `EntradaCompra`, `DevolucionProveedor`, `EntradaProduccion`
 **liquidaciones_partidas**: `id`, `liquidacion_id`, `producto_id`, `lote` (UX con los dos anteriores), `cargado`,
 `vendido`, `devuelto_clientes_vendible`, `devuelto_clientes_no_vendible`, `sobrante_esperado`,
 `sobrante_contado null`, `diferencia null`, `destino_sobrante` (`Reintegrar`, `Merma`, `Reproceso`),
-`motivo_merma_id null`.
+`motivo_merma_id null`. **(v0.2)** Se agregan: `cargado_inicial`, `recargado` (`cargado` = suma),
+`cambios_entregados` (salidas `SalidaCambio`), `cantidad_a_cobro numeric(18,4)` (RN-LOG-24, default 0),
+`precio_a_cobro numeric(18,4) null`, `importe_venta numeric(18,2)` (columna "Total $" del formato).
 
-Folios `ENV-`, `RET-`, `LIQ-`.
+**liquidaciones_gastos (v0.2)**: `id`, `liquidacion_id`, `concepto text` (diésel, casetas, maniobras…),
+`importe numeric(18,2)`, `comprobante text null`, `autorizado boolean`, `capturado_por`, `capturado_en`.
+
+**cargos_chofer (v0.2)** — cuenta del chofer (RN-LOG-25).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| folio | text UX | `CCH-000001` |
+| chofer_id | uuid | |
+| tipo | text | `ProductoACobro`, `FaltanteProducto`, `FaltanteEfectivo`, `DiferenciaPrecio`, `Otro` |
+| liquidacion_id | uuid null | origen |
+| producto_id | uuid null | |
+| cantidad_base | numeric(18,4) null | |
+| precio_unitario | numeric(18,4) null | |
+| importe | numeric(18,2) | positivo = se le cobra al chofer |
+| fecha_operativa | date | |
+| estado | text | `Pendiente`, `Aplicado` (incluido en un corte), `Cancelado` |
+| corte_id | uuid null | |
+| notas | text null | `Otro` exige nota |
+| cancelado_por, cancelado_en, motivo_cancelacion | null | |
+| xmin | concurrencia | índice `ix_cargos_chofer_chofer_estado` |
+
+**cortes_chofer (v0.2)** — corte semanal para comisiones (RN-LOG-28).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| folio | text UX | `CSC-000001` |
+| chofer_id | uuid | |
+| desde, hasta | date | semana operativa; UX (`chofer_id`, `desde`) |
+| total_venta | numeric(18,2) | ventas registradas del chofer en el periodo (snapshot) |
+| total_cargos | numeric(18,2) | cargos aplicados |
+| estado | text | `Abierto`, `Cerrado` |
+| cerrado_por, cerrado_en | null | |
+| xmin | concurrencia | |
+
+Folios `ENV-`, `RET-`, `LIQ-`, **`CCH-`, `CSC-` (v0.2)**.
 
 ---
 
 ## Esquema `ventas`
 
 **canales**: `id`, `clave UX` (`INST`, `AUTO`, `TRAD`), `nombre`, `requiere_factura_default`, `activo`.
+**(v0.2)** Claves `AUTO` Autoservicio, `DET` Detalle (renombra `TRAD`; la migración cambia clave y nombre y el
+importador acepta ambas), `INST` Institucional, `CEDIS` CEDIS. Columnas nuevas:
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| formato_liquidacion | text | `Completo` (AUTO, DET) o `Simplificado` (INST, CEDIS) — RN-LOG-19 |
+| aplica_producto_a_cobro | boolean | `true` en AUTO y DET (RN-LOG-24) |
+| pedido_por | text | `Cliente` (AUTO, INST, CEDIS: un pedido por tienda/cliente) o `Ruta` (DET: pedido global al genérico) — RN-VEN-16 |
+| orden | smallint | orden de las pestañas del estimado |
+
+**grupos_clientes (v0.2)** — corporativos (Walmart, Chedraui, La Comer, City Market…): `id`, `clave UX`,
+`nombre`, `canal_id`, `lista_precio_id null` (lista que hereda el cliente nuevo del grupo), `activo`, `version_sync`.
+
+**precios_cliente (v0.2)** — precio especial que gana sobre la lista (RN-VEN-12): PK (`cliente_id`,
+`producto_id`, `unidad_id`), `precio_unitario numeric(18,4)` sin impuestos, `vigente_desde date`, `activo`,
+`version_sync`.
+
+**productos_exclusivos (v0.2)** — producto que solo se vende a ciertos clientes (RN-VEN-14): `id`, `producto_id`,
+`cliente_id null`, `grupo_cliente_id null` (uno de los dos), `activo`, `version_sync`. UX
+(`producto_id`, `cliente_id`, `grupo_cliente_id`).
 
 **listas_precio**: `id`, `nombre`, `canal_id null`, `vigente_desde date`, `activo`,
 `version_sync`. **listas_precio_partidas**: PK (`lista_precio_id`, `producto_id`, `unidad_id`),
@@ -381,6 +499,7 @@ Folios `ENV-`, `RET-`, `LIQ-`.
 | codigo | text UX | |
 | nombre | text | nombre comercial ("Abarrotes Lupita") |
 | canal_id | uuid | |
+| grupo_cliente_id | uuid null | **(v0.2)** corporativo |
 | lista_precio_id | uuid | |
 | condicion_pago | text | `Contado`, `Credito` |
 | dias_credito | integer | `[SUP-08]` |
@@ -405,6 +524,13 @@ Folios `ENV-`, `RET-`, `LIQ-`.
 `producto_id`, `unidad_id`, `factor_a_base`, `cantidad`, `cantidad_base`, `precio_unitario`,
 `tasa_iva`, `tasa_ieps null`, `importe`, `cantidad_entregada_base`.
 
+**(v0.2)** `pedidos` agrega: `origen` (`Web`, `App`), `op_id uuid UX null` (idempotencia de `CapturarPedido`),
+`capturado_por uuid`, `dispositivo_id uuid null`, `confirmado_por uuid null`, `confirmado_en timestamptz null`,
+`es_ruta boolean` (pedido global de detalle al genérico, RN-VEN-16). Índice `ix_pedidos_fecha_entrega_estado`.
+`pedidos_partidas` agrega: `tipo` (`Venta`, `CambioFisico`; las de cambio llevan precio 0 y no suman al total,
+RN-VEN-17), `cantidad_solicitada numeric(18,4) null` (lo que capturó el vendedor antes de validarse, RN-VEN-18),
+`notas text null` (observaciones del estimado).
+
 **ventas**
 
 | Columna | Tipo | Notas |
@@ -424,7 +550,7 @@ Folios `ENV-`, `RET-`, `LIQ-`.
 | fecha_hora_servidor | timestamptz | |
 | fecha_operativa | date | |
 | condicion_pago | text | `Contado`, `Credito` |
-| forma_pago | text | `Efectivo`, `Transferencia`, `Credito` |
+| forma_pago | text | `Efectivo`, `Transferencia`, `Credito`, **`Cheque` (v0.2)** (no suma al efectivo esperado) |
 | subtotal, iva, ieps, total | numeric(18,2) | recalculados por el servidor |
 | latitud, longitud | numeric(9,6) null | |
 | precision_m | numeric(9,2) null | |
@@ -441,6 +567,8 @@ Folios `ENV-`, `RET-`, `LIQ-`.
 **ventas_partidas**: `id`, `venta_id`, `producto_id`, `unidad_id`, `factor_a_base`,
 `cantidad`, `cantidad_base`, `lote` (si FEFO repartió en varios lotes van separados por coma; el detalle exacto está
 en el kardex), `precio_unitario`, `tasa_iva`, `tasa_ieps`, `importe`, `iva`, `ieps`, `pedido_partida_id null`.
+**(v0.2)** `precio_referencia numeric(18,4) null`: precio vigente del cliente (especial o lista) al aplicar la venta;
+se llena siempre en ventas de la app (RN-VEN-12, RN-LOG-23).
 
 **cobros** `[SUP-08]`: `id`, `op_id UX null`, `folio`, `cliente_id`, `ruta_id null`,
 `dispositivo_id null`, `fecha_operativa`, `forma_pago`, `importe`, `estado` (`Registrado`, `Cancelado`); folio `COB-`.
@@ -529,6 +657,16 @@ emisor. Índices `ux_facturas_serie_folio`, `ux_facturas_uuid_fiscal` (parcial),
 | `produccion.umbral_variacion_pct` | `0.05` | |
 | `compras.tolerancia_pct` | `0.05` | `[SUP-04]` |
 | `inventario.metodo_costeo` | `PromedioPonderado` | `[SUP-06]` |
+| `logistica.dias_tolerancia_devolucion` | `11` | **(v0.2)** `[SUP-19]` |
+| `logistica.precio_producto_a_cobro` | `ListaCanal` | **(v0.2)** `ListaCanal` o `Costo` `[SUP-20]` |
+| `logistica.cargo_faltante_producto` | `true` | **(v0.2)** faltante de producto en liquidación genera cargo al chofer `[SUP-21]` |
+| `logistica.cargo_faltante_efectivo` | `true` | **(v0.2)** `[SUP-21]` |
+| `logistica.requiere_revision_supervisor` | `true` | **(v0.2)** etapa `Revisada` obligatoria (RN-LOG-20) |
+| `logistica.dia_inicio_semana_corte` | `1` | **(v0.2)** 1 = lunes `[SUP-22]` |
+| `ventas.dias_estimado_referencia` | `7` | **(v0.2)** el estimado sin pedido toma el de hace N días (RN-PRO-12) `[SUP-23]` |
+| `ruta.alerta_cantidad_factor` | `3` | **(v0.2)** la app pide confirmar si la cantidad supera N veces el promedio (RN-APP-09) |
+| `ruta.alerta_cantidad_maxima` | `500` | **(v0.2)** tope absoluto por partida en unidad de venta que pide confirmación |
+| `ruta.consumo_promedio_visitas` | `8` | **(v0.2)** ventas/entregas que promedia `consumos_clientes` (RN-APP-09) |
 
 ## Datos semilla (demo y pruebas)
 
@@ -579,5 +717,7 @@ GRANOS, QUIMICA, EMPAQUES.
 
 **Folios:** secuencia por prefijo `<esquema>.folio_<prefijo>_seq` creada en la migración de cada módulo.
 
-**Canales:** INST, AUTO, TRAD. **Listas de precio:** una por canal. **Clientes:** 5 por ruta, más un
+**Canales:** INST, AUTO, TRAD. **(v0.2)** AUTO, DET, INST, CEDIS con los valores de `formato_liquidacion`,
+`aplica_producto_a_cobro` y `pedido_por` de arriba; grupos de ejemplo WALMART, CHEDRAUI, LACOMER, CITY (canal AUTO);
+rutas de ejemplo `R1` (AUTO), `R51` (DET), `R101` (INST), `R151` (CEDIS). **Listas de precio:** una por canal. **Clientes:** 5 por ruta, más un
 "Público en general" genérico por ruta. **Usuarios:** uno por rol (contraseña de desarrollo).

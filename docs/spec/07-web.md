@@ -17,6 +17,27 @@ Menú por módulo; cada opción visible solo con su permiso.
 | Facturación | Facturas, solicitudes de autofactura, factura global, emisor |
 | Seguridad | Usuarios, roles y permisos, dispositivos |
 
+### Cambios v0.2
+
+| Sección | Cambio |
+|---|---|
+| Producción | **Estimado de producción** (pestañas por canal; cuadrícula rutas × productos con `nombre_corto`, observaciones, TOTAL, CAJAS/PAQUETES y REAL; celdas editables en DET (pedido de ruta); en AUTO, INST y CEDIS la celda abre los pedidos de los clientes de la ruta; "Usar referencia"; "Confirmar estimado"; imprimir igual al formato en papel). **Plan sugerido** (demanda vs existencia vs órdenes; crear órdenes). **Plan del día** vuelve al menú. Recetas: botón "Copiar a otro producto" |
+| Ventas | Pedidos: filtro **Por validar** (origen App, `Capturado`), columnas "Solicitado" vs "Validado", pestaña Historial. Clientes: grupo, **precios especiales**. **Grupos de clientes** (nuevo). Productos exclusivos en la ficha del producto (pestaña Ventas) |
+| Logística | Rutas: canal, chofer y vehículo predeterminados. Cargas del día: **Generar cargas sugeridas**; nueva carga con chofer y vehículo. **Cambios pendientes** (nuevo). Liquidaciones: rediseño por etapas (ver abajo). **Cuenta de choferes** y **Corte semanal** (nuevos) |
+| Catálogos | Productos: nombre corto, producto a cobro, unidad de traslado con paquetes por caja |
+| Seguridad | **Bitácora** (nuevo) y pestaña Historial en los detalles |
+
+**Liquidación (v0.2).** Encabezado: ruta, canal, chofer, fecha, etapa y responsables. Pestaña **Producto**
+(almacén): tabla con las columnas del formato del canal (RN-LOG-19), captura de sobrante, destino y producto a cobro
+(con la sugerencia por antigüedad), botón "Confirmar producto". Pestaña **Dinero** (liquidaciones): venta total,
+créditos del día por cliente y folio (solo lectura), cobros y pagos del día (solo lectura), transferencias, cheques,
+gastos (captura), diferencia de precios, efectivo esperado, efectivo entregado, diferencia. Pestaña **Cargos**:
+cargos generados al chofer y alta de `DiferenciaPrecio`/`Otro`. Botones por etapa: Confirmar producto · Revisar ·
+Regresar · Cerrar. **Imprimir hoja** con las 4 firmas (RN-LOG-22).
+
+**Corte semanal.** Filtro por semana y chofer; tabla por chofer con ventas, cargos por tipo y total a descontar;
+detalle por día y producto; "Cerrar corte" y "Exportar CSV".
+
 Pautas:
 - Captura rápida en tablets de planta: formularios de una columna, teclado numérico, botones
   grandes en Producción.
