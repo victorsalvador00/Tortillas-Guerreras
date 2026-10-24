@@ -118,7 +118,7 @@ regenerado (definición de terminado).
   (bitácora de importación) para que no choque con el atributo. Se hace temprano para que las tareas siguientes ya queden
   auditadas. *Lee:* 01 (Transversales), `seguridad-catalogos.md`. *Acepta:* RN-SEG-06, 07; prueba de que un
   rollback no deja filas de bitácora.
-- [ ] **T-8.3 Roles y permisos v0.2** *(ajusta T-0.4)*. Roles Captura y Liquidaciones; permisos
+- [x] **T-8.3 Roles y permisos v0.2** *(ajusta T-0.4)*. Roles Captura y Liquidaciones; permisos
   `logistica.liquidar_producto`, `logistica.revisar_liquidacion`, `logistica.cargos_chofer`,
   `logistica.cambios_cancelar`, `ventas.pedidos_app`, `seguridad.bitacora`; migración que los asigna a los roles
   existentes. *Acepta:* un Almacén no puede cerrar el dinero de una liquidación (403).

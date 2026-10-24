@@ -15,7 +15,10 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
 
     public override int Orden => 20;
 
-    /// <summary>Permisos por rol <c>[SUP-01]</c>. Administrador recibe todos.</summary>
+    /// <summary>
+    /// Permisos por rol <c>[SUP-01]</c>. Administrador recibe todos. Solo se aplican al crear el rol; los permisos
+    /// nuevos de una versión llegan a roles existentes por migración (v0.2: <c>V02PermisosRoles</c>).
+    /// </summary>
     public static readonly IReadOnlyDictionary<string, string[]> RolesPredeterminados = new Dictionary<string, string[]>
     {
         ["Administrador"] = P.Todos.Select(p => p.Clave).ToArray(),
@@ -38,13 +41,15 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
         [
             P.Tablero.Ver, P.Inventario.Ver, P.Inventario.Ajustar, P.Inventario.Traspasar, P.Inventario.Contar,
             P.Compras.Ver, P.Compras.Recibir, P.Logistica.Ver, P.Logistica.Cargar, P.Logistica.Retornos,
+            P.Logistica.LiquidarProducto,
         ],
         ["Logistica"] =
         [
             P.Tablero.Ver, P.Logistica.Configurar, P.Logistica.Ver, P.Logistica.Cargar, P.Logistica.Retornos,
             P.Logistica.Liquidar, P.Ventas.Ver, P.Ventas.Pedidos, P.Ventas.Clientes, P.Inventario.Ver,
         ],
-        ["Vendedor"] = [P.Sincronizacion.Operar, P.Ventas.Registrar, P.Ventas.Cobrar],
+        // Vendedor = chofer/operador de ruta (v0.2).
+        ["Vendedor"] = [P.Sincronizacion.Operar, P.Ventas.Registrar, P.Ventas.Cobrar, P.Ventas.PedidosApp],
         ["Facturacion"] =
         [
             P.Tablero.Ver, P.Facturacion.Ver, P.Facturacion.Emitir, P.Facturacion.Cancelar, P.Facturacion.Configurar,
@@ -53,8 +58,13 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
         ["Supervisor"] =
         [
             P.Tablero.Ver, P.Ventas.Ver, P.Ventas.Supervisar, P.Ventas.Cancelar, P.Logistica.Ver, P.Logistica.Liquidar,
-            P.Logistica.ForzarCierre, P.Seguridad.Dispositivos, P.Inventario.Ver,
+            P.Logistica.ForzarCierre, P.Seguridad.Dispositivos, P.Inventario.Ver, P.Logistica.RevisarLiquidacion,
+            P.Logistica.CargosChofer, P.Logistica.CambiosCancelar,
         ],
+        // v0.2: valida pedidos y captura estimados en oficina.
+        ["Captura"] = [P.Ventas.Pedidos, P.Ventas.Ver, P.Produccion.Ver, P.Logistica.Ver],
+        // v0.2: recibe el dinero y cierra la liquidación (caja).
+        ["Liquidaciones"] = [P.Logistica.Ver, P.Logistica.Liquidar, P.Logistica.CargosChofer, P.Ventas.Ver],
     };
 
     public static readonly (string Usuario, string Nombre, string Rol)[] UsuariosDemo =
@@ -69,6 +79,8 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
         ("vendedor3", "Vendedor Ruta 3", "Vendedor"),
         ("facturacion", "Auxiliar de Facturación", "Facturacion"),
         ("supervisor", "Supervisor de Rutas", "Supervisor"),
+        ("captura", "Capturista de Pedidos", "Captura"),
+        ("liquidaciones", "Cajero de Liquidaciones", "Liquidaciones"),
     ];
 
     public override async Task SembrarAsync(IServiceProvider servicios, bool datosDemo, CancellationToken ct)

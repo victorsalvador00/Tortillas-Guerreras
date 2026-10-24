@@ -57,6 +57,12 @@ public static class Permisos
         public const string Retornos = "logistica.retornos";
         public const string Liquidar = "logistica.liquidar";
         public const string ForzarCierre = "logistica.forzar_cierre";
+
+        // v0.2
+        public const string LiquidarProducto = "logistica.liquidar_producto";
+        public const string RevisarLiquidacion = "logistica.revisar_liquidacion";
+        public const string CargosChofer = "logistica.cargos_chofer";
+        public const string CambiosCancelar = "logistica.cambios_cancelar";
     }
 
     public static class Ventas
@@ -69,6 +75,9 @@ public static class Permisos
         public const string Registrar = "ventas.registrar";
         public const string Cancelar = "ventas.cancelar";
         public const string Cobrar = "ventas.cobrar";
+
+        // v0.2
+        public const string PedidosApp = "ventas.pedidos_app";
     }
 
     public static class Facturacion
@@ -118,6 +127,10 @@ public static class Permisos
         (Logistica.Retornos, "Registrar retornos"),
         (Logistica.Liquidar, "Liquidar rutas"),
         (Logistica.ForzarCierre, "Forzar cierre de liquidación con pendientes"),
+        (Logistica.LiquidarProducto, "Confirmar el producto de la liquidación (almacén)"),
+        (Logistica.RevisarLiquidacion, "Revisar la liquidación (supervisor)"),
+        (Logistica.CargosChofer, "Administrar la cuenta y el corte de los choferes"),
+        (Logistica.CambiosCancelar, "Cancelar cambios pendientes de clientes"),
         (Ventas.Configurar, "Administrar canales y listas de precio"),
         (Ventas.Clientes, "Administrar clientes"),
         (Ventas.Supervisar, "Revisar incidencias y aprobar ubicaciones"),
@@ -126,6 +139,7 @@ public static class Permisos
         (Ventas.Registrar, "Registrar ventas"),
         (Ventas.Cancelar, "Cancelar ventas"),
         (Ventas.Cobrar, "Registrar cobros"),
+        (Ventas.PedidosApp, "Capturar pedidos desde la app de ruta"),
         (Facturacion.Ver, "Consultar facturas"),
         (Facturacion.Emitir, "Emitir facturas y factura global"),
         (Facturacion.Cancelar, "Cancelar facturas"),
