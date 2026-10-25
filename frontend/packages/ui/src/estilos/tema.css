@@ -535,3 +535,56 @@
 .tg-campo-compacto > label {
   display: none;
 }
+
+/*
+ * Prefijo ($) y sufijo (unidad) del campo: reservan su espacio en el control (sin esto el valor queda debajo) y se
+ * alinean con la línea del valor, que en el campo normal va abajo de la etiqueta flotante.
+ */
+.tg-campo > .tg-control.tg-con-sufijo {
+  padding-right: calc(20px + 3em);
+}
+
+.tg-campo > .tg-control.tg-con-prefijo {
+  padding-left: calc(20px + 1.25em);
+}
+
+.tg-campo > .tg-sufijo,
+.tg-campo > .tg-prefijo {
+  position: absolute;
+  top: calc(20px + 16px * var(--tg-escala-texto));
+  transform: translateY(-50%);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.tg-campo > .tg-sufijo {
+  right: 20px;
+  max-width: calc(3em - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-campo > .tg-prefijo {
+  left: 20px;
+}
+
+.tg-campo-compacto > .tg-control.tg-con-sufijo {
+  padding-right: calc(14px + 3em);
+}
+
+.tg-campo-compacto > .tg-control.tg-con-prefijo {
+  padding-left: calc(14px + 1.25em);
+}
+
+.tg-campo-compacto > .tg-sufijo,
+.tg-campo-compacto > .tg-prefijo {
+  top: 50%;
+}
+
+.tg-campo-compacto > .tg-sufijo {
+  right: 14px;
+}
+
+.tg-campo-compacto > .tg-prefijo {
+  left: 14px;
+}

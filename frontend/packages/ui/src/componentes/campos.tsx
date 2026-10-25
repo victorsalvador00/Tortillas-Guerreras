@@ -87,24 +87,15 @@ export const Campo = forwardRef<HTMLInputElement, CampoProps>(function Campo(
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${campoId}-error` : ayuda ? `${campoId}-ayuda` : undefined}
           aria-label={compacto ? etiqueta : undefined}
-          className={cn('tg-control', sufijo && 'pr-14', prefijo && 'pl-9', props.type === 'number' && 'text-right tabular-nums')}
+          className={cn('tg-control', sufijo && 'tg-con-sufijo', prefijo && 'tg-con-prefijo', props.type === 'number' && 'text-right tabular-nums')}
           {...props}
         />
         <label htmlFor={campoId}>{etiqueta}</label>
         {prefijo && (
-          <span className={cn('pointer-events-none absolute left-5 text-base text-muted', compacto ? 'top-2.5' : 'top-[23px]')}>
-            {prefijo}
-          </span>
+          <span className="tg-prefijo pointer-events-none text-base text-muted">{prefijo}</span>
         )}
         {sufijo && (
-          <span
-            className={cn(
-              'absolute right-4 flex items-center text-sm text-muted',
-              compacto ? 'top-1/2 -translate-y-1/2' : 'top-1/2 -translate-y-1/2',
-            )}
-          >
-            {sufijo}
-          </span>
+          <span className="tg-sufijo flex items-center text-sm text-muted">{sufijo}</span>
         )}
       </div>
       {!compacto && <PieCampo id={campoId} error={error} ayuda={ayuda} />}
