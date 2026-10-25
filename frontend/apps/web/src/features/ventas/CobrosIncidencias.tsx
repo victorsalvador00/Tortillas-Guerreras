@@ -178,7 +178,7 @@ export function Cobros() {
         }
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
       />
-      <DialogoCobro abierto={nuevo} onCambiar={setNuevo} />
+      {nuevo && <DialogoCobro abierto onCambiar={setNuevo} />}
     </Pagina>
   );
 }

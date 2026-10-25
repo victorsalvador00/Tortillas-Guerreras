@@ -120,7 +120,7 @@ export function Vehiculos() {
         }
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(v) => v.id} mensajeVacio="No hay vehículos registrados." />
-      <DialogoVehiculo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoVehiculo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }
@@ -279,7 +279,7 @@ export function Rutas() {
         alClicFila={(r) => navegar({ to: '/logistica/rutas/$id', params: { id: r.id } })}
         mensajeVacio="No hay rutas registradas."
       />
-      <DialogoRuta ruta={null} abierto={dialogo} onCambiar={setDialogo} />
+      {dialogo && <DialogoRuta ruta={null} abierto onCambiar={setDialogo} />}
     </Pagina>
   );
 }

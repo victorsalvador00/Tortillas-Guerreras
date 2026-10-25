@@ -152,7 +152,7 @@ export function Unidades() {
         acciones={editable && <Boton icono="add" onClick={() => setDialogo({ abierto: true, unidad: null })}>Nueva unidad</Boton>}
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(u) => u.id} />
-      <DialogoUnidad {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoUnidad {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }
@@ -280,7 +280,7 @@ export function MotivosMerma() {
         acciones={editable && <Boton icono="add" onClick={() => setDialogo({ abierto: true, motivo: null })}>Nuevo motivo</Boton>}
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(m) => m.id} />
-      <DialogoMotivo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoMotivo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }

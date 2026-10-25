@@ -201,7 +201,7 @@ export function Usuarios() {
         mensajeVacio="No hay usuarios con esa búsqueda."
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
       />
-      <DialogoUsuario {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoUsuario {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
       {porDesbloquear && (
         <DialogoConfirmacion
           abierto

@@ -142,7 +142,7 @@ export function GruposClientes() {
         acciones={editable && <Boton icono="add" onClick={() => setDialogo({ abierto: true, grupo: null })}>Nuevo grupo</Boton>}
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(g) => g.id} />
-      <DialogoGrupo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoGrupo {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }

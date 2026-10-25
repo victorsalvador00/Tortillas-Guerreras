@@ -332,7 +332,7 @@ export function Proveedores() {
         mensajeVacio="No hay proveedores con esos filtros."
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
       />
-      <DialogoProveedor {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoProveedor {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
       {precios && <DialogoPrecios proveedor={precios} onCerrar={() => setPrecios(null)} />}
       {catalogo && <DialogoProductosProveedor proveedor={catalogo} editable={editable} onCerrar={() => setCatalogo(null)} />}
       {cambiarEstado && (

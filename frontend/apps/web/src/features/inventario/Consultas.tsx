@@ -456,7 +456,7 @@ export function Almacenes() {
         }
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(a) => a.id} />
-      <DialogoAlmacen {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoAlmacen {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }

@@ -114,7 +114,7 @@ export function Lineas() {
         }
       />
       <TablaDatos columnas={columnas} datos={data} cargando={isLoading} idFila={(l) => l.id} />
-      <DialogoLinea {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
+      {dialogo.abierto && <DialogoLinea {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />}
     </Pagina>
   );
 }

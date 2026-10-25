@@ -207,7 +207,7 @@ export function RutaDetalle() {
                 </Boton>
               </BarraAccion>
             )}
-            <DialogoRuta ruta={r} abierto={editar} onCambiar={setEditar} />
+            {editar && <DialogoRuta ruta={r} abierto onCambiar={setEditar} />}
           </>
         )}
       </EstadoConsulta>

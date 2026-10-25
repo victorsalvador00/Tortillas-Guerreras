@@ -156,7 +156,7 @@ export function Roles() {
           )}
         </div>
       </EstadoConsulta>
-      <DialogoNuevoRol abierto={nuevo} onCambiar={setNuevo} alCrear={(r) => setRolId(r.id)} />
+      {nuevo && <DialogoNuevoRol abierto onCambiar={setNuevo} alCrear={(r) => setRolId(r.id)} />}
     </Pagina>
   );
 }
