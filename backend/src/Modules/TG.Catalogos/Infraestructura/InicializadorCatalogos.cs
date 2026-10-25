@@ -39,6 +39,8 @@ internal sealed class InicializadorCatalogos : InicializadorModulo<CatalogosDbCo
         (ClavesParametro.ProduccionConsumoSinExistencia, "false", TipoParametro.@bool, "Permitir terminar órdenes sin existencia de componentes [SUP-12]"),
         (ClavesParametro.ProduccionUmbralVariacion, "0.05", TipoParametro.@decimal, "Umbral de variación teórico vs real (0.05 = 5 %)"),
         (ClavesParametro.ComprasTolerancia, "0.05", TipoParametro.@decimal, "Tolerancia para recibir de más (0.05 = 5 %) [SUP-04]"),
+        (ClavesParametro.ComprasSoloCatalogoProveedor, "true", TipoParametro.@bool,
+            "La orden de compra solo acepta productos del catálogo del proveedor (RN-COM-12) [SUP-32]"),
         (ClavesParametro.MetodoCosteo, "PromedioPonderado", TipoParametro.text, "Método de costeo [SUP-06]"),
         (ClavesParametro.DiasToleranciaDevolucion, "11", TipoParametro.@int, "Días de antigüedad del lote devuelto sin cargo al chofer [SUP-19]"),
         (ClavesParametro.PrecioProductoACobro, "ListaCanal", TipoParametro.text, "Valuación del producto a cobro: ListaCanal o Costo [SUP-20]"),

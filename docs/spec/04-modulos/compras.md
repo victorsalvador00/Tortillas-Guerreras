@@ -9,6 +9,8 @@ Registra lo que entra al negocio desde proveedores: materias primas, empaques y 
 4. Registrar compra directa sin orden `[SUP-04]` (requiere permiso `compras.compra_directa`).
 5. Cancelar una recepción (genera contra-movimiento).
 6. Consultar historial de precios por proveedor y producto.
+7. Administrar el catálogo de productos de cada proveedor (qué se le compra, unidad, clave, precio pactado, días de
+   entrega y proveedor preferido) y consultar qué proveedores venden un producto.
 
 ## Estados de la orden de compra
 
@@ -32,9 +34,19 @@ Registra lo que entra al negocio desde proveedores: materias primas, empaques y 
 - **RN-COM-06** La entrada recalcula el costo promedio ponderado del producto (ver Inventario).
 - **RN-COM-07** Cancelar una recepción genera `AjusteSalida` por las mismas cantidades; se rechaza
   si la existencia actual del lote no alcanza.
-- **RN-COM-08** Al registrar una recepción se actualiza `proveedores_productos.ultimo_precio`.
+- **RN-COM-08** Al registrar una recepción se actualizan `proveedores_productos.ultimo_precio`,
+  `ultima_unidad_id` y `ultima_compra_en`; si el producto no estaba en el catálogo del proveedor (compra directa)
+  se agrega activo con la unidad y el precio recibidos como pactado.
 - **RN-COM-09** Productos con `maneja_lote` exigen lote (y caducidad si `vida_util_dias` no es nulo
   y el proveedor la informa).
+- **RN-COM-10** El catálogo de un proveedor solo admite productos comprables y activos, una vez cada uno; la unidad
+  es la base o una con conversión de compra. El precio pactado es **opcional** (sin IVA, ≥ 0, por esa unidad); los
+  días de entrega van de 0 a 365. Los productos de un proveedor inactivo no se editan hasta reactivarlo (`COM-020`).
+- **RN-COM-11** Un solo proveedor preferido por producto: marcar uno desmarca el anterior. Una relación inactiva nunca
+  es preferida y desactivar un proveedor le quita sus preferencias.
+- **RN-COM-12** `[SUP-32]` Con `compras.solo_catalogo_proveedor = true` (por omisión) una orden de compra solo acepta
+  productos activos del catálogo del proveedor (`COM-017`). El precio se sugiere del pactado; si no hay, del último
+  pagado; siempre es editable. Las compras directas no se bloquean (alimentan el catálogo, RN-COM-08).
 
 Fuera de alcance por ahora: cuentas por pagar y facturas de proveedor `[SUP-04]`.
 
@@ -42,6 +54,9 @@ Fuera de alcance por ahora: cuentas por pagar y facturas de proveedor `[SUP-04]`
 | Método | Ruta | Permiso |
 |---|---|---|
 | GET/POST/PUT | `/proveedores` | `compras.ver` / `compras.editar` |
+| GET | `/proveedores/{id}/productos?incluirInactivos` | `compras.ver` |
+| POST / PUT | `/proveedores/{id}/productos`, `/proveedores/{id}/productos/{productoId}` | `compras.editar` |
+| GET | `/productos/{productoId}/proveedores` (preferido primero, luego más barato por unidad base) | `compras.ver` |
 | GET/POST | `/ordenes-compra` | `compras.ver` / `compras.editar` |
 | GET/PUT | `/ordenes-compra/{id}` | |
 | POST | `/ordenes-compra/{id}/autorizar` | `compras.autorizar` |

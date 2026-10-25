@@ -7,16 +7,17 @@ import {
   useCrearOrdenCompra,
   useListarAlmacenes,
   useListarPreciosProveedor,
+  useListarProductosProveedor,
   useObtenerOrdenCompra,
   type OrdenCompraDto,
   type ProductoDto,
 } from '@tg/api-client';
 import { formatoCentavos, formatoPorcentaje } from '@tg/shared';
 import { Aviso, BarraAccion, Boton, BotonIcono, Campo, EstadoVacio, Selector, Tarjeta, toast } from '@tg/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SelectorAlmacen, SelectorProducto } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
-import { totalesOrden, unidadesCompra } from './calculos';
+import { precioSugerido, totalesOrden, unidadesCompra } from './calculos';
 import { SelectorProveedor } from './comunes';
 
 interface Partida {
@@ -74,6 +75,9 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const precios = useListarPreciosProveedor(proveedorId, undefined, { query: { enabled: !!proveedorId } });
+  // RN-COM-12: solo se piden productos del catálogo activo del proveedor.
+  const catalogo = useListarProductosProveedor(proveedorId, undefined, { query: { enabled: !!proveedorId } });
+  const permitidos = useMemo(() => new Set((catalogo.data ?? []).map((c) => c.productoId)), [catalogo.data]);
 
   // Por defecto las compras entran al almacén de materias primas.
   useEffect(() => {
@@ -91,14 +95,13 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
       cambiar(clave, { producto: null, unidadId: '', precioUnitario: '' });
       return;
     }
-    // Sugiere la unidad y el último precio pagado a este proveedor.
-    const ultimo = precios.data?.find((x) => x.productoId === producto.id);
-    const compra = producto.conversiones.find((c) => c.usoCompra);
-    cambiar(clave, {
+    // Sugiere el precio pactado con el proveedor; si no hay, el último pagado (RN-COM-12).
+    const sugerido = precioSugerido(
       producto,
-      unidadId: ultimo?.unidadId ?? compra?.unidadId ?? producto.unidadBaseId,
-      precioUnitario: ultimo ? String(ultimo.ultimoPrecio) : '',
-    });
+      catalogo.data?.find((x) => x.productoId === producto.id),
+      precios.data?.find((x) => x.productoId === producto.id),
+    );
+    cambiar(clave, { producto, unidadId: sugerido.unidadId, precioUnitario: sugerido.precio });
   };
 
   const capturadas = partidas.filter((p) => p.producto);
@@ -180,6 +183,11 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
           }
         >
           {errores.partidas && <p className="m-0 mb-2 text-sm text-error">{errores.partidas}</p>}
+          {proveedorId && catalogo.data && catalogo.data.length === 0 && (
+            <Aviso tipo="advertencia" className="mb-3">
+              Este proveedor no tiene productos en su catálogo. Agrégalos en Compras → Proveedores → Productos que vende.
+            </Aviso>
+          )}
           <div className="flex flex-col gap-3">
             {partidas.map((p, i) => {
               const importe = p.producto
@@ -192,6 +200,8 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
                     valor={p.producto?.id}
                     producto={p.producto}
                     filtro={{ esComprable: true }}
+                    permitidos={permitidos}
+                    deshabilitado={!proveedorId}
                     onCambiar={(prod) => elegirProducto(p.clave, prod)}
                   />
                   <Selector

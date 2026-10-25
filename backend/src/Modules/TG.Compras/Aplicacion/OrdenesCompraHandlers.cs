@@ -224,6 +224,13 @@ public sealed class GuardarOrdenCompraHandler(
         }
 
         var productos = await catalogos.ObtenerProductosAsync(r.Partidas.Select(p => p.ProductoId), ct);
+
+        // RN-COM-12 [SUP-32]: con el parámetro activo solo se piden productos del catálogo activo del proveedor.
+        var soloCatalogo = await catalogos.ObtenerParametroAsync(ClavesParametro.ComprasSoloCatalogoProveedor, true, ct);
+        var catalogo = soloCatalogo
+            ? (await db.ProveedoresProductos.AsNoTracking().Where(pp => pp.ProveedorId == r.ProveedorId && pp.Activo)
+                .Select(pp => pp.ProductoId).ToListAsync(ct)).ToHashSet()
+            : [];
         var partidas = new List<OrdenCompraPartida>();
         foreach (var p in r.Partidas)
         {
@@ -235,6 +242,11 @@ public sealed class GuardarOrdenCompraHandler(
             if (!producto.EsComprable || !producto.Activo)
             {
                 return ErroresCompras.NoComprable(producto.Nombre);
+            }
+
+            if (soloCatalogo && !catalogo.Contains(p.ProductoId))
+            {
+                return ErroresCompras.FueraDeCatalogo(producto.Nombre, proveedor.RazonSocial);
             }
 
             var conversion = await catalogos.ConvertirABaseAsync(p.ProductoId, p.UnidadId, p.Cantidad, UsoUnidad.Compra, ct);

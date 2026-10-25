@@ -16,14 +16,40 @@ public sealed class Proveedor : EntidadAuditable
     public bool Activo { get; set; } = true;
 }
 
-/// <summary>Último precio por proveedor y producto (RN-COM-08).</summary>
-public sealed class ProveedorProducto
+/// <summary>
+/// Producto del catálogo de un proveedor (RN-COM-10 a RN-COM-12): unidad de compra, clave y precio pactado (opcional),
+/// días de entrega y preferido. La recepción actualiza el último precio pagado y lo agrega si no estaba (RN-COM-08).
+/// </summary>
+public sealed class ProveedorProducto : IAuditable
 {
     public Guid ProveedorId { get; set; }
     public Guid ProductoId { get; set; }
+
+    /// <summary>Unidad de compra del precio pactado.</summary>
     public Guid UnidadId { get; set; }
+
+    public string? ClaveProveedor { get; set; }
+
+    /// <summary>Pactado, sin IVA, por <see cref="UnidadId"/>; opcional.</summary>
+    public decimal? Precio { get; set; }
+
+    public int DiasEntrega { get; set; }
+
+    /// <summary>Uno por producto (RN-COM-11); nunca en una relación inactiva.</summary>
+    public bool Preferido { get; set; }
+
+    public bool Activo { get; set; } = true;
+
+    /// <summary>Lo pagado en la última recepción, en <see cref="UltimaUnidadId"/> (RN-COM-08).</summary>
     public decimal UltimoPrecio { get; set; }
+
+    public Guid? UltimaUnidadId { get; set; }
     public DateTimeOffset? UltimaCompraEn { get; set; }
+
+    public DateTimeOffset CreadoEn { get; set; }
+    public Guid CreadoPor { get; set; }
+    public DateTimeOffset? ActualizadoEn { get; set; }
+    public Guid? ActualizadoPor { get; set; }
 }
 
 public enum EstadoOrdenCompra

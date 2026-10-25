@@ -51,7 +51,7 @@ internal sealed class InicializadorCompras : InicializadorModulo<ComprasDbContex
                 {
                     db.ProveedoresProductos.Add(new ProveedorProducto
                     {
-                        ProveedorId = proveedor.Id, ProductoId = producto.Id, UnidadId = u.Id, UltimoPrecio = precio,
+                        ProveedorId = proveedor.Id, ProductoId = producto.Id, UnidadId = u.Id, Precio = precio,
                     });
                 }
             }

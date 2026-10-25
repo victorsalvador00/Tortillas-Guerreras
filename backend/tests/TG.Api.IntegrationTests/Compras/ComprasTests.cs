@@ -33,9 +33,23 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
             new { unidadId = await admin.UnidadAsync("TON"), factorABase = 1000m, usoCompra = true, usoVenta = false, usoProduccion = false, predeterminadaVenta = false },
         ]);
 
+    private sealed record ProductoProveedorPrueba(Guid ProductoId, Guid UnidadId, string Unidad, decimal? Precio, decimal? PrecioBase,
+        bool Preferido, bool Activo, decimal? UltimoPrecio, string? UltimaUnidad, string? ClaveProveedor);
+
+    private sealed record OfertaPrueba(Guid ProveedorId, decimal? Precio, decimal? PrecioBase, bool Preferido);
+
+    /// <summary>RN-COM-12: la orden solo acepta productos del catálogo del proveedor.</summary>
+    private static Task<ProductoProveedorPrueba> CatalogoAsync(HttpClient compras, Guid proveedorId, Guid productoId, Guid unidadId,
+        decimal? precio = null, bool preferido = false, string? clave = null) =>
+        compras.PostOkAsync<ProductoProveedorPrueba>($"/api/v1/compras/proveedores/{proveedorId}/productos", new
+        {
+            productoId, unidadId, claveProveedor = clave, precio, diasEntrega = 2, preferido,
+        });
+
     private static async Task<OrdenPrueba> OrdenAutorizadaAsync(HttpClient compras, Guid proveedorId, Guid almacenId, Guid productoId,
         Guid unidadId, decimal cantidad, decimal precio)
     {
+        await CatalogoAsync(compras, proveedorId, productoId, unidadId);
         var orden = await compras.PostOkAsync<OrdenPrueba>("/api/v1/compras/ordenes-compra", new
         {
             proveedorId, almacenDestinoId = almacenId,
@@ -159,6 +173,7 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
             proveedorId = proveedor.Id, almacenDestinoId = mp,
             partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 3, precioUnitario = 10.555m } },
         };
+        await CatalogoAsync(compras, proveedor.Id, producto.Id, producto.UnidadBaseId);
         var orden = await compras.PostOkAsync<OrdenPrueba>("/api/v1/compras/ordenes-compra", cuerpo);
         orden.Estado.ShouldBe("Borrador");
         orden.Subtotal.ShouldBe(31.67m);
@@ -278,6 +293,126 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
         var cerrada = await compras.PostOkAsync<OrdenPrueba>($"/api/v1/compras/ordenes-compra/{orden.Id}/cerrar");
         cerrada.Estado.ShouldBe("Cerrada");
         await (await RecibirAsync(compras, orden, 10)).DebeFallarAsync(HttpStatusCode.Conflict, "COM-008");
+    }
+
+    // ───────────── Catálogo de productos por proveedor ─────────────
+
+    [Fact]
+    [Trait("Regla", "RN-COM-10")]
+    public async Task Catalogo_SoloComprables_SinRepetir_YConUnidadDeCompra()
+    {
+        var admin = await api.ClienteAsync();
+        var compras = await api.ClienteAsync("compras");
+        var proveedor = await ProveedorAsync(compras);
+        var producto = await ProductoPorToneladaAsync(admin);
+        var ton = await admin.UnidadAsync("TON");
+
+        // El precio pactado es opcional.
+        var sinPrecio = await CatalogoAsync(compras, proveedor.Id, producto.Id, ton, clave: "MZ-01");
+        sinPrecio.Precio.ShouldBeNull();
+        sinPrecio.Unidad.ShouldBe("TON");
+        sinPrecio.ClaveProveedor.ShouldBe("MZ-01");
+
+        await (await compras.PostJsonAsync($"/api/v1/compras/proveedores/{proveedor.Id}/productos",
+                new { productoId = producto.Id, unidadId = ton, precio = 1m, diasEntrega = 0, preferido = false }))
+            .DebeFallarAsync(HttpStatusCode.BadRequest, "COM-018");
+
+        var tortilla = await admin.ProductoAsync("PT-TORT-KG");
+        await (await compras.PostJsonAsync($"/api/v1/compras/proveedores/{proveedor.Id}/productos",
+                new { productoId = tortilla.Id, unidadId = tortilla.UnidadBaseId, diasEntrega = 0, preferido = false }))
+            .DebeFallarAsync(HttpStatusCode.BadRequest, "COM-001");
+
+        // PAQ no es unidad de compra del producto.
+        var otro = await admin.CrearProductoAsync();
+        (await compras.PostJsonAsync($"/api/v1/compras/proveedores/{proveedor.Id}/productos",
+                new { productoId = otro.Id, unidadId = await admin.UnidadAsync("PAQ"), diasEntrega = 0, preferido = false }))
+            .IsSuccessStatusCode.ShouldBeFalse();
+
+        // Con precio: se informa por unidad de compra y por unidad base.
+        var conPrecio = await compras.PutOkAsync<ProductoProveedorPrueba>($"/api/v1/compras/proveedores/{proveedor.Id}/productos/{producto.Id}",
+            new { unidadId = ton, claveProveedor = "MZ-01", precio = 6500m, diasEntrega = 3, preferido = false, activo = true });
+        conPrecio.PrecioBase.ShouldBe(6.5m);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-COM-11")]
+    public async Task Preferido_UnoPorProducto_YSeQuitaAlDesactivarElProveedor()
+    {
+        var admin = await api.ClienteAsync();
+        var compras = await api.ClienteAsync("compras");
+        var producto = await admin.CrearProductoAsync();
+        var a = await ProveedorAsync(compras);
+        var b = await ProveedorAsync(compras);
+        await CatalogoAsync(compras, a.Id, producto.Id, producto.UnidadBaseId, precio: 10m, preferido: true);
+        await CatalogoAsync(compras, b.Id, producto.Id, producto.UnidadBaseId, precio: 8m, preferido: true);
+
+        var ofertas = await compras.GetOkAsync<List<OfertaPrueba>>($"/api/v1/compras/productos/{producto.Id}/proveedores");
+        ofertas.Count.ShouldBe(2);
+        ofertas[0].ProveedorId.ShouldBe(b.Id);
+        ofertas.Count(o => o.Preferido).ShouldBe(1);
+
+        // Inactivo nunca es preferido.
+        await (await compras.PutAsJsonAsync($"/api/v1/compras/proveedores/{b.Id}/productos/{producto.Id}",
+                new { unidadId = producto.UnidadBaseId, precio = 8m, diasEntrega = 0, preferido = true, activo = false }, ExtensionesHttp.Json))
+            .DebeFallarAsync(HttpStatusCode.BadRequest, null);
+
+        await compras.PostOkAsync<ProveedorPrueba>($"/api/v1/compras/proveedores/{b.Id}/desactivar");
+        var despues = await compras.GetOkAsync<List<OfertaPrueba>>($"/api/v1/compras/productos/{producto.Id}/proveedores");
+        despues.Single().ProveedorId.ShouldBe(a.Id);
+        despues.Single().Preferido.ShouldBeFalse();
+
+        // Los productos de un proveedor inactivo no se editan.
+        await (await compras.PutAsJsonAsync($"/api/v1/compras/proveedores/{b.Id}/productos/{producto.Id}",
+                new { unidadId = producto.UnidadBaseId, precio = 8m, diasEntrega = 0, preferido = false, activo = true }, ExtensionesHttp.Json))
+            .DebeFallarAsync(HttpStatusCode.Conflict, "COM-020");
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-COM-12")]
+    public async Task Orden_ConProductoFueraDelCatalogoDelProveedor_DevuelveCOM017()
+    {
+        var admin = await api.ClienteAsync();
+        var compras = await api.ClienteAsync("compras");
+        var producto = await admin.CrearProductoAsync();
+        var proveedor = await ProveedorAsync(compras);
+        var cuerpo = new
+        {
+            proveedorId = proveedor.Id, almacenDestinoId = await admin.AlmacenAsync("MP"),
+            partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 5, precioUnitario = 2 } },
+        };
+        await (await compras.PostJsonAsync("/api/v1/compras/ordenes-compra", cuerpo)).DebeFallarAsync(HttpStatusCode.BadRequest, "COM-017");
+
+        // Desactivado en su catálogo tampoco se puede pedir.
+        await CatalogoAsync(compras, proveedor.Id, producto.Id, producto.UnidadBaseId);
+        await compras.PutOkAsync<ProductoProveedorPrueba>($"/api/v1/compras/proveedores/{proveedor.Id}/productos/{producto.Id}",
+            new { unidadId = producto.UnidadBaseId, diasEntrega = 0, preferido = false, activo = false });
+        await (await compras.PostJsonAsync("/api/v1/compras/ordenes-compra", cuerpo)).DebeFallarAsync(HttpStatusCode.BadRequest, "COM-017");
+
+        await compras.PutOkAsync<ProductoProveedorPrueba>($"/api/v1/compras/proveedores/{proveedor.Id}/productos/{producto.Id}",
+            new { unidadId = producto.UnidadBaseId, diasEntrega = 0, preferido = false, activo = true });
+        (await compras.PostJsonAsync("/api/v1/compras/ordenes-compra", cuerpo)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-COM-08")]
+    public async Task CompraDirecta_AgregaElProductoAlCatalogo_ConSuUltimoPrecio()
+    {
+        var admin = await api.ClienteAsync();
+        var compras = await api.ClienteAsync("compras");
+        var producto = await admin.CrearProductoAsync();
+        var proveedor = await ProveedorAsync(compras);
+        await compras.PostOkAsync<RecepcionPrueba>("/api/v1/compras/recepciones", new
+        {
+            proveedorId = proveedor.Id, almacenId = await admin.AlmacenAsync("MP"),
+            partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 8, precioUnitario = 3.5m } },
+        });
+
+        var catalogo = await compras.GetOkAsync<List<ProductoProveedorPrueba>>($"/api/v1/compras/proveedores/{proveedor.Id}/productos");
+        var registro = catalogo.Single(p => p.ProductoId == producto.Id);
+        registro.Activo.ShouldBeTrue();
+        registro.Precio.ShouldBe(3.5m);
+        registro.UltimoPrecio.ShouldBe(3.5m);
+        registro.UltimaUnidad.ShouldNotBeNull();
     }
 
     [Fact]

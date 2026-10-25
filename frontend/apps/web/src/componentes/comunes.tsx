@@ -22,6 +22,7 @@ export function SelectorProducto({
   compacto,
   className,
   deshabilitado,
+  permitidos,
 }: {
   etiqueta?: string;
   valor: string | null | undefined;
@@ -32,16 +33,20 @@ export function SelectorProducto({
   compacto?: boolean;
   className?: string;
   deshabilitado?: boolean;
+  /** Si se indica, solo se ofrecen estos productos (p. ej. el catálogo de un proveedor). */
+  permitidos?: ReadonlySet<string>;
 }) {
   const cache = useMemo(() => new Map<string, ProductoDto>(), []);
   const filtroClave = JSON.stringify(filtro ?? {});
+  const permitidosClave = permitidos ? [...permitidos].sort().join(',') : null;
   const buscar = useCallback(
     async (texto: string): Promise<OpcionBusqueda[]> => {
       const r = await listarProductos({ ...(JSON.parse(filtroClave) as object), activo: true, buscar: texto || undefined, tamano: 30 });
       r.items.forEach((p) => cache.set(p.id, p));
-      return r.items.map((p) => ({ valor: p.id, etiqueta: `${p.sku} · ${p.nombre}`, detalle: `${etiquetaEnum(p.tipo)} · ${p.unidadBaseClave}` }));
+      const lista = permitidosClave == null ? r.items : r.items.filter((p) => permitidosClave.split(',').includes(p.id));
+      return lista.map((p) => ({ valor: p.id, etiqueta: `${p.sku} · ${p.nombre}`, detalle: `${etiquetaEnum(p.tipo)} · ${p.unidadBaseClave}` }));
     },
-    [cache, filtroClave],
+    [cache, filtroClave, permitidosClave],
   );
   return (
     <BuscadorSeleccion

@@ -2,6 +2,21 @@ import { calcularTotales, type TotalesDocumento } from '@tg/shared';
 import type { ProductoDto } from '@tg/api-client';
 
 /** Unidades en que se puede comprar un producto: la base y las conversiones con uso de compra. */
+/**
+ * Unidad y precio que se sugieren al agregar un producto a la orden (RN-COM-12): el pactado con el proveedor; si no
+ * hay, el último pagado (si hubo compras); si tampoco, la unidad del catálogo o la primera de compra, sin precio.
+ */
+export function precioSugerido(
+  producto: Pick<ProductoDto, 'unidadBaseId' | 'conversiones'>,
+  catalogo?: { unidadId: string; precio?: number | null } | null,
+  ultimo?: { unidadId: string; ultimoPrecio: number; ultimaCompraEn?: string | null } | null,
+): { unidadId: string; precio: string } {
+  if (catalogo?.precio != null) return { unidadId: catalogo.unidadId, precio: String(catalogo.precio) };
+  if (ultimo?.ultimaCompraEn) return { unidadId: ultimo.unidadId, precio: String(ultimo.ultimoPrecio) };
+  const compra = producto.conversiones.find((c) => c.usoCompra);
+  return { unidadId: catalogo?.unidadId ?? compra?.unidadId ?? producto.unidadBaseId, precio: '' };
+}
+
 export function unidadesCompra(p: Pick<ProductoDto, 'unidadBaseId' | 'unidadBaseClave' | 'conversiones'>) {
   return [
     { valor: p.unidadBaseId, etiqueta: p.unidadBaseClave, factor: 1 },

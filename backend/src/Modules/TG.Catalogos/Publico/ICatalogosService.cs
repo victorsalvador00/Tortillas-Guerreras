@@ -140,6 +140,7 @@ public static class ClavesParametro
     public const string ProduccionConsumoSinExistencia = "produccion.permitir_consumo_sin_existencia";
     public const string ProduccionUmbralVariacion = "produccion.umbral_variacion_pct";
     public const string ComprasTolerancia = "compras.tolerancia_pct";
+    public const string ComprasSoloCatalogoProveedor = "compras.solo_catalogo_proveedor";
     public const string MetodoCosteo = "inventario.metodo_costeo";
 
     // v0.2

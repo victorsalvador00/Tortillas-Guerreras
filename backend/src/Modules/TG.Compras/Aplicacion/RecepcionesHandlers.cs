@@ -351,7 +351,8 @@ public sealed class RegistrarRecepcionHandler(
             orden.Estado = ReglasCompras.EstadoPorRecepciones(orden.Partidas);
         }
 
-        // RN-COM-08: último precio por proveedor y producto.
+        // RN-COM-08: último precio por proveedor y producto; si no estaba en su catálogo (compra directa) se agrega con
+        // la unidad y el precio recibidos.
         var ahora = reloj.GetUtcNow();
         foreach (var grupo in recepcion.Partidas.GroupBy(p => p.ProductoId))
         {
@@ -359,11 +360,14 @@ public sealed class RegistrarRecepcionHandler(
             var registro = await db.ProveedoresProductos.FirstOrDefaultAsync(pp => pp.ProveedorId == proveedorId && pp.ProductoId == grupo.Key, ct);
             if (registro is null)
             {
-                registro = new ProveedorProducto { ProveedorId = proveedorId, ProductoId = grupo.Key };
+                registro = new ProveedorProducto
+                {
+                    ProveedorId = proveedorId, ProductoId = grupo.Key, UnidadId = ultima.UnidadId, Precio = ultima.PrecioUnitario,
+                };
                 db.ProveedoresProductos.Add(registro);
             }
 
-            registro.UnidadId = ultima.UnidadId;
+            registro.UltimaUnidadId = ultima.UnidadId;
             registro.UltimoPrecio = ultima.PrecioUnitario;
             registro.UltimaCompraEn = ahora;
         }

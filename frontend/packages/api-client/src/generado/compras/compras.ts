@@ -25,18 +25,23 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ActualizarProductoProveedorRequest,
+  AgregarProductoProveedorRequest,
   GuardarOrdenCompraRequest,
   GuardarProveedorRequest,
   HttpValidationProblemDetails,
   ListarOrdenesCompraParams,
   ListarPreciosProveedorParams,
+  ListarProductosProveedorParams,
   ListarProveedoresParams,
   ListarRecepcionesParams,
+  OfertaProveedorDto,
   OrdenCompraDto,
   PaginadoOfOrdenCompraResumenDto,
   PaginadoOfProveedorDto,
   PaginadoOfRecepcionResumenDto,
   PrecioProveedorDto,
+  ProductoProveedorDto,
   ProveedorDto,
   RecepcionDto,
   RegistrarRecepcionRequest
@@ -437,7 +442,219 @@ export function useListarPreciosProveedor<TData = Awaited<ReturnType<typeof list
 
 
 
-export const desactivarProveedor = (
+export const listarProductosProveedor = (
+    id: string,
+    params?: ListarProductosProveedorParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<ProductoProveedorDto[]>(
+      {url: `/api/v1/compras/proveedores/${id}/productos`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarProductosProveedorQueryKey = (id?: string,
+    params?: ListarProductosProveedorParams,) => {
+    return [
+    `/api/v1/compras/proveedores/${id}/productos`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListarProductosProveedorQueryOptions = <TData = Awaited<ReturnType<typeof listarProductosProveedor>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListarProductosProveedorParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarProductosProveedorQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarProductosProveedor>>> = ({ signal }) => listarProductosProveedor(id,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarProductosProveedorQueryResult = NonNullable<Awaited<ReturnType<typeof listarProductosProveedor>>>
+export type ListarProductosProveedorQueryError = ErrorType<unknown>
+
+
+export function useListarProductosProveedor<TData = Awaited<ReturnType<typeof listarProductosProveedor>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: undefined |  ListarProductosProveedorParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProductosProveedor>>,
+          TError,
+          Awaited<ReturnType<typeof listarProductosProveedor>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProductosProveedor<TData = Awaited<ReturnType<typeof listarProductosProveedor>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListarProductosProveedorParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProductosProveedor>>,
+          TError,
+          Awaited<ReturnType<typeof listarProductosProveedor>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProductosProveedor<TData = Awaited<ReturnType<typeof listarProductosProveedor>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListarProductosProveedorParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarProductosProveedor<TData = Awaited<ReturnType<typeof listarProductosProveedor>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListarProductosProveedorParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProductosProveedor>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarProductosProveedorQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const agregarProductoProveedor = (
+    id: string,
+    agregarProductoProveedorRequest: BodyType<AgregarProductoProveedorRequest>,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<ProductoProveedorDto>(
+      {url: `/api/v1/compras/proveedores/${id}/productos`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: agregarProductoProveedorRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getAgregarProductoProveedorMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof agregarProductoProveedor>>, TError,{id: string;data: BodyType<AgregarProductoProveedorRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof agregarProductoProveedor>>, TError,{id: string;data: BodyType<AgregarProductoProveedorRequest>}, TContext> => {
+
+const mutationKey = ['agregarProductoProveedor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof agregarProductoProveedor>>, {id: string;data: BodyType<AgregarProductoProveedorRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  agregarProductoProveedor(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AgregarProductoProveedorMutationResult = NonNullable<Awaited<ReturnType<typeof agregarProductoProveedor>>>
+    export type AgregarProductoProveedorMutationBody = BodyType<AgregarProductoProveedorRequest>
+    export type AgregarProductoProveedorMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useAgregarProductoProveedor = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof agregarProductoProveedor>>, TError,{id: string;data: BodyType<AgregarProductoProveedorRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof agregarProductoProveedor>>,
+        TError,
+        {id: string;data: BodyType<AgregarProductoProveedorRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getAgregarProductoProveedorMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const actualizarProductoProveedor = (
+    id: string,
+    productoId: string,
+    actualizarProductoProveedorRequest: BodyType<ActualizarProductoProveedorRequest>,
+ options?: SecondParameter<typeof clienteApi>,) => {
+      
+      
+      return clienteApi<ProductoProveedorDto>(
+      {url: `/api/v1/compras/proveedores/${id}/productos/${productoId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: actualizarProductoProveedorRequest
+    },
+      options);
+    }
+  
+
+
+export const getActualizarProductoProveedorMutationOptions = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarProductoProveedor>>, TError,{id: string;productoId: string;data: BodyType<ActualizarProductoProveedorRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof actualizarProductoProveedor>>, TError,{id: string;productoId: string;data: BodyType<ActualizarProductoProveedorRequest>}, TContext> => {
+
+const mutationKey = ['actualizarProductoProveedor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof actualizarProductoProveedor>>, {id: string;productoId: string;data: BodyType<ActualizarProductoProveedorRequest>}> = (props) => {
+          const {id,productoId,data} = props ?? {};
+
+          return  actualizarProductoProveedor(id,productoId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActualizarProductoProveedorMutationResult = NonNullable<Awaited<ReturnType<typeof actualizarProductoProveedor>>>
+    export type ActualizarProductoProveedorMutationBody = BodyType<ActualizarProductoProveedorRequest>
+    export type ActualizarProductoProveedorMutationError = ErrorType<HttpValidationProblemDetails>
+
+    export const useActualizarProductoProveedor = <TError = ErrorType<HttpValidationProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarProductoProveedor>>, TError,{id: string;productoId: string;data: BodyType<ActualizarProductoProveedorRequest>}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof actualizarProductoProveedor>>,
+        TError,
+        {id: string;productoId: string;data: BodyType<ActualizarProductoProveedorRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getActualizarProductoProveedorMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const desactivarProveedor = (
     id: string,
  options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
 ) => {
@@ -549,7 +766,93 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const listarOrdenesCompra = (
+    export const listarProveedoresProducto = (
+    productoId: string,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<OfertaProveedorDto[]>(
+      {url: `/api/v1/compras/productos/${productoId}/proveedores`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarProveedoresProductoQueryKey = (productoId?: string,) => {
+    return [
+    `/api/v1/compras/productos/${productoId}/proveedores`
+    ] as const;
+    }
+
+    
+export const getListarProveedoresProductoQueryOptions = <TData = Awaited<ReturnType<typeof listarProveedoresProducto>>, TError = ErrorType<unknown>>(productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarProveedoresProductoQueryKey(productoId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarProveedoresProducto>>> = ({ signal }) => listarProveedoresProducto(productoId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(productoId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListarProveedoresProductoQueryResult = NonNullable<Awaited<ReturnType<typeof listarProveedoresProducto>>>
+export type ListarProveedoresProductoQueryError = ErrorType<unknown>
+
+
+export function useListarProveedoresProducto<TData = Awaited<ReturnType<typeof listarProveedoresProducto>>, TError = ErrorType<unknown>>(
+ productoId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProveedoresProducto>>,
+          TError,
+          Awaited<ReturnType<typeof listarProveedoresProducto>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProveedoresProducto<TData = Awaited<ReturnType<typeof listarProveedoresProducto>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarProveedoresProducto>>,
+          TError,
+          Awaited<ReturnType<typeof listarProveedoresProducto>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListarProveedoresProducto<TData = Awaited<ReturnType<typeof listarProveedoresProducto>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListarProveedoresProducto<TData = Awaited<ReturnType<typeof listarProveedoresProducto>>, TError = ErrorType<unknown>>(
+ productoId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarProveedoresProducto>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListarProveedoresProductoQueryOptions(productoId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const listarOrdenesCompra = (
     params?: ListarOrdenesCompraParams,
  options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
 ) => {

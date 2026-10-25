@@ -2354,6 +2354,156 @@
         }
       }
     },
+    "/api/v1/compras/proveedores/{id}/productos": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarProductosProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductoProveedorDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "agregarProductoProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgregarProductoProveedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoProveedorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/proveedores/{id}/productos/{productoId}": {
+      "put": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "actualizarProductoProveedor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarProductoProveedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductoProveedorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/compras/proveedores/{id}/desactivar": {
       "post": {
         "tags": [
@@ -2409,6 +2559,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProveedorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compras/productos/{productoId}/proveedores": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "listarProveedoresProducto",
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OfertaProveedorDto"
+                  }
                 }
               }
             }
@@ -8748,6 +8932,83 @@
           }
         }
       },
+      "ActualizarProductoProveedorRequest": {
+        "required": [
+          "unidadId",
+          "diasEntrega",
+          "preferido",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "claveProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "precio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diasEntrega": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "preferido": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgregarProductoProveedorRequest": {
+        "required": [
+          "productoId",
+          "unidadId",
+          "diasEntrega",
+          "preferido"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "claveProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "precio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diasEntrega": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "preferido": {
+            "type": "boolean"
+          }
+        }
+      },
       "AjusteRecienteDto": {
         "required": [
           "documentoId",
@@ -14521,6 +14782,69 @@
           }
         }
       },
+      "OfertaProveedorDto": {
+        "required": [
+          "proveedorId",
+          "codigo",
+          "proveedor",
+          "diasCredito",
+          "unidadId",
+          "unidad",
+          "diasEntrega",
+          "preferido"
+        ],
+        "type": "object",
+        "properties": {
+          "proveedorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "proveedor": {
+            "type": "string"
+          },
+          "diasCredito": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "claveProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "precio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "precioBase": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diasEntrega": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "preferido": {
+            "type": "boolean"
+          }
+        }
+      },
       "OperacionRecibidaDto": {
         "required": [
           "opId",
@@ -17177,6 +17501,110 @@
           }
         }
       },
+      "ProductoProveedorDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "tipo",
+          "productoActivo",
+          "unidadBase",
+          "unidadId",
+          "unidad",
+          "factorABase",
+          "diasEntrega",
+          "preferido",
+          "activo",
+          "tasaIva"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "productoActivo": {
+            "type": "boolean"
+          },
+          "unidadBase": {
+            "type": "string"
+          },
+          "unidadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "factorABase": {
+            "type": "number",
+            "format": "double"
+          },
+          "claveProveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "precio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "precioBase": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "diasEntrega": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "preferido": {
+            "type": "boolean"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "ultimoPrecio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "ultimaUnidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ultimaCompraEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "tasaIva": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "ProductosExclusivosRequest": {
         "required": [
           "exclusivos"
@@ -17323,6 +17751,11 @@
           },
           "activo": {
             "type": "boolean"
+          },
+          "productos": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
           }
         }
       },

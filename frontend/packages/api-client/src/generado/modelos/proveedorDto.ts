@@ -22,4 +22,5 @@ export interface ProveedorDto {
   email?: ProveedorDtoEmail;
   diasCredito: number;
   activo: boolean;
+  productos?: number;
 }

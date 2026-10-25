@@ -30,6 +30,10 @@ public sealed class ComprasDbContext(DbContextOptions<ComprasDbContext> options)
             e.ToTable("proveedores_productos");
             e.HasKey(p => new { p.ProveedorId, p.ProductoId });
             e.Property(p => p.UltimoPrecio).Precio();
+            e.Property(p => p.Precio).Precio();
+            e.Property(p => p.ClaveProveedor).HasMaxLength(50);
+            e.Property(p => p.Activo).HasDefaultValue(true);
+            e.HasIndex(p => p.ProductoId).IsUnique().HasFilter("preferido").HasDatabaseName("ux_proveedores_productos_preferido");
             e.HasOne<Proveedor>().WithMany().HasForeignKey(p => p.ProveedorId).OnDelete(DeleteBehavior.Cascade);
         });
 

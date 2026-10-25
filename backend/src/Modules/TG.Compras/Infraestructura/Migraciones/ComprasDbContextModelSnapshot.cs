@@ -267,9 +267,53 @@ namespace TG.Compras.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("producto_id");
 
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("activo");
+
+                    b.Property<DateTimeOffset?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<Guid?>("ActualizadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actualizado_por");
+
+                    b.Property<string>("ClaveProveedor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("clave_proveedor");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<int>("DiasEntrega")
+                        .HasColumnType("integer")
+                        .HasColumnName("dias_entrega");
+
+                    b.Property<decimal?>("Precio")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("precio");
+
+                    b.Property<bool>("Preferido")
+                        .HasColumnType("boolean")
+                        .HasColumnName("preferido");
+
                     b.Property<DateTimeOffset?>("UltimaCompraEn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ultima_compra_en");
+
+                    b.Property<Guid?>("UltimaUnidadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ultima_unidad_id");
 
                     b.Property<decimal>("UltimoPrecio")
                         .HasPrecision(18, 4)
@@ -282,6 +326,11 @@ namespace TG.Compras.Infraestructura.Migraciones
 
                     b.HasKey("ProveedorId", "ProductoId")
                         .HasName("pk_proveedores_productos");
+
+                    b.HasIndex("ProductoId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_proveedores_productos_preferido")
+                        .HasFilter("preferido");
 
                     b.ToTable("proveedores_productos", "compras");
                 });

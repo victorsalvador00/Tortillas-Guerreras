@@ -21,6 +21,17 @@ internal static class ComprasEndpoints
             (await h.ObtenerAsync(id, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("obtenerProveedor");
         proveedores.MapGet("/{id:guid}/precios", async (Guid id, Guid? productoId, ProveedoresHandler h, CancellationToken ct) =>
             (await h.PreciosAsync(id, productoId, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("listarPreciosProveedor");
+        proveedores.MapGet("/{id:guid}/productos", async (Guid id, bool? incluirInactivos, ProductosProveedorHandler h, CancellationToken ct) =>
+            (await h.ListarAsync(id, incluirInactivos ?? false, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("listarProductosProveedor");
+        proveedores.MapPost("/{id:guid}/productos", async (Guid id, AgregarProductoProveedorRequest r, ProductosProveedorHandler h, CancellationToken ct) =>
+            (await h.AgregarAsync(id, r, ct)).AHttp()).RequireAuthorization(P.Editar).Validar<AgregarProductoProveedorRequest>()
+            .WithName("agregarProductoProveedor");
+        proveedores.MapPut("/{id:guid}/productos/{productoId:guid}", async (Guid id, Guid productoId, ActualizarProductoProveedorRequest r,
+                ProductosProveedorHandler h, CancellationToken ct) =>
+            (await h.ActualizarAsync(id, productoId, r, ct)).AHttp()).RequireAuthorization(P.Editar).Validar<ActualizarProductoProveedorRequest>()
+            .WithName("actualizarProductoProveedor");
+        grupo.MapGet("/productos/{productoId:guid}/proveedores", async (Guid productoId, ProductosProveedorHandler h, CancellationToken ct) =>
+            (await h.OfertasAsync(productoId, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("listarProveedoresProducto");
         proveedores.MapPost("/", async (GuardarProveedorRequest r, ProveedoresHandler h, CancellationToken ct) =>
             (await h.CrearAsync(r, ct)).AHttp()).RequireAuthorization(P.Editar).Validar<GuardarProveedorRequest>().WithName("crearProveedor");
         proveedores.MapPut("/{id:guid}", async (Guid id, GuardarProveedorRequest r, ProveedoresHandler h, CancellationToken ct) =>

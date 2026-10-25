@@ -133,8 +133,10 @@ oficina) y **Liquidaciones** (recibe el dinero y cierra la liquidación). "Vende
 **proveedores**: `id`, `codigo UX`, `razon_social`, `nombre_comercial null`, `rfc null` (12 o 13 caracteres),
 `contacto null`, `telefono null`, `email null`, `dias_credito int`, `activo`.
 
-**proveedores_productos**: `proveedor_id`, `producto_id` (PK), `unidad_id`, `ultimo_precio`,
-`ultima_compra_en`.
+**proveedores_productos** (catálogo del proveedor, RN-COM-10 a 12): `proveedor_id`, `producto_id` (PK), `unidad_id`
+(unidad de compra), `clave_proveedor varchar(50) null`, `precio numeric(18,4) null` (pactado, sin IVA),
+`dias_entrega int`, `preferido bool` (único parcial por `producto_id`), `activo bool`, `ultimo_precio`,
+`ultima_unidad_id null`, `ultima_compra_en null`, auditoría.
 
 **ordenes_compra**
 

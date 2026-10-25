@@ -174,3 +174,7 @@ regenerado (definición de terminado).
   de `docs/cliente/mapeo.md`** (P-06). *Acepta:* importar las plantillas de ejemplo deja rutas, clientes por ruta y
   precios listos para operar. *(Hecho: plantillas y columnas, ver `07-web.md` "Carga inicial por CSV". Pendiente
   solo la carga real del catálogo del cliente, que espera P-06.)*
+- [x] **T-8.15 Catálogo de productos por proveedor** *(ajusta T-2.1 y T-2.2; guía: `SupplierItem` de panissimo)*.
+  En Proveedores, "Productos que vende": unidad de compra, clave del proveedor, precio pactado opcional, días de
+  entrega, preferido y activo; la orden de compra solo acepta productos del catálogo `[SUP-32]` y sugiere el precio
+  pactado. *Acepta:* RN-COM-10, RN-COM-11 y RN-COM-12 con pruebas; la compra directa agrega al catálogo (RN-COM-08).

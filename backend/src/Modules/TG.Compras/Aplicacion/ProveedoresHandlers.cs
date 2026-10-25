@@ -50,6 +50,18 @@ public static class ErroresCompras
         Error.Campo("COM-015", "almacenId", "El almacén no existe, está inactivo o es de ruta.");
 
     public static readonly Error ProductoNoEncontrado = Error.Campo("COM-016", "productoId", "El producto no existe.");
+
+    public static Error FueraDeCatalogo(string producto, string proveedor) =>
+        Error.Campo("COM-017", "productoId", $"{proveedor} no vende {producto}: agrégalo a su catálogo en Proveedores → Productos.");
+
+    public static Error ProductoYaEnCatalogo(string producto) =>
+        Error.Campo("COM-018", "productoId", $"{producto} ya está en el catálogo del proveedor.");
+
+    public static readonly Error ProductoNoEnCatalogoProveedor =
+        Error.NoEncontrado("COM-019", "El producto no está en el catálogo del proveedor.");
+
+    public static readonly Error ProveedorInactivoCatalogo =
+        Error.Conflicto("COM-020", "El proveedor está inactivo: reactívalo para editar sus productos.");
 }
 
 public sealed record ProveedorDto(
@@ -62,7 +74,8 @@ public sealed record ProveedorDto(
     string? Telefono,
     string? Email,
     int DiasCredito,
-    bool Activo);
+    bool Activo,
+    int Productos = 0);
 
 public sealed record GuardarProveedorRequest(
     string Codigo,
@@ -117,7 +130,11 @@ public sealed class ProveedoresHandler(ComprasDbContext db, ICatalogosService ca
             consulta = consulta.Where(p => p.Activo == activo);
         }
 
-        return (await consulta.OrderBy(p => p.RazonSocial).PaginarAsync(pagina, tamano, ct)).Map(ADto);
+        var pagina_ = await consulta.OrderBy(p => p.RazonSocial).PaginarAsync(pagina, tamano, ct);
+        var ids = pagina_.Items.Select(p => p.Id).ToList();
+        var conteos = await db.ProveedoresProductos.AsNoTracking().Where(pp => ids.Contains(pp.ProveedorId) && pp.Activo)
+            .GroupBy(pp => pp.ProveedorId).Select(g => new { g.Key, Total = g.Count() }).ToDictionaryAsync(g => g.Key, g => g.Total, ct);
+        return pagina_.Map(p => ADto(p, conteos.GetValueOrDefault(p.Id)));
     }
 
     public async Task<Result<ProveedorDto>> ObtenerAsync(Guid id, CancellationToken ct)
@@ -170,6 +187,13 @@ public sealed class ProveedoresHandler(ComprasDbContext db, ICatalogosService ca
         }
 
         proveedor.Activo = activo;
+        if (!activo)
+        {
+            // RN-COM-11: desactivar un proveedor le quita sus preferencias.
+            await db.ProveedoresProductos.Where(pp => pp.ProveedorId == id && pp.Preferido)
+                .ExecuteUpdateAsync(s => s.SetProperty(pp => pp.Preferido, false), ct);
+        }
+
         await db.SaveChangesAsync(ct);
         return ADto(proveedor);
     }
@@ -196,8 +220,8 @@ public sealed class ProveedoresHandler(ComprasDbContext db, ICatalogosService ca
         return ultimos.Select(u =>
             {
                 var producto = productos.GetValueOrDefault(u.ProductoId);
-                return new PrecioProveedorDto(u.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?", u.UnidadId,
-                    unidades.GetValueOrDefault(u.UnidadId)?.Clave ?? "?", u.UltimoPrecio, u.UltimaCompraEn,
+                return new PrecioProveedorDto(u.ProductoId, producto?.Sku ?? "?", producto?.Nombre ?? "?", u.UltimaUnidadId ?? u.UnidadId,
+                    unidades.GetValueOrDefault(u.UltimaUnidadId ?? u.UnidadId)?.Clave ?? "?", u.UltimoPrecio, u.UltimaCompraEn,
                     historial.Where(h => h.ProductoId == u.ProductoId).Select(h => new HistorialPrecioDto(h.FechaOperativa, h.Folio,
                         unidades.GetValueOrDefault(h.UnidadId)?.Clave ?? "?", h.Cantidad, h.PrecioUnitario, h.CostoUnitarioBase)).ToList());
             })
@@ -217,6 +241,8 @@ public sealed class ProveedoresHandler(ComprasDbContext db, ICatalogosService ca
 
     private static string? Limpiar(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 
-    internal static ProveedorDto ADto(Proveedor p) =>
-        new(p.Id, p.Codigo, p.RazonSocial, p.NombreComercial, p.Rfc, p.Contacto, p.Telefono, p.Email, p.DiasCredito, p.Activo);
+    internal static ProveedorDto ADto(Proveedor p) => ADto(p, 0);
+
+    internal static ProveedorDto ADto(Proveedor p, int productos) =>
+        new(p.Id, p.Codigo, p.RazonSocial, p.NombreComercial, p.Rfc, p.Contacto, p.Telefono, p.Email, p.DiasCredito, p.Activo, productos);
 }

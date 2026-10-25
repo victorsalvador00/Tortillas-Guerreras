@@ -33,6 +33,7 @@ import { z } from 'zod';
 import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
+import { DialogoProductosProveedor } from './ProductosProveedor';
 
 const opcional = z.string().trim().optional();
 
@@ -202,6 +203,7 @@ export function Proveedores() {
   const activar = useActivarProveedor();
   const [dialogo, setDialogo] = useState<{ abierto: boolean; proveedor: ProveedorDto | null }>({ abierto: false, proveedor: null });
   const [precios, setPrecios] = useState<ProveedorDto | null>(null);
+  const [catalogo, setCatalogo] = useState<ProveedorDto | null>(null);
   const [cambiarEstado, setCambiarEstado] = useState<ProveedorDto | null>(null);
 
   const columnas = useMemo<ColumnDef<ProveedorDto, unknown>[]>(
@@ -224,6 +226,16 @@ export function Proveedores() {
         cell: ({ row }) => [row.original.contacto, row.original.telefono].filter(Boolean).join(' · ') || '—',
         meta: { ocultarEnMovil: true },
       },
+      {
+        header: 'Productos',
+        accessorKey: 'productos',
+        meta: { alinear: 'fin' },
+        cell: ({ row }) => (
+          <Boton variante="texto" tamano="chico" onClick={() => setCatalogo(row.original)}>
+            {row.original.productos ?? 0}
+          </Boton>
+        ),
+      },
       { header: 'Crédito', accessorKey: 'diasCredito', cell: ({ row }) => `${row.original.diasCredito} días`, meta: { alinear: 'fin', ocultarEnMovil: true } },
       { header: 'Estado', accessorKey: 'activo', cell: ({ row }) => <EtiquetaEstado estado={row.original.activo ? 'Activo' : 'Inactivo'} /> },
       {
@@ -235,7 +247,8 @@ export function Proveedores() {
           <MenuAcciones
             disparador={<BotonIcono icono="more_vert" etiqueta={`Acciones de ${row.original.codigo}`} plano />}
             opciones={[
-              { etiqueta: 'Precios e historial', icono: 'price_change', alSeleccionar: () => setPrecios(row.original) },
+              { etiqueta: 'Productos que vende', icono: 'inventory_2', alSeleccionar: () => setCatalogo(row.original) },
+              { etiqueta: 'Historial de precios', icono: 'price_change', alSeleccionar: () => setPrecios(row.original) },
               ...(editable
                 ? [
                     { etiqueta: 'Editar', icono: 'edit', alSeleccionar: () => setDialogo({ abierto: true, proveedor: row.original }) },
@@ -321,6 +334,7 @@ export function Proveedores() {
       />
       <DialogoProveedor {...dialogo} onCambiar={(a) => setDialogo((d) => ({ ...d, abierto: a }))} />
       {precios && <DialogoPrecios proveedor={precios} onCerrar={() => setPrecios(null)} />}
+      {catalogo && <DialogoProductosProveedor proveedor={catalogo} editable={editable} onCerrar={() => setCatalogo(null)} />}
       {cambiarEstado && (
         <DialogoConfirmacion
           abierto
