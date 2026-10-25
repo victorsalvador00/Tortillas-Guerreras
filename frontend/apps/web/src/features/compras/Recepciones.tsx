@@ -12,6 +12,7 @@ import { formatoCantidad, formatoFecha, formatoFechaHora, formatoMoneda } from '
 import { Boton, Campo, Dato, Datos, DialogoConfirmacion, EtiquetaEstado, Selector, TablaDatos, Tarjeta, toast, type ColumnDef } from '@tg/ui';
 import { useMemo, useState } from 'react';
 import { BarraFiltros, TablaMovimientos, exportarCsv } from '@/componentes/comunes';
+import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { SelectorProveedor } from './comunes';
@@ -177,6 +178,7 @@ export function RecepcionDetalle() {
               migas={[{ etiqueta: 'Compras' }, { etiqueta: 'Recepciones', a: '/compras/recepciones' }, { etiqueta: recepcion.folio }]}
               acciones={
                 <>
+                  <BotonRastrear tipo="Recepcion" id={recepcion.id} etiqueta={recepcion.folio} />
                   {recepcion.ordenCompraId && (
                     <Boton
                       variante="secundario"

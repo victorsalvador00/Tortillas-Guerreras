@@ -39,6 +39,7 @@ import {
 } from '@tg/ui';
 import { useMemo, useState } from 'react';
 import { BarraFiltros, SelectorProducto, TablaMovimientos } from '@/componentes/comunes';
+import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { DialogoCargasSugeridas } from './CargasSugeridas';
@@ -455,8 +456,7 @@ export function CargaDetalle() {
               subtitulo={`${etiquetaEnum(envio.tipo)} · Ruta ${envio.rutaCodigo} · ${formatoFecha(envio.fechaOperativa)}`}
               migas={[{ etiqueta: 'Logística' }, { etiqueta: 'Cargas del día', a: '/logistica/cargas' }, { etiqueta: envio.folio }]}
               acciones={
-                puedeCargar &&
-                envio.estado === 'Preparado' && (
+                puedeCargar && envio.estado === 'Preparado' ? (
                   <>
                     <Boton variante="secundario" icono="block" onClick={() => setAccion('cancelar')}>
                       Cancelar
@@ -465,6 +465,8 @@ export function CargaDetalle() {
                       Despachar
                     </Boton>
                   </>
+                ) : (
+                  envio.estado !== 'Preparado' && envio.estado !== 'Cancelado' && <BotonRastrear tipo="Envio" id={envio.id} etiqueta={envio.folio} />
                 )
               }
             />

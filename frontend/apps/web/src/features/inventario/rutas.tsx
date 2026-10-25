@@ -3,6 +3,7 @@ import { pantalla } from '@/app/rutas-base';
 import { Ajustes, DetalleAjuste, NuevoAjuste } from './Ajustes';
 import { Almacenes, Existencias, Kardex, Valuacion } from './Consultas';
 import { Conteos, DetalleConteo } from './Conteos';
+import { Trazabilidad } from './Trazabilidad';
 import { DetalleTraspaso, NuevoTraspaso, Traspasos } from './Traspasos';
 
 export function rutasInventario(): AnyRoute[] {
@@ -19,5 +20,6 @@ export function rutasInventario(): AnyRoute[] {
     pantalla('/inventario/conteos', Conteos, 'inventario.contar'),
     pantalla('/inventario/conteos/$id', DetalleConteo, 'inventario.contar'),
     pantalla('/inventario/valuacion', Valuacion, 'inventario.costos'),
+    pantalla('/inventario/trazabilidad', Trazabilidad, 'inventario.trazabilidad'),
   ];
 }

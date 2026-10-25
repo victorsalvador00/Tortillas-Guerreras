@@ -37,6 +37,7 @@ import {
 import { useMemo, useState } from 'react';
 import { BarraFiltros, SelectorAlmacen, exportarCsv } from '@/componentes/comunes';
 import { MapaLeaflet, type MarcadorMapa } from '@/componentes/MapaLeaflet';
+import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { EditorPartidasVenta, ResumenTotales } from './EditorPartidasVenta';
@@ -254,11 +255,14 @@ export function VentaDetalle() {
               subtitulo={`${v.cliente} · ${formatoFecha(v.fechaOperativa)} · ${v.origen === 'App' ? 'App de ruta' : 'Web'}`}
               migas={[{ etiqueta: 'Ventas' }, { etiqueta: 'Ventas', a: '/ventas/ventas' }, { etiqueta: v.folio }]}
               acciones={
-                puedeCancelar && (
-                  <Boton variante="secundario" icono="cancel" onClick={() => setCancelando(true)}>
-                    Cancelar venta
-                  </Boton>
-                )
+                <>
+                  <BotonRastrear tipo="Venta" id={v.id} etiqueta={v.folio} />
+                  {puedeCancelar && (
+                    <Boton variante="secundario" icono="cancel" onClick={() => setCancelando(true)}>
+                      Cancelar venta
+                    </Boton>
+                  )}
+                </>
               }
             />
             <div className="flex flex-col gap-4">

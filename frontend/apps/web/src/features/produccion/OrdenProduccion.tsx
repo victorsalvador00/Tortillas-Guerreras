@@ -30,6 +30,7 @@ import {
 } from '@tg/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { CantidadConSigno, SelectorMotivo, etiquetaMovimiento } from '@/componentes/comunes';
+import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { costoEstimado, teoricoAjustado, variacion } from './calculos';
@@ -357,6 +358,7 @@ export function OrdenProduccion() {
               }
               subtitulo={`${orden.sku} · ${orden.producto}`}
               migas={[{ etiqueta: 'Producción' }, { etiqueta: 'Órdenes de producción', a: '/produccion/ordenes' }, { etiqueta: orden.folio }]}
+              acciones={orden.estado === 'Terminada' && <BotonRastrear tipo="OrdenProduccion" id={orden.id} etiqueta={orden.folio} />}
             />
             <div className="flex flex-col gap-4">
               <Tarjeta>

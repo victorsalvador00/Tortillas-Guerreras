@@ -11,6 +11,7 @@ import {
 import { formatoCantidad, formatoFecha, formatoFechaHora, formatoMoneda } from '@tg/shared';
 import { Boton, Dato, Datos, DialogoConfirmacion, EtiquetaEstado, TablaDatos, Tarjeta, toast, type ColumnDef } from '@tg/ui';
 import { useMemo, useState } from 'react';
+import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { avanceRecepcion } from './calculos';
@@ -130,6 +131,7 @@ export function OrdenCompraDetalle() {
               migas={[{ etiqueta: 'Compras' }, { etiqueta: 'Órdenes de compra', a: '/compras/ordenes' }, { etiqueta: orden.folio }]}
               acciones={
                 <>
+                  {orden.estado !== 'Borrador' && <BotonRastrear tipo="OrdenCompra" id={orden.id} etiqueta={orden.folio} />}
                   {orden.estado === 'Borrador' && tienePermiso('compras.editar') && (
                     <Boton variante="secundario" icono="edit" onClick={() => navegar({ to: '/compras/ordenes/$id/editar', params: { id } })}>
                       Editar
