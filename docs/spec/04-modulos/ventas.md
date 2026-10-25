@@ -95,7 +95,7 @@ duplicado (RN-VEN-16), `VEN-021` fecha de entrega anterior a la fecha operativa 
 | POST | `/clientes/{id}/aprobar-ubicacion` | `ventas.supervisar` |
 | GET/POST/PUT | `/pedidos`, `POST /pedidos/{id}/confirmar`, `/asignar`, `/cancelar` | `ventas.pedidos` |
 | GET | `/pedidos?estado&clienteId&rutaId&desde&hasta&envioId&sinCarga` (filtros de la lista; `envioId`/`sinCarga` para las cargas, RN-LOG-11) | `ventas.pedidos` |
-| GET/POST | `/ventas` | `ventas.ver` / `ventas.registrar` |
+| GET/POST | `/ventas` (filtro `pedidoId`: entregas del pedido) | `ventas.ver` / `ventas.registrar` |
 | POST | `/ventas/{id}/cancelar` | `ventas.cancelar` |
 | GET/POST | `/cobros` | `ventas.cobrar` |
 | GET | `/incidencias`, `POST /incidencias/{id}/revisar` | `ventas.supervisar` |

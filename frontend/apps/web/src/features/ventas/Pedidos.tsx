@@ -12,11 +12,13 @@ import {
   useObtenerCliente,
   useObtenerListaPrecio,
   useListarPreciosCliente,
+  useListarVentas,
   useObtenerPedido,
   type ClienteDto,
   type EstadoPedido,
   type PedidoDto,
   type PedidoPartidaDto,
+  type VentaDto,
 } from '@tg/api-client';
 import { formatoCantidad, formatoFecha, formatoFechaHora, formatoMoneda, sumarDias, fechaOperativa } from '@tg/shared';
 import {
@@ -316,6 +318,55 @@ function FormularioPedido({ pedido, lineasIniciales }: { pedido?: PedidoDto; lin
 
 type Accion = 'confirmar' | 'asignar' | 'cancelar' | null;
 
+/** RN-VEN-08: ventas `EntregaPedido` del pedido, con enlace al detalle donde está el mapa del GPS. */
+function EntregasPedido({ pedidoId }: { pedidoId: string }) {
+  const navegar = useNavigate();
+  const { data, isLoading } = useListarVentas({ pedidoId, tamano: 100 });
+  const columnas = useMemo<ColumnDef<VentaDto, unknown>[]>(
+    () => [
+      {
+        header: 'Folio',
+        accessorKey: 'folio',
+        cell: ({ row }) => (
+          <Link to="/ventas/ventas/$id" params={{ id: row.original.id }} className="font-medium text-primary">
+            {row.original.folio}
+          </Link>
+        ),
+      },
+      { header: 'Hora', accessorKey: 'fechaHoraServidor', cell: ({ row }) => formatoFechaHora(row.original.fechaHoraDispositivo ?? row.original.fechaHoraServidor) },
+      {
+        header: 'Ubicación',
+        id: 'ubicacion',
+        cell: ({ row }) => {
+          const v = row.original;
+          if (v.latitud == null) return <span className="text-muted">Sin GPS</span>;
+          const distancia = v.distanciaClienteM != null ? `${formatoCantidad(v.distanciaClienteM, 0)} m del cliente` : 'Con GPS';
+          return v.requiereRevision ? <EtiquetaEstado color="naranja" etiqueta={`${distancia} · revisar`} /> : distancia;
+        },
+      },
+      { header: 'Total', accessorKey: 'total', cell: ({ row }) => formatoMoneda(row.original.total), meta: { alinear: 'fin' } },
+      { header: 'Estado', accessorKey: 'estado', cell: ({ row }) => <EtiquetaEstado estado={row.original.estado} /> },
+    ],
+    [],
+  );
+  const entregas = data?.items ?? [];
+  return (
+    <Tarjeta titulo="Entregas" subtitulo="Abre una entrega para ver en el mapa dónde se registró.">
+      {isLoading ? null : entregas.length === 0 ? (
+        <p className="m-0 text-13 text-muted">Este pedido todavía no tiene entregas.</p>
+      ) : (
+        <TablaDatos
+          columnas={columnas}
+          datos={entregas}
+          idFila={(v) => v.id}
+          ordenable={false}
+          alClicFila={(v) => navegar({ to: '/ventas/ventas/$id', params: { id: v.id } })}
+        />
+      )}
+    </Tarjeta>
+  );
+}
+
 export function PedidoDetalle() {
   const { id } = useParams({ strict: false }) as { id: string };
   const navegar = useNavigate();
@@ -440,6 +491,7 @@ export function PedidoDetalle() {
                       <Tarjeta>
                         <ResumenTotales totales={{ subtotal: Math.round(p.subtotal * 100), ieps: Math.round(p.ieps * 100), iva: Math.round(p.iva * 100), total: Math.round(p.total * 100) }} />
                       </Tarjeta>
+                      <EntregasPedido pedidoId={p.id} />
                     </div>
                   ),
                 },

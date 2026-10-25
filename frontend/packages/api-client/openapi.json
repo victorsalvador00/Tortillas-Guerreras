@@ -5429,6 +5429,14 @@
             }
           },
           {
+            "name": "pedidoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "estado",
             "in": "query",
             "schema": {

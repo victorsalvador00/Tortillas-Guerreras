@@ -90,9 +90,9 @@ internal static class VentasEndpoints
             (await h.CancelarAsync(id, ct)).AHttp()).WithName("cancelarPedido");
 
         var ventas = grupo.MapGroup("/ventas");
-        ventas.MapGet("/", (DateOnly? desde, DateOnly? hasta, Guid? rutaId, Guid? clienteId, EstadoVenta? estado, bool? requiereRevision,
-                OrigenVenta? origen, string? folio, int? pagina, int? tamano, VentasWebHandler h, CancellationToken ct) =>
-            h.ListarAsync(desde, hasta, rutaId, clienteId, estado, requiereRevision, origen, folio, pagina, tamano, ct))
+        ventas.MapGet("/", (DateOnly? desde, DateOnly? hasta, Guid? rutaId, Guid? clienteId, Guid? pedidoId, EstadoVenta? estado,
+                bool? requiereRevision, OrigenVenta? origen, string? folio, int? pagina, int? tamano, VentasWebHandler h, CancellationToken ct) =>
+            h.ListarAsync(desde, hasta, rutaId, clienteId, pedidoId, estado, requiereRevision, origen, folio, pagina, tamano, ct))
             .RequireAuthorization(P.Ver).WithName("listarVentas");
         ventas.MapGet("/{id:guid}", async (Guid id, VentasWebHandler h, CancellationToken ct) =>
             (await h.ObtenerAsync(id, ct)).AHttp()).RequireAuthorization(P.Ver).WithName("obtenerVenta");

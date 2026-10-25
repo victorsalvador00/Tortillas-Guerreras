@@ -22,7 +22,7 @@ Menú por módulo; cada opción visible solo con su permiso.
 | Sección | Cambio |
 |---|---|
 | Producción | **Estimado de producción** (pestañas por canal; cuadrícula rutas × productos con `nombre_corto`, observaciones, TOTAL, CAJAS/PAQUETES y REAL; celdas editables en DET (pedido de ruta); en AUTO, INST y CEDIS la celda abre los pedidos de los clientes de la ruta; "Usar referencia"; "Confirmar estimado"; imprimir igual al formato en papel). **Plan sugerido** (demanda vs existencia vs órdenes; crear órdenes). **Plan del día** vuelve al menú. Recetas: botón "Copiar a otro producto" |
-| Ventas | Pedidos: filtro **Por validar** (origen App, `Capturado`), columnas "Solicitado" vs "Validado", pestaña Historial. Clientes: grupo, **precios especiales**. **Grupos de clientes** (nuevo). Productos exclusivos en la ficha del producto (pestaña Ventas) |
+| Ventas | Pedidos: filtro **Por validar** (origen App, `Capturado`), columnas "Solicitado" vs "Validado", pestaña Historial; el detalle lista sus **Entregas** (folio, hora, distancia del GPS al cliente) con enlace a la venta. Clientes: grupo, **precios especiales**. **Grupos de clientes** (nuevo). Productos exclusivos en la ficha del producto (pestaña Ventas) |
 | Logística | Rutas: canal, chofer y vehículo predeterminados. Cargas del día: **Generar cargas sugeridas**; nueva carga con chofer y vehículo. **Cambios pendientes** (nuevo). Liquidaciones: rediseño por etapas (ver abajo). **Cuenta de choferes** y **Corte semanal** (nuevos) |
 | Catálogos | Productos: nombre corto, producto a cobro, unidad de traslado con paquetes por caja |
 | Seguridad | **Bitácora** (nuevo) y pestaña Historial en los detalles |

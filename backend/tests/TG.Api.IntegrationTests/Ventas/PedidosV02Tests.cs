@@ -91,6 +91,10 @@ public sealed class PedidosV02Tests(ApiFixture api) : IClassFixture<ApiFixture>
         return (cliente, solicitado.Id);
     }
 
+    private sealed record EntregaPrueba(Guid Id, string Folio, string Tipo);
+
+    private sealed record PaginaEntregas(IReadOnlyList<EntregaPrueba> Items);
+
     private static object CapturarPedido(Guid opId, Guid pedidoId, Guid clienteId, DateOnly fechaEntrega, Guid productoId, Guid unidadId,
         decimal cantidad) => new
     {
@@ -186,6 +190,11 @@ public sealed class PedidosV02Tests(ApiFixture api) : IClassFixture<ApiFixture>
         entrega.EsExito.ShouldBeTrue();
         entrega.Valor.Total.ShouldBe(30m);
         (await admin.GetOkAsync<PedidoRespuesta>($"/api/v1/ventas/pedidos/{pedido.Id}")).Estado.ShouldBe("Entregado");
+
+        // El detalle del pedido lista sus entregas filtrando las ventas por pedido.
+        var entregas = await admin.GetOkAsync<PaginaEntregas>($"/api/v1/ventas/ventas?pedidoId={pedido.Id}");
+        entregas.Items.Select(v => v.Folio).ShouldBe([entrega.Valor.Folio]);
+        entregas.Items.Single().Tipo.ShouldBe("EntregaPedido");
     }
 
     [Fact]

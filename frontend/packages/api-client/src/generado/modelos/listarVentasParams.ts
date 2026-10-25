@@ -13,6 +13,7 @@ desde?: string;
 hasta?: string;
 rutaId?: string;
 clienteId?: string;
+pedidoId?: string;
 estado?: EstadoVenta;
 requiereRevision?: boolean;
 origen?: OrigenVenta;

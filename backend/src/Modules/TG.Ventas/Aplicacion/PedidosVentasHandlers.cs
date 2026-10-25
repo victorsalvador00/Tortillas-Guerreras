@@ -433,10 +433,16 @@ public sealed class VentasWebHandler(
     IUnitOfWork unitOfWork,
     TimeProvider reloj)
 {
-    public async Task<Paginado<VentaDto>> ListarAsync(DateOnly? desde, DateOnly? hasta, Guid? rutaId, Guid? clienteId,
+    /// <param name="pedidoId">Las ventas <c>EntregaPedido</c> de ese pedido (RN-VEN-08).</param>
+    public async Task<Paginado<VentaDto>> ListarAsync(DateOnly? desde, DateOnly? hasta, Guid? rutaId, Guid? clienteId, Guid? pedidoId,
         EstadoVenta? estado, bool? requiereRevision, OrigenVenta? origen, string? folio, int? pagina, int? tamano, CancellationToken ct)
     {
         var consulta = db.Ventas.AsNoTracking().Include(v => v.Partidas).AsQueryable();
+        if (pedidoId is not null)
+        {
+            consulta = consulta.Where(v => v.PedidoId == pedidoId);
+        }
+
         if (desde is not null)
         {
             consulta = consulta.Where(v => v.FechaOperativa >= desde);
