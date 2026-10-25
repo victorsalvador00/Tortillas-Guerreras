@@ -105,8 +105,8 @@ export function Variacion() {
             <ResponsiveContainer>
               <BarChart data={agregado.map((a) => ({ ...a, pct: Math.round(a.variacion * 1000) / 10 }))} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--tg-row-divider)" vertical={false} />
-                <XAxis dataKey="componente" tick={{ fontSize: 16, fill: 'var(--tg-on-surface-variant)' }} interval={0} />
-                <YAxis unit=" %" tick={{ fontSize: 16, fill: 'var(--tg-on-surface-variant)' }} />
+                <XAxis dataKey="componente" tick={{ fontSize: 14, fill: 'var(--tg-on-surface-variant)' }} interval={0} />
+                <YAxis unit=" %" tick={{ fontSize: 14, fill: 'var(--tg-on-surface-variant)' }} />
                 <Tooltip
                   formatter={(v) => [`${v} %`, 'Variación']}
                   contentStyle={{ background: 'var(--tg-card-bg)', borderRadius: 12, border: '1px solid var(--tg-outline-variant)' }}

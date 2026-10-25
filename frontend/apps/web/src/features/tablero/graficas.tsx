@@ -7,7 +7,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
  * tintas de texto, nunca el color de la serie.
  */
 
-const ejes = { stroke: 'var(--tg-outline-variant)', tick: { fill: 'var(--tg-on-surface-variant)', fontSize: 16 } };
+const ejes = { stroke: 'var(--tg-outline-variant)', tick: { fill: 'var(--tg-on-surface-variant)', fontSize: 14 } };
 
 function TooltipTarjeta({
   active,
@@ -67,7 +67,7 @@ export function GraficaBarras<T extends Record<string, unknown>>({
             cursor={{ fill: 'var(--tg-row-hover)' }}
             content={(p) => <TooltipTarjeta {...(p as object)} formato={formato} />}
           />
-          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 17, color: 'var(--tg-on-surface-variant)' }} iconType="square" />}
+          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 15, color: 'var(--tg-on-surface-variant)' }} iconType="square" />}
           {series.map((s, i) => (
             <Bar key={s.clave} dataKey={s.clave} name={s.nombre} fill={`var(--tg-serie-${i + 1})`} radius={[4, 4, 0, 0]} maxBarSize={36} />
           ))}

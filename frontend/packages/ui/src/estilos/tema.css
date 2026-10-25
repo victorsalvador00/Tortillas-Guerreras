@@ -90,7 +90,7 @@
    * Escala de la letra (1 = tamaño original del diseño). Multiplica todos los tamaños de texto e íconos sin cambiar
    * márgenes ni puntos de quiebre. Para ajustarla solo se cambia este valor.
    */
-  --tg-escala-texto: 1.3;
+  --tg-escala-texto: 1.17;
 
   --tg-topbar-height: 64px;
   --tg-sidebar-width: calc(256px * (0.6 + 0.4 * var(--tg-escala-texto)));
