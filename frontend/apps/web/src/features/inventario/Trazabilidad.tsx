@@ -304,62 +304,69 @@ function Mapa({
   const nodoSeleccionado = traza.nodos.find((n) => n.id === seleccion) ?? null;
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="relative overflow-hidden rounded-card border border-card-border bg-card">
-        <div className="absolute top-2 right-2 z-10 flex gap-1 rounded-xl bg-card/90 p-1 shadow-card">
-          <BotonIcono icono="remove" etiqueta="Alejar" onClick={() => setZoom((z) => Math.max(0.2, z / 1.25))} />
-          <BotonIcono icono="add" etiqueta="Acercar" onClick={() => setZoom((z) => Math.min(2, z * 1.25))} />
-          <BotonIcono icono="fit_screen" etiqueta="Ver todo" onClick={verTodo} />
-        </div>
-        <div
-          ref={contenedor}
-          className="h-[min(70vh,720px)] cursor-grab overflow-auto active:cursor-grabbing"
-          onPointerDown={alPresionar}
-          onPointerMove={alMover}
-          onPointerUp={alSoltar}
-        >
-          <div style={{ width: layout.ancho * zoom, height: layout.alto * zoom }}>
-            <div className="relative origin-top-left" style={{ width: layout.ancho, height: layout.alto, transform: `scale(${zoom})` }}>
-              <Carriles layout={layout} />
-              <svg className="pointer-events-none absolute inset-0" width={layout.ancho} height={layout.alto} aria-hidden>
-                {layout.enlaces.map((e) => {
-                  const apagado = resaltados && !(resaltados.has(e.desde) && resaltados.has(e.hacia));
-                  return (
-                    <g key={e.id} opacity={apagado ? 0.12 : 1}>
-                      <path
-                        d={e.d}
-                        fill="none"
-                        stroke={colorArista(e.tipo)}
-                        strokeWidth={e.grosor}
-                        strokeOpacity={e.tipo === 'Suministro' ? 0.8 : 0.45}
-                        strokeDasharray={e.tipo === 'Suministro' ? '4 3' : undefined}
-                      />
-                      {e.etiqueta && (
-                        <text x={e.etiquetaX} y={e.etiquetaY} textAnchor="middle" className="fill-[var(--tg-on-surface-variant)] text-[11px]">
-                          {e.etiqueta}
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-              {layout.tarjetas.map((t) => (
-                <TarjetaNodo
-                  key={t.id}
-                  nodo={t.nodo}
-                  x={t.x}
-                  y={t.y}
-                  activa={seleccion === t.id}
-                  apagada={!!resaltados && !resaltados.has(t.id)}
-                  entrada={esEntrada(traza, t.nodo)}
-                  onClick={() => onSeleccion(seleccion === t.id ? null : t.id)}
-                />
-              ))}
-            </div>
+    <div className="relative overflow-hidden rounded-card border border-card-border bg-card">
+      <div className="absolute top-2 right-2 z-10 flex gap-1 rounded-xl bg-card/90 p-1 shadow-card">
+        <BotonIcono icono="remove" etiqueta="Alejar" onClick={() => setZoom((z) => Math.max(0.2, z / 1.25))} />
+        <BotonIcono icono="add" etiqueta="Acercar" onClick={() => setZoom((z) => Math.min(2, z * 1.25))} />
+        <BotonIcono icono="fit_screen" etiqueta="Ver todo" onClick={verTodo} />
+      </div>
+      <div
+        ref={contenedor}
+        className="h-[min(70vh,720px)] cursor-grab overflow-auto active:cursor-grabbing"
+        onPointerDown={alPresionar}
+        onPointerMove={alMover}
+        onPointerUp={alSoltar}
+      >
+        <div style={{ width: layout.ancho * zoom, height: layout.alto * zoom }}>
+          <div className="relative origin-top-left" style={{ width: layout.ancho, height: layout.alto, transform: `scale(${zoom})` }}>
+            <Carriles layout={layout} />
+            <svg className="pointer-events-none absolute inset-0" width={layout.ancho} height={layout.alto} aria-hidden>
+              {layout.enlaces.map((e) => {
+                const apagado = resaltados && !(resaltados.has(e.desde) && resaltados.has(e.hacia));
+                return (
+                  <g key={e.id} opacity={apagado ? 0.12 : 1}>
+                    <path
+                      d={e.d}
+                      fill="none"
+                      stroke={colorArista(e.tipo)}
+                      strokeWidth={e.grosor}
+                      strokeOpacity={e.tipo === 'Suministro' ? 0.8 : 0.45}
+                      strokeDasharray={e.tipo === 'Suministro' ? '4 3' : undefined}
+                    />
+                    {e.etiqueta && (
+                      <text x={e.etiquetaX} y={e.etiquetaY} textAnchor="middle" className="fill-[var(--tg-on-surface-variant)] text-[11px]">
+                        {e.etiqueta}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+            {layout.tarjetas.map((t) => (
+              <TarjetaNodo
+                key={t.id}
+                nodo={t.nodo}
+                x={t.x}
+                y={t.y}
+                activa={seleccion === t.id}
+                apagada={!!resaltados && !resaltados.has(t.id)}
+                entrada={esEntrada(traza, t.nodo)}
+                onClick={() => onSeleccion(seleccion === t.id ? null : t.id)}
+              />
+            ))}
           </div>
         </div>
       </div>
-      <Ficha nodo={nodoSeleccionado} onRastrear={onRastrear} onCerrar={() => onSeleccion(null)} />
+      {nodoSeleccionado ? (
+        // Ficha emergente sobre el mapa, para que el diagrama ocupe todo el ancho.
+        <div className="absolute top-16 right-2 z-20 max-h-[calc(100%-5rem)] w-[min(360px,calc(100%-1rem))] overflow-auto rounded-card shadow-lg">
+          <Ficha nodo={nodoSeleccionado} onRastrear={onRastrear} onCerrar={() => onSeleccion(null)} />
+        </div>
+      ) : (
+        <p className="pointer-events-none absolute bottom-2 left-2 z-10 m-0 rounded-lg bg-card/90 px-3 py-1.5 text-xs text-muted shadow-card">
+          Toca una tarjeta para ver su ficha y resaltar su cadena. Arrastra el fondo para moverte por el mapa.
+        </p>
+      )}
     </div>
   );
 }
@@ -440,15 +447,7 @@ function TarjetaNodo({
   );
 }
 
-function Ficha({ nodo, onRastrear, onCerrar }: { nodo: NodoTrazaDto | null; onRastrear: (n: NodoTrazaDto) => void; onCerrar: () => void }) {
-  if (!nodo)
-    return (
-      <Tarjeta className="h-fit">
-        <p className="m-0 text-13 text-muted">
-          Toca una tarjeta para ver su ficha y resaltar su cadena. Arrastra el fondo para moverte por el mapa.
-        </p>
-      </Tarjeta>
-    );
+function Ficha({ nodo, onRastrear, onCerrar }: { nodo: NodoTrazaDto; onRastrear: (n: NodoTrazaDto) => void; onCerrar: () => void }) {
   const rastreable = (nodo.tipo === 'Lote' && !!nodo.lote) || !!nodo.documentoId;
   return (
     <Tarjeta
@@ -462,7 +461,8 @@ function Ficha({ nodo, onRastrear, onCerrar }: { nodo: NodoTrazaDto | null; onRa
       subtitulo={nodo.tipo === 'Lote' ? nodo.subtitulo : ETIQUETA_NODO[nodo.tipo]}
       acciones={<BotonIcono icono="close" etiqueta="Cerrar ficha" onClick={onCerrar} />}
     >
-      <Datos className="mb-3">
+      {/* La ficha mide 360 px: dos columnas sin importar el ancho de la pantalla, para no partir palabras. */}
+      <Datos className="mb-3 grid-cols-2 gap-x-4 sm:grid-cols-2 lg:grid-cols-2">
         {nodo.tipo === 'Lote' && (
           <>
             <Dato etiqueta="Almacén">{nodo.almacen ?? '—'}</Dato>
