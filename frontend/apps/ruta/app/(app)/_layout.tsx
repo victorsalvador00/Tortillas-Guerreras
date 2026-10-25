@@ -1,6 +1,7 @@
 import { Redirect, Stack } from "expo-router";
 import { useSesion } from "@/servicios/contextoSesion";
 import { ProveedorSync } from "@/servicios/sincronizacion";
+import { Encabezado } from "@/ui/Encabezado";
 import { Logo } from "@/ui/Logo";
 import { BotonMenu, ProveedorMenuLateral } from "@/ui/MenuLateral";
 import { useColores } from "@/ui/tema";
@@ -21,9 +22,9 @@ export default function LayoutApp() {
       <ProveedorMenuLateral>
         <Stack
           screenOptions={{
-            // Con edge-to-edge el encabezado de esta pila anidada no reservaba la barra de estado: la flecha y el
-            // título quedaban debajo de ella y no recibían toques. Así el encabezado nativo aplica ese margen.
-            statusBarTranslucent: true,
+            // Con edge-to-edge el encabezado nativo de esta pila anidada no reservaba la barra de estado: la flecha y
+            // el título quedaban debajo de ella y no recibían toques. El encabezado propio aplica el área segura.
+            header: (props) => <Encabezado {...props} />,
             headerStyle: { backgroundColor: c.barra },
             headerTintColor: c.barraTexto,
             headerTitleStyle: { fontWeight: "600" },
