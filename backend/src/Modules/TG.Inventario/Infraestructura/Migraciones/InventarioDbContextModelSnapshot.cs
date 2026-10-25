@@ -371,6 +371,10 @@ namespace TG.Inventario.Infraestructura.Migraciones
                     b.HasIndex("DocumentoTipo", "DocumentoId")
                         .HasDatabaseName("ix_movimientos_documento");
 
+                    b.HasIndex("Lote", "ProductoId")
+                        .HasDatabaseName("ix_movimientos_lote")
+                        .HasFilter("lote <> ''");
+
                     b.HasIndex("ProductoId", "AlmacenId", "FechaHora")
                         .HasDatabaseName("ix_movimientos_producto_almacen_fecha");
 

@@ -89,7 +89,7 @@ public sealed class ImportacionTests(ApiFixture api) : IClassFixture<ApiFixture>
         var csv = $"""
             almacen,sku,lote,caducidad,cantidad,costo_unitario
             PT,{producto.Sku},L-INI,2026-11-20,120,9.80
-            MP,MP-SAL,,,40,"3,50"
+            MP,MP-SAL,L-SAL,2027-01-31,40,"3,50"
             """;
 
         var r = await ImportarAsync(admin, "existencias", csv);

@@ -15,6 +15,7 @@ public static class VentasModule
     {
         services.AgregarDbContextModulo<VentasDbContext>(VentasDbContext.Esquema);
         services.AgregarHandlers(typeof(VentasModule).Assembly);
+        services.AddScoped<IConsultaVentas>(sp => sp.GetRequiredService<ConsultaVentasHandler>());
         services.AddScoped<VentasService>();
         services.AddScoped<IVentasService>(sp => sp.GetRequiredService<VentasService>());
         services.AddScoped<IIncidenciasService, IncidenciasService>();

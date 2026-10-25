@@ -82,7 +82,8 @@ public static class DatosPrueba
             nombre = $"Producto de prueba {codigo}",
             tipo,
             unidadBaseId = unidadId,
-            manejaLote,
+            // [SUP-02] MP y semiterminado manejan lote por omisión; aquí solo si la prueba lo pide.
+            manejaLote = manejaLote ?? (tipo is "MateriaPrima" or "Semiterminado" ? false : null),
             esVendible = vendible,
             tasaIva,
             tasaIeps,

@@ -17,7 +17,7 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
 
     /// <summary>
     /// Permisos por rol <c>[SUP-01]</c>. Administrador recibe todos. Solo se aplican al crear el rol; los permisos
-    /// nuevos de una versión llegan a roles existentes por migración (v0.2: <c>V02PermisosRoles</c>).
+    /// nuevos de una versión llegan a roles existentes por migración (v0.2: <c>V02PermisosRoles</c>; trazabilidad: <c>PermisoTrazabilidad</c>).
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string[]> RolesPredeterminados = new Dictionary<string, string[]>
     {
@@ -25,21 +25,23 @@ internal sealed class InicializadorSeguridad : InicializadorModulo<SeguridadDbCo
         ["Direccion"] =
         [
             P.Tablero.Ver, P.Compras.Ver, P.Compras.Autorizar, P.Produccion.Ver, P.Inventario.Ver, P.Inventario.Costos,
+            P.Inventario.Trazabilidad,
             P.Logistica.Ver, P.Ventas.Ver, P.Facturacion.Ver,
         ],
         ["Compras"] =
         [
             P.Tablero.Ver, P.Compras.Ver, P.Compras.Editar, P.Compras.Autorizar, P.Compras.Recibir, P.Compras.CompraDirecta,
-            P.Inventario.Ver,
+            P.Inventario.Ver, P.Inventario.Trazabilidad,
         ],
         ["Produccion"] =
         [
             P.Tablero.Ver, P.Produccion.Ver, P.Produccion.Recetas, P.Produccion.Planear, P.Produccion.Operar,
-            P.Produccion.Cerrar, P.Inventario.Ver,
+            P.Produccion.Cerrar, P.Inventario.Ver, P.Inventario.Trazabilidad,
         ],
         ["Almacen"] =
         [
             P.Tablero.Ver, P.Inventario.Ver, P.Inventario.Ajustar, P.Inventario.Traspasar, P.Inventario.Contar,
+            P.Inventario.Trazabilidad,
             P.Compras.Ver, P.Compras.Recibir, P.Logistica.Ver, P.Logistica.Cargar, P.Logistica.Retornos,
             P.Logistica.LiquidarProducto,
         ],

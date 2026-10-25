@@ -54,6 +54,30 @@ public interface IInventarioService
   incidencia `ExistenciaNegativaRuta` (RN-INV-03). Los reportes de mermas no la cuentan como merma; el reporte de
   cambios la muestra junto con lo retirado.
 
+### Trazabilidad de lotes (T-8.16, guía: trazabilidad de panissimo)
+Pantalla **Inventario → Trazabilidad**: se busca un lote, una orden de compra o el folio de cualquier documento que
+movió inventario (recepción, orden de producción, carga, venta, retorno, liquidación, traspaso, ajuste, conteo) y se
+dibuja el camino del producto de proveedor a cliente. Pestañas *Mapa* (grafo por carriles), *Resumen* (proveedores,
+lotes, órdenes, rutas y clientes alcanzados) y *Bitácora* (movimientos del kardex), con exportación a CSV. El grafo se
+arma **solo con el kardex** (`inventario.movimientos`): cada nodo "lote" es un lote en un almacén; los documentos lo
+unen con los lotes que entran y salen. Los nombres (proveedor, OC, ruta, chofer, cliente) salen de las interfaces
+`Publico/` de cada módulo. Permiso `inventario.trazabilidad`. Las consultas se registran en el log de la API (la
+bitácora solo guarda altas, cambios y bajas).
+
+- **RN-INV-14** Hacia el origen se siguen las entradas de cada lote (compra, producción, llegada de traspaso o carga);
+  una orden de producción lleva a los lotes que consumió con la cantidad neta del documento (FEFO puede repartir un
+  componente entre varios lotes). Hacia el destino se siguen las salidas: consumo en producción, carga a ruta,
+  traspaso, venta (→ cliente). Por omisión una OC o recepción se rastrea hacia el destino, una venta hacia el origen
+  y lo demás en ambas direcciones. `[SUP-02]` Materia prima y semiterminado manejan lote por omisión para que la
+  cadena llegue al proveedor.
+- **RN-INV-15** Lo que no sigue la cadena se dibuja como terminal: merma (nodo *Merma* con el folio que la
+  generó), devolución de cliente (arista *Rechazo* hacia el retorno) y sobrante que regresa al almacén en la
+  liquidación (nodo *Regresó a…*). Las entradas por retorno o liquidación no se tratan como origen.
+- **RN-INV-16** Un componente sin control de lote no se puede rastrear: aparece en la orden de producción como
+  "consumo sin lote" con su cantidad y el resultado lleva el aviso `componentes_sin_lote`.
+- **RN-INV-17** El recorrido es por niveles con tope de 20 niveles y 2,000 nodos; al alcanzarlo se devuelve lo
+  armado con `truncado = true` y el aviso `truncado`.
+
 ## Endpoints (`/api/v1/inventario`)
 | Método | Ruta | Permiso |
 |---|---|---|
@@ -64,6 +88,8 @@ public interface IInventarioService
 | POST | `/ajustes` | `inventario.ajustar` |
 | GET/POST | `/traspasos` | `inventario.traspasar` |
 | GET/POST | `/conteos`, `/conteos/{id}/partidas`, `/conteos/{id}/cerrar` | `inventario.contar` |
+| GET | `/trazabilidad?tipo&id&productoId&lote&direccion` | `inventario.trazabilidad` |
+| GET | `/trazabilidad/buscar?q` | `inventario.trazabilidad` |
 
 ## Criterios de aceptación
 - Dos solicitudes concurrentes que consumen la última existencia en `PT`: una pasa y la otra

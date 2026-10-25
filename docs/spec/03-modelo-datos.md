@@ -92,7 +92,7 @@ oficina) y **Liquidaciones** (recibe el dinero y cierra la liquidación). "Vende
 | es_comprable | boolean | por defecto según tipo (MateriaPrima, Empaque, Reventa) |
 | es_producible | boolean | Semiterminado, Terminado |
 | es_vendible | boolean | Terminado, Reventa (y Semiterminado si venden masa) |
-| maneja_lote | boolean | `[SUP-02]` por defecto `true` en Terminado |
+| maneja_lote | boolean | `[SUP-02]` por defecto `true` en Terminado, MateriaPrima y Semiterminado (T-8.16) |
 | vida_util_dias | integer null | tortilla 2 días, masa 1 día `[SUP-02]` |
 | clave_prod_serv_sat | text null | se confirma con el contador `[SUP-03]` |
 | objeto_impuesto_sat | text | `02` por defecto |

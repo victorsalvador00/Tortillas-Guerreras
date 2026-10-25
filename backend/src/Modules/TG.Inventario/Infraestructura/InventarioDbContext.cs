@@ -56,6 +56,8 @@ public sealed class InventarioDbContext(DbContextOptions<InventarioDbContext> op
             e.HasIndex(m => new { m.ProductoId, m.AlmacenId, m.FechaHora }).HasDatabaseName("ix_movimientos_producto_almacen_fecha");
             e.HasIndex(m => new { m.DocumentoTipo, m.DocumentoId }).HasDatabaseName("ix_movimientos_documento");
             e.HasIndex(m => m.FechaOperativa).HasDatabaseName("ix_movimientos_fecha_operativa");
+            // Trazabilidad (RN-INV-14): movimientos de un lote; los productos sin lote guardan "" y no se indexan.
+            e.HasIndex(m => new { m.Lote, m.ProductoId }).HasDatabaseName("ix_movimientos_lote").HasFilter("lote <> ''");
         });
 
         builder.Entity<Traspaso>(e =>

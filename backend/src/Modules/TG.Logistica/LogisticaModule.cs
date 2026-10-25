@@ -16,6 +16,7 @@ public static class LogisticaModule
     {
         services.AgregarDbContextModulo<LogisticaDbContext>(LogisticaDbContext.Esquema);
         services.AgregarHandlers(typeof(LogisticaModule).Assembly);
+        services.AddScoped<IConsultaEnvios>(sp => sp.GetRequiredService<ConsultaEnviosHandler>());
         services.AddScoped<ServicioRetornos>();
         services.AddScoped<ServicioCargosChofer>();
         services.AddScoped<ILogisticaService, LogisticaService>();

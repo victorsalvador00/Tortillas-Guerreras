@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Formatting.Compact;
+using TG.Api.Trazabilidad;
 using TG.Catalogos;
 using TG.Compras;
 using TG.Facturacion;
@@ -128,6 +129,7 @@ public static class HostApi
         servicios.AddSincronizacionModule(configuracion);
         servicios.AddScoped<ConsultasTablero>();
         servicios.AddScoped<ImportadorCsv>();
+        servicios.AddScoped<ServicioTrazabilidad>();
 
         if (HangfireHabilitado(configuracion))
         {
@@ -180,6 +182,7 @@ public static class HostApi
         api.MapSincronizacionEndpoints();
         api.MapTableroEndpoints();
         api.MapImportacionEndpoints();
+        api.MapTrazabilidadEndpoints();
         return app;
     }
 

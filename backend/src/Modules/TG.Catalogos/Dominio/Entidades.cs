@@ -77,10 +77,11 @@ public sealed class Producto : EntidadAuditable, IVersionSync, IConcurrencia
     /// <summary>RN-CAT-04: banderas propuestas según el tipo (editables).</summary>
     public static (bool Comprable, bool Producible, bool Vendible, bool ManejaLote) BanderasPorTipo(TipoProducto tipo) => tipo switch
     {
-        TipoProducto.MateriaPrima => (true, false, false, false),
+        // [SUP-02] materia prima, semiterminado y terminado manejan lote: la trazabilidad (RN-INV-14) sigue el lote del
+        // proveedor a la masa y de la masa a la tortilla.
+        TipoProducto.MateriaPrima => (true, false, false, true),
         TipoProducto.Empaque => (true, false, false, false),
-        TipoProducto.Semiterminado => (false, true, false, false),
-        // [SUP-02] el producto terminado maneja lote.
+        TipoProducto.Semiterminado => (false, true, false, true),
         TipoProducto.Terminado => (false, true, true, true),
         TipoProducto.Reventa => (true, false, true, false),
         _ => (false, false, false, false),

@@ -178,3 +178,9 @@ regenerado (definición de terminado).
   En Proveedores, "Productos que vende": unidad de compra, clave del proveedor, precio pactado opcional, días de
   entrega, preferido y activo; la orden de compra solo acepta productos del catálogo `[SUP-32]` y sugiere el precio
   pactado. *Acepta:* RN-COM-10, RN-COM-11 y RN-COM-12 con pruebas; la compra directa agrega al catálogo (RN-COM-08).
+- [x] **T-8.16 Trazabilidad de lotes** *(nueva; guía: trazabilidad de panissimo)*. Inventario → Trazabilidad: búsqueda
+  por lote, OC o folio; mapa por carriles de proveedor a cliente, resumen, bitácora y CSV; grafo armado sobre el
+  kardex con consultas `Publico/` de Compras, Producción, Logística y Ventas; permiso `inventario.trazabilidad`;
+  MP y semiterminado con lote por omisión `[SUP-02]`. *Acepta:* RN-INV-14 a RN-INV-17 con pruebas de integración
+  (hacia atrás hasta la OC, hacia adelante hasta el cliente, masa en dos niveles, FEFO repartido, componente sin
+  lote, tope y permiso).

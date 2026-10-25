@@ -47,6 +47,7 @@ public static class Permisos
         public const string Ajustar = "inventario.ajustar";
         public const string Traspasar = "inventario.traspasar";
         public const string Contar = "inventario.contar";
+        public const string Trazabilidad = "inventario.trazabilidad";
     }
 
     public static class Logistica
@@ -121,6 +122,7 @@ public static class Permisos
         (Inventario.Ajustar, "Registrar ajustes de inventario"),
         (Inventario.Traspasar, "Registrar traspasos"),
         (Inventario.Contar, "Realizar conteos físicos"),
+        (Inventario.Trazabilidad, "Rastrear lotes de proveedor a cliente"),
         (Logistica.Configurar, "Administrar rutas y vehículos"),
         (Logistica.Ver, "Consultar logística"),
         (Logistica.Cargar, "Preparar y despachar cargas"),

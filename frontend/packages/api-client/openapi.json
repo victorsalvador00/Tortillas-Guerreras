@@ -8876,6 +8876,98 @@
           }
         }
       }
+    },
+    "/api/v1/inventario/trazabilidad": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "rastrearTrazabilidad",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TipoEntradaTraza"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "productoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lote",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direccion",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DireccionTraza"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrazaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/trazabilidad/buscar": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "operationId": "buscarTrazabilidad",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpcionTrazaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9161,6 +9253,38 @@
               "number"
             ],
             "format": "double"
+          }
+        }
+      },
+      "AristaTrazaDto": {
+        "required": [
+          "desde",
+          "hacia",
+          "tipo"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string"
+          },
+          "hacia": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAristaTraza"
+          },
+          "cantidad": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "unidad": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -10800,6 +10924,35 @@
           }
         }
       },
+      "ConsumoSinLoteDto": {
+        "required": [
+          "productoId",
+          "sku",
+          "producto",
+          "cantidad",
+          "unidad"
+        ],
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidad": {
+            "type": "string"
+          }
+        }
+      },
       "ConteoDto": {
         "required": [
           "id",
@@ -11511,11 +11664,33 @@
           }
         }
       },
+      "DatoTrazaDto": {
+        "required": [
+          "etiqueta",
+          "valor"
+        ],
+        "type": "object",
+        "properties": {
+          "etiqueta": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string"
+          }
+        }
+      },
       "DestinoSobrante": {
         "enum": [
           "Reintegrar",
           "Merma",
           "Reproceso"
+        ]
+      },
+      "DireccionTraza": {
+        "enum": [
+          "Origen",
+          "Destino",
+          "Ambas"
         ]
       },
       "DispositivoDto": {
@@ -11663,6 +11838,41 @@
           },
           "esEjemplo": {
             "type": "boolean"
+          }
+        }
+      },
+      "EntradaTrazaDto": {
+        "required": [
+          "tipo",
+          "etiqueta"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEntradaTraza"
+          },
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "etiqueta": {
+            "type": "string"
           }
         }
       },
@@ -12169,6 +12379,76 @@
           "pedidosCapturados": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "EventoTrazaDto": {
+        "required": [
+          "id",
+          "fechaHora",
+          "fechaOperativa",
+          "tipo",
+          "documentoTipo",
+          "documentoId",
+          "folio",
+          "sku",
+          "producto",
+          "lote",
+          "cantidad",
+          "unidad",
+          "almacen"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaOperativa": {
+            "type": "string",
+            "format": "date"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMovimiento"
+          },
+          "documentoTipo": {
+            "$ref": "#/components/schemas/DocumentoInventario"
+          },
+          "documentoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "folio": {
+            "type": "string"
+          },
+          "nodoId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sku": {
+            "type": "string"
+          },
+          "producto": {
+            "type": "string"
+          },
+          "lote": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "almacen": {
+            "type": "string"
           }
         }
       },
@@ -14782,6 +15062,158 @@
           }
         }
       },
+      "NodoTrazaDto": {
+        "required": [
+          "id",
+          "tipo",
+          "titulo",
+          "datos",
+          "consumoSinLote"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoNodoTraza"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "subtitulo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "sku": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "producto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipoProducto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "caducidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "almacen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipoAlmacen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "entradas": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "salidas": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "existencia": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "documentoTipo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DocumentoInventario"
+              }
+            ]
+          },
+          "documentoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "folio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fecha": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "estado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "datos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatoTrazaDto"
+            }
+          },
+          "consumoSinLote": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsumoSinLoteDto"
+            }
+          }
+        }
+      },
       "OfertaProveedorDto": {
         "required": [
           "proveedorId",
@@ -14842,6 +15274,45 @@
           },
           "preferido": {
             "type": "boolean"
+          }
+        }
+      },
+      "OpcionTrazaDto": {
+        "required": [
+          "tipo",
+          "etiqueta",
+          "detalle"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEntradaTraza"
+          },
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "productoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "etiqueta": {
+            "type": "string"
+          },
+          "detalle": {
+            "type": "string"
           }
         }
       },
@@ -19454,6 +19925,21 @@
           "Ruta"
         ]
       },
+      "TipoAristaTraza": {
+        "enum": [
+          "Suministro",
+          "Entrada",
+          "Consumo",
+          "Produccion",
+          "Salida",
+          "Llegada",
+          "Venta",
+          "Entrega",
+          "Merma",
+          "Rechazo",
+          "Regreso"
+        ]
+      },
       "TipoCargoChofer": {
         "enum": [
           "ProductoACobro",
@@ -19461,6 +19947,21 @@
           "FaltanteEfectivo",
           "DiferenciaPrecio",
           "Otro"
+        ]
+      },
+      "TipoEntradaTraza": {
+        "enum": [
+          "Lote",
+          "OrdenCompra",
+          "Recepcion",
+          "OrdenProduccion",
+          "Envio",
+          "Venta",
+          "Retorno",
+          "Liquidacion",
+          "Traspaso",
+          "Ajuste",
+          "ConteoFisico"
         ]
       },
       "TipoEnvio": {
@@ -19513,6 +20014,23 @@
           "AjusteEntrada",
           "AjusteSalida",
           "SalidaCambio"
+        ]
+      },
+      "TipoNodoTraza": {
+        "enum": [
+          "Proveedor",
+          "Recepcion",
+          "Lote",
+          "Produccion",
+          "Envio",
+          "Traspaso",
+          "Venta",
+          "Cliente",
+          "Retorno",
+          "Liquidacion",
+          "Ajuste",
+          "Merma",
+          "Regreso"
         ]
       },
       "TipoParametro": {
@@ -19677,6 +20195,58 @@
           "cantidad": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "TrazaDto": {
+        "required": [
+          "entrada",
+          "direccion",
+          "al",
+          "truncado",
+          "avisos",
+          "nodos",
+          "aristas",
+          "eventos"
+        ],
+        "type": "object",
+        "properties": {
+          "entrada": {
+            "$ref": "#/components/schemas/EntradaTrazaDto"
+          },
+          "direccion": {
+            "$ref": "#/components/schemas/DireccionTraza"
+          },
+          "al": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "truncado": {
+            "type": "boolean"
+          },
+          "avisos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nodos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodoTrazaDto"
+            }
+          },
+          "aristas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AristaTrazaDto"
+            }
+          },
+          "eventos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventoTrazaDto"
+            }
           }
         }
       },

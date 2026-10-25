@@ -28,6 +28,7 @@ import type {
   AbrirConteoRequest,
   AjusteResumenDto,
   AlmacenDto,
+  BuscarTrazabilidadParams,
   CapturarConteoRequest,
   ConsultarKardexParams,
   ConsultarValuacionParams,
@@ -39,12 +40,15 @@ import type {
   ListarConteosParams,
   ListarExistenciasParams,
   ListarTraspasosParams,
+  OpcionTrazaDto,
   PaginadoOfExistenciaDto,
   PaginadoOfMovimientoDto,
+  RastrearTrazabilidadParams,
   RegistrarAjusteRequest,
   RegistrarTraspasoRequest,
   ResultadoDocumentoDto,
   TraspasoDto,
+  TrazaDto,
   ValuacionTotalDto
 } from '.././modelos';
 
@@ -1358,4 +1362,177 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    export const rastrearTrazabilidad = (
+    params: RastrearTrazabilidadParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<TrazaDto>(
+      {url: `/api/v1/inventario/trazabilidad`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getRastrearTrazabilidadQueryKey = (params?: RastrearTrazabilidadParams,) => {
+    return [
+    `/api/v1/inventario/trazabilidad`, ...(params ? [params]: [])
+    ] as const;
+    }
+
     
+export const getRastrearTrazabilidadQueryOptions = <TData = Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError = ErrorType<unknown>>(params: RastrearTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRastrearTrazabilidadQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rastrearTrazabilidad>>> = ({ signal }) => rastrearTrazabilidad(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RastrearTrazabilidadQueryResult = NonNullable<Awaited<ReturnType<typeof rastrearTrazabilidad>>>
+export type RastrearTrazabilidadQueryError = ErrorType<unknown>
+
+
+export function useRastrearTrazabilidad<TData = Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError = ErrorType<unknown>>(
+ params: RastrearTrazabilidadParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rastrearTrazabilidad>>,
+          TError,
+          Awaited<ReturnType<typeof rastrearTrazabilidad>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRastrearTrazabilidad<TData = Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError = ErrorType<unknown>>(
+ params: RastrearTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rastrearTrazabilidad>>,
+          TError,
+          Awaited<ReturnType<typeof rastrearTrazabilidad>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRastrearTrazabilidad<TData = Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError = ErrorType<unknown>>(
+ params: RastrearTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useRastrearTrazabilidad<TData = Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError = ErrorType<unknown>>(
+ params: RastrearTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rastrearTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRastrearTrazabilidadQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const buscarTrazabilidad = (
+    params?: BuscarTrazabilidadParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<OpcionTrazaDto[]>(
+      {url: `/api/v1/inventario/trazabilidad/buscar`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getBuscarTrazabilidadQueryKey = (params?: BuscarTrazabilidadParams,) => {
+    return [
+    `/api/v1/inventario/trazabilidad/buscar`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getBuscarTrazabilidadQueryOptions = <TData = Awaited<ReturnType<typeof buscarTrazabilidad>>, TError = ErrorType<unknown>>(params?: BuscarTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBuscarTrazabilidadQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof buscarTrazabilidad>>> = ({ signal }) => buscarTrazabilidad(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BuscarTrazabilidadQueryResult = NonNullable<Awaited<ReturnType<typeof buscarTrazabilidad>>>
+export type BuscarTrazabilidadQueryError = ErrorType<unknown>
+
+
+export function useBuscarTrazabilidad<TData = Awaited<ReturnType<typeof buscarTrazabilidad>>, TError = ErrorType<unknown>>(
+ params: undefined |  BuscarTrazabilidadParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof buscarTrazabilidad>>,
+          TError,
+          Awaited<ReturnType<typeof buscarTrazabilidad>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBuscarTrazabilidad<TData = Awaited<ReturnType<typeof buscarTrazabilidad>>, TError = ErrorType<unknown>>(
+ params?: BuscarTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof buscarTrazabilidad>>,
+          TError,
+          Awaited<ReturnType<typeof buscarTrazabilidad>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBuscarTrazabilidad<TData = Awaited<ReturnType<typeof buscarTrazabilidad>>, TError = ErrorType<unknown>>(
+ params?: BuscarTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useBuscarTrazabilidad<TData = Awaited<ReturnType<typeof buscarTrazabilidad>>, TError = ErrorType<unknown>>(
+ params?: BuscarTrazabilidadParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof buscarTrazabilidad>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBuscarTrazabilidadQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+

@@ -237,14 +237,15 @@ public sealed class CatalogosTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     private sealed record GuardarProducto(string Sku, string Nombre, string Tipo, Guid UnidadBaseId, decimal TasaIva,
         string? NombreCorto = null, bool AplicaProductoACobro = false, int? DiasToleranciaDevolucion = null,
-        object[]? Conversiones = null);
+        object[]? Conversiones = null, bool? ManejaLote = null);
 
     private sealed record ConversionV02(Guid UnidadId, bool UsoTraslado, bool PredeterminadaTraslado);
 
     private sealed record ProductoV02(Guid Id, string? NombreCorto, bool AplicaProductoACobro, int? DiasToleranciaDevolucion,
         List<ConversionV02> Conversiones);
 
-    private static GuardarProducto Guardar(ProductoPrueba p, string sku) => new(sku, p.Nombre, "MateriaPrima", p.UnidadBaseId, 0m);
+    private static GuardarProducto Guardar(ProductoPrueba p, string sku) => new(sku, p.Nombre, "MateriaPrima", p.UnidadBaseId, 0m,
+        ManejaLote: p.ManejaLote);
 
     private static StringContent Contenido(object cuerpo) =>
         new(System.Text.Json.JsonSerializer.Serialize(cuerpo, ExtensionesHttp.Json), System.Text.Encoding.UTF8, "application/json");

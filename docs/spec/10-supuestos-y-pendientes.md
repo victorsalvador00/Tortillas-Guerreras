@@ -21,7 +21,7 @@ sus Excel. Procedimiento (también disponible como comando `/actualizar-modelo`)
 | ID | Supuesto (valor por defecto) | Impacta | Confirma | Estado |
 |---|---|---|---|---|
 | SUP-01 | Roles: Administrador, Direccion, Compras, Produccion, Almacen, Logistica, Vendedor, Facturacion, Supervisor. **v0.2:** + Captura y Liquidaciones; Vendedor = chofer/operador | Seguridad | Cliente | Cambiado (v0.2) |
-| SUP-02 | Producto terminado maneja lote; tortilla vida útil 2 días, masa 1 día | Catálogos, Inventario | Cliente | Abierto |
+| SUP-02 | Producto terminado maneja lote; tortilla vida útil 2 días, masa 1 día. **T-8.16:** materia prima y semiterminado también manejan lote por omisión (necesario para la trazabilidad hasta el proveedor); se puede apagar por producto | Catálogos, Inventario | Cliente | Abierto |
 | SUP-03 | Claves SAT de productos y tasas: tortilla/masa IVA 0 %, totopos IVA 16 % + IEPS 8 % | Catálogos, Facturación | Contador del cliente | Abierto |
 | SUP-04 | Se permiten compras directas sin OC con permiso; tolerancia de recepción 5 %; sin cuentas por pagar | Compras | Cliente | Abierto |
 | SUP-05 | Producción por turnos (Matutino, Vespertino, Nocturno) y líneas (molino, tortilladora) | Producción | Cliente | Abierto |

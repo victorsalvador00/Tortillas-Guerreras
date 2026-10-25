@@ -90,8 +90,9 @@ public sealed class ProduccionTests(ApiFixture api) : IClassFixture<ApiFixture>
         var tortilla = await admin.ProductoAsync("PT-TORT-KG");
         var mp = await admin.AlmacenAsync("MP");
         var pt = await admin.AlmacenAsync("PT");
-        await admin.EntradaAsync(mp, (await admin.ProductoAsync("SEM-MASA")).Id, 300, 4);
-        await admin.EntradaAsync(mp, (await admin.ProductoAsync("MP-CONSERV")).Id, 5, 50);
+        // [SUP-02] masa y conservador manejan lote.
+        await admin.EntradaAsync(mp, (await admin.ProductoAsync("SEM-MASA")).Id, 300, 4, DatosPrueba.Unico("L"), Fecha.AddDays(2));
+        await admin.EntradaAsync(mp, (await admin.ProductoAsync("MP-CONSERV")).Id, 5, 50, DatosPrueba.Unico("L"), Fecha.AddDays(90));
         await admin.EntradaAsync(mp, (await admin.ProductoAsync("EMP-BOLSA-1K")).Id, 500, 0.5m);
 
         var orden = await PlanearAsync(produccion, tortilla.Id, 176);

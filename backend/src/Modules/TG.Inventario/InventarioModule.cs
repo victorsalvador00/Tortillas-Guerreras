@@ -20,6 +20,7 @@ public static class InventarioModule
         services.AgregarHandlers(typeof(InventarioModule).Assembly);
         services.AddScoped<IInventarioService, InventarioService>();
         services.AddScoped<IConsultaInventarioProducto, ConsultaInventarioProducto>();
+        services.AddScoped<IConsultaKardex, ConsultaKardex>();
         services.AddScoped<IInicializadorModulo, InicializadorInventario>();
         return services;
     }

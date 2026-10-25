@@ -15,6 +15,7 @@ public static class ProduccionModule
     {
         services.AgregarDbContextModulo<ProduccionDbContext>(ProduccionDbContext.Esquema);
         services.AgregarHandlers(typeof(ProduccionModule).Assembly);
+        services.AddScoped<IConsultaOrdenesProduccion>(sp => sp.GetRequiredService<ConsultaOrdenesProduccionHandler>());
         services.AddScoped<IConsultaProduccion>(sp => sp.GetRequiredService<ReportesProduccionHandler>());
         services.AddScoped<IInicializadorModulo, InicializadorProduccion>();
         return services;
