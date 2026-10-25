@@ -1,7 +1,7 @@
 import { fechaOperativa, formatoCentavos, formatoCantidad, formatoFechaHora, formatoFechaLarga } from '@tg/shared';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { canalRuta, cargas, clienteGenerico, estadoDispositivo, resumenDia } from '@/db/consultas';
+import { cargas, estadoDispositivo, resumenDia } from '@/db/consultas';
 import { useSesion } from '@/servicios/contextoSesion';
 import { useSync } from '@/servicios/sincronizacion';
 import { Aviso, Boton, Etiqueta, Indicador, Pantalla, Tarjeta, Texto, estilos } from '@/ui/componentes';
@@ -9,18 +9,16 @@ import { useDatos } from '@/ui/useDatos';
 
 /**
  * Mi día: ruta (la de la carga asignada, RN-SYN-09), cargas del día, totales, efectivo esperado, pedidos por enviar,
- * cambios entregados, pendientes y botón Sincronizar (06).
+ * cambios entregados, pendientes y botón Sincronizar (06). Las demás pantallas se abren desde el menú lateral.
  */
 export default function MiDia() {
-  const { perfil, salir } = useSesion();
+  const { perfil } = useSesion();
   const { sincronizar, sincronizando, ultimo, conRed } = useSync();
   const hoy = fechaOperativa();
-  const { resumen, estado, cargasDia, canal, generico } = useDatos(() => ({
+  const { resumen, estado, cargasDia } = useDatos(() => ({
     resumen: resumenDia(hoy),
     estado: estadoDispositivo(),
     cargasDia: cargas(),
-    canal: canalRuta(),
-    generico: clienteGenerico(),
   }));
 
   return (
@@ -80,18 +78,6 @@ export default function MiDia() {
       </Tarjeta>
 
       <Boton texto="Clientes de hoy" icono="groups" grande alPresionar={() => router.push('/clientes')} />
-      {canal?.pedidoPor === 'Ruta' && generico && (
-        <Boton
-          texto="Pedido de la ruta"
-          icono="grid-on"
-          variante="secundario"
-          alPresionar={() => router.push({ pathname: '/pedido/[clienteId]', params: { clienteId: generico.id, ruta: '1' } })}
-        />
-      )}
-      <Boton texto="Pedidos" icono="assignment" variante="secundario" alPresionar={() => router.push('/pedidos')} />
-      <Boton texto="Inventario de camioneta" icono="inventory" variante="secundario" alPresionar={() => router.push('/inventario')} />
-      <Boton texto="Pendientes" icono="pending-actions" variante="secundario" alPresionar={() => router.push('/pendientes')} />
-      <Boton texto="Cerrar sesión" variante="texto" alPresionar={salir} />
     </Pantalla>
   );
 }

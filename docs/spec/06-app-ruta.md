@@ -4,6 +4,12 @@ Usuarios: vendedores y repartidores. Plataforma por defecto: Android `[SUP-16]`.
 
 ## Pantallas
 
+**Navegación:** menú lateral (botón ☰ en Mi día, Clientes de hoy, Pedidos, Inventario de camioneta y Pendientes) con
+chofer, ruta y estado de red arriba; opciones Mi día, Clientes de hoy, Pedido de la ruta (si el canal pide por ruta),
+Pedidos (contador por enviar), Inventario de camioneta, Pendientes (contador; rojo si hay rechazadas) y Cerrar sesión.
+Cada opción se abre sobre Mi día, así que atrás regresa al inicio. Las pantallas de captura usan flecha de regreso.
+Hecho con componentes de React Native, sin módulos nativos nuevos, para poder publicarse por EAS Update.
+
 | Pantalla | Qué hace |
 |---|---|
 | Inicio de sesión | Usuario y contraseña; registra el dispositivo la primera vez (queda por aprobar) |
