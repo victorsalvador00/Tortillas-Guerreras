@@ -21,6 +21,9 @@ export default function LayoutApp() {
       <ProveedorMenuLateral>
         <Stack
           screenOptions={{
+            // Con edge-to-edge el encabezado de esta pila anidada no reservaba la barra de estado: la flecha y el
+            // título quedaban debajo de ella y no recibían toques. Así el encabezado nativo aplica ese margen.
+            statusBarTranslucent: true,
             headerStyle: { backgroundColor: c.barra },
             headerTintColor: c.barraTexto,
             headerTitleStyle: { fontWeight: "600" },
