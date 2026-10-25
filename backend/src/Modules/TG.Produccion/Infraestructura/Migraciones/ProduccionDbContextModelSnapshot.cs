@@ -83,6 +83,10 @@ namespace TG.Produccion.Infraestructura.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid>("AlmacenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("almacen_id");
+
                     b.Property<decimal?>("CantidadRealBase")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
@@ -376,6 +380,10 @@ namespace TG.Produccion.Infraestructura.Migraciones
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("AlmacenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("almacen_id");
 
                     b.Property<decimal>("Cantidad")
                         .HasPrecision(18, 4)

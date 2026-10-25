@@ -11,7 +11,13 @@ public sealed class ProduccionTests(ApiFixture api) : IClassFixture<ApiFixture>
     private sealed record RecetaPrueba(Guid Id, Guid ProductoId, int Version, string Estado, string Nombre);
 
     private sealed record ConsumoPrueba(Guid ProductoId, string Sku, decimal CantidadTeoricaBase, decimal? CantidadRealBase,
-        decimal CostoUnitario);
+        decimal CostoUnitario, Guid AlmacenId);
+
+    private sealed record ComponentePrueba(Guid ProductoId, Guid? AlmacenId, string? Almacen);
+
+    private sealed record RecetaConComponentes(Guid Id, IReadOnlyList<ComponentePrueba> Componentes);
+
+    private sealed record AlmacenPrueba(Guid Id, string Codigo);
 
     private sealed record MovimientoOrdenPrueba(string Tipo, Guid AlmacenId, Guid ProductoId, string Lote, decimal Cantidad,
         decimal CostoUnitario);
@@ -181,6 +187,59 @@ public sealed class ProduccionTests(ApiFixture api) : IClassFixture<ApiFixture>
         fila["lote"]!.GetValue<string>().ShouldBe(terminada.Lote);
         fila["cantidad"]!.GetValue<decimal>().ShouldBe(80m);
         fila["fechaCaducidad"]!.GetValue<string>().ShouldBe("2026-11-06");
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-PRO-11")]
+    public async Task ComponenteConAlmacenPropio_SaleDeEseAlmacen_YSePuedeCambiarAntesDeTerminar()
+    {
+        var admin = await api.ClienteAsync();
+        var producto = await admin.CrearProductoAsync(tipo: "Terminado", vidaUtil: 3);
+        var a = await admin.CrearProductoAsync();
+        var b = await admin.CrearProductoAsync();
+        Task<AlmacenPrueba> AlmacenAsync() => admin.PostOkAsync<AlmacenPrueba>("/api/v1/inventario/almacenes", new
+        {
+            codigo = DatosPrueba.Unico("Z"), nombre = "Almacén de prueba", tipo = "General", activo = true,
+        });
+        var empaque = await AlmacenAsync();
+        var otro = await AlmacenAsync();
+        var mp = await admin.AlmacenAsync("MP");
+
+        // A tiene almacén propio; B sale del almacén de consumo de la orden (MP).
+        var receta = await admin.PostOkAsync<RecetaConComponentes>("/api/v1/produccion/recetas", new
+        {
+            productoId = producto.Id, nombre = "Receta con almacenes", rendimientoCantidad = 50, mermaEsperadaPct = 0,
+            componentes = new object[]
+            {
+                new { productoId = a.Id, cantidad = 10m, almacenId = empaque.Id },
+                new { productoId = b.Id, cantidad = 20m },
+            },
+        });
+        receta.Componentes.Single(c => c.ProductoId == a.Id).Almacen.ShouldBe(empaque.Codigo);
+        receta.Componentes.Single(c => c.ProductoId == b.Id).AlmacenId.ShouldBeNull();
+        await admin.PostOkAsync<RecetaPrueba>($"/api/v1/produccion/recetas/{receta.Id}/publicar");
+
+        var orden = await PlanearAsync(admin, producto.Id, 50);
+        orden.Consumos.Single(c => c.ProductoId == a.Id).AlmacenId.ShouldBe(empaque.Id);
+        orden.Consumos.Single(c => c.ProductoId == b.Id).AlmacenId.ShouldBe(mp);
+
+        // Ese día B salió de otro almacén: se cambia sin tocar el consumo real.
+        await (await admin.PutJsonAsync($"/api/v1/produccion/ordenes/{orden.Id}/consumos",
+            new { consumos = new[] { new { productoId = b.Id, almacenId = Guid.NewGuid() } } })).DebeFallarAsync(HttpStatusCode.BadRequest, "PRO-011");
+        orden = await admin.PutOkAsync<OrdenPrueba>($"/api/v1/produccion/ordenes/{orden.Id}/consumos",
+            new { consumos = new[] { new { productoId = b.Id, almacenId = otro.Id } } });
+        orden.Consumos.Single(c => c.ProductoId == b.Id).AlmacenId.ShouldBe(otro.Id);
+        orden.Consumos.Single(c => c.ProductoId == b.Id).CantidadRealBase.ShouldBeNull();
+
+        await admin.EntradaAsync(empaque.Id, a.Id, 10, 5);
+        await admin.EntradaAsync(otro.Id, b.Id, 20, 2);
+        var terminada = await admin.PostOkAsync<OrdenPrueba>($"/api/v1/produccion/ordenes/{orden.Id}/terminar",
+            new { cantidadProducida = 50 });
+
+        terminada.Movimientos.Single(m => m.Tipo == "SalidaConsumo" && m.ProductoId == a.Id).AlmacenId.ShouldBe(empaque.Id);
+        terminada.Movimientos.Single(m => m.Tipo == "SalidaConsumo" && m.ProductoId == b.Id).AlmacenId.ShouldBe(otro.Id);
+        (await admin.ExistenciaAsync(empaque.Id, a.Id)).ShouldBe(0m);
+        (await admin.ExistenciaAsync(otro.Id, b.Id)).ShouldBe(0m);
     }
 
     [Fact]

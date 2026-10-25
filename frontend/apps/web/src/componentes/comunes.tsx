@@ -1,6 +1,7 @@
 import {
   listarProductos,
   useListarAlmacenes,
+  useListarExistencias,
   useListarMotivosMerma,
   type AlmacenDto,
   type ListarProductosParams,
@@ -96,6 +97,56 @@ export function SelectorAlmacen({
       vacio={vacio}
       className={className}
       error={error}
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+/**
+ * RN-PRO-11: almacén del que sale un componente. Cada opción muestra la existencia del componente en ese almacén (suma de
+ * sus lotes), para elegir de dónde tomarlo.
+ */
+export function SelectorAlmacenComponente({
+  productoId,
+  unidad,
+  etiqueta = 'Sale de',
+  vacio,
+  className,
+  value,
+  onChange,
+  disabled,
+}: {
+  productoId: string;
+  unidad?: string;
+  etiqueta?: string;
+  vacio?: string;
+  className?: string;
+  value: string;
+  onChange: (valor: string) => void;
+  disabled?: boolean;
+}) {
+  const { data: almacenes } = useListarAlmacenes({ activo: true });
+  const { data: existencias } = useListarExistencias({ productoId, tamano: 200 }, { query: { enabled: !!productoId } });
+  const porAlmacen = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of existencias?.items ?? []) m.set(e.almacenId, (m.get(e.almacenId) ?? 0) + e.cantidad);
+    return m;
+  }, [existencias]);
+  const clave = unidad ?? existencias?.items[0]?.unidad ?? '';
+  const opciones = (almacenes ?? [])
+    .filter((a: AlmacenDto) => a.tipo !== 'Ruta')
+    .map((a) => ({
+      valor: a.id,
+      etiqueta: `${a.codigo} · ${a.nombre} — ${formatoCantidad(porAlmacen.get(a.id) ?? 0)} ${clave}`.trimEnd(),
+    }));
+  return (
+    <Selector
+      etiqueta={etiqueta}
+      opciones={opciones}
+      vacio={vacio}
+      className={className}
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}

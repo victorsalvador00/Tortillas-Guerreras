@@ -18,4 +18,6 @@ export interface ConsumoDto {
   cantidadRealBase?: ConsumoDtoCantidadRealBase;
   loteConsumido?: ConsumoDtoLoteConsumido;
   costoUnitario: number;
+  almacenId: string;
+  almacen: string;
 }

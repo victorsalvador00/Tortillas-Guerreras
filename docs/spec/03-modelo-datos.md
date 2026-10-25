@@ -201,7 +201,8 @@ capturada; alimenta el historial de precios), `costo_unitario_base numeric(18,6)
 | xmin | concurrencia | índice único parcial `ux_recetas_producto_vigente` (`producto_id` donde `estado = 'Vigente'`, RN-PRO-01) |
 
 **recetas_componentes**: `id`, `receta_id`, `producto_id`, `unidad_id`, `factor_a_base`,
-`cantidad`, `cantidad_base`, `orden smallint`.
+`cantidad`, `cantidad_base`, `orden smallint`, `almacen_id uuid null` (almacén predeterminado del componente; nulo =
+el de consumo de la orden, RN-PRO-11).
 
 **ordenes_produccion**
 
@@ -230,7 +231,7 @@ capturada; alimenta el historial de precios), `costo_unitario_base numeric(18,6)
 
 **ordenes_produccion_consumos**: `id`, `orden_produccion_id`, `producto_id`,
 `cantidad_teorica_base`, `cantidad_real_base null` (nulo = no capturado, RN-PRO-03), `lote_consumido null`,
-`costo_unitario`.
+`costo_unitario`, `almacen_id` (de dónde sale el componente, RN-PRO-11).
 
 **ordenes_produccion_mermas**: `id`, `orden_produccion_id`, `producto_id`, `cantidad_base`,
 `motivo_merma_id`, `notas`, `registrada_en`.

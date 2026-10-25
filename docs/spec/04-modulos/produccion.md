@@ -33,7 +33,7 @@ realmente se consumió, produjo y mermó.
 - **RN-PRO-03** Al terminar, si no se capturó consumo real, se usa el teórico recalculado con
   `cantidad_producida` en lugar de la planeada.
 - **RN-PRO-04** Terminar genera, en una sola transacción:
-  `SalidaConsumo` por cada componente (almacén de consumo, cantidad real),
+  `SalidaConsumo` por cada componente (su almacén, RN-PRO-11; cantidad real),
   `EntradaProduccion` del producto (almacén destino, lote de la orden),
   `Merma` por cada merma registrada.
 - **RN-PRO-05** Costo unitario del producto = suma de (consumo real × costo promedio del
@@ -45,6 +45,11 @@ realmente se consumió, produjo y mermó.
   supera ±5 % (`produccion.umbral_variacion_pct`).
 - **RN-PRO-09** `cantidad_producida` es obligatoria y mayor que cero para terminar.
 - **RN-PRO-10** Lote = `AAMMDD-<folio sin guion>`; caducidad = `fecha_operativa + vida_util_dias`.
+- **RN-PRO-11** `[SUP-33]` *Almacén por componente*: cada componente de la receta puede tener un almacén
+  predeterminado (activo, no de ruta, `PRO-011`); sin él, sale del almacén de consumo de la orden. Al liberar, cada
+  consumo de la orden toma ese almacén (o el de consumo si el predeterminado ya no está activo) y se puede cambiar
+  mientras la orden está Liberada o En proceso. Al terminar, la `SalidaConsumo` y la merma de cada componente salen
+  de su almacén. El selector muestra, por almacén activo, la existencia del componente.
 
 ## Cambios v0.2 (reunión del 24-oct-2026)
 
@@ -142,8 +147,8 @@ los dos depende de Producción, no hay ciclo).
   liberada, la orden conserva su versión (criterio de RN-PRO-01).
 - **Mermas al terminar (RN-PRO-04):** la merma del producto de la orden se registra como `EntradaProduccion` por
   `producida + merma` y `Merma` del mismo lote, de modo que el lote queda con la cantidad producida (buena) y el costo
-  de la merma se absorbe en el costo unitario (RN-PRO-05). La merma de un componente sale del almacén de consumo
-  (FEFO) con el costo promedio vigente.
+  de la merma se absorbe en el costo unitario (RN-PRO-05). La merma de un componente sale del almacén de su consumo
+  (RN-PRO-11, FEFO) con el costo promedio vigente.
 - **Variación (RN-PRO-08):** el teórico se ajusta a la cantidad producida
   (`teórico planeado × producida / planeada`) antes de compararlo con el real.
 - **RN-PRO-06:** con `produccion.permitir_consumo_sin_existencia = true` el kardex permite dejar negativo el almacén

@@ -34,7 +34,7 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { BarraFiltros, SelectorProducto } from '@/componentes/comunes';
+import { BarraFiltros, SelectorAlmacenComponente, SelectorProducto } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { unidadesProduccion } from './calculos';
@@ -120,9 +120,11 @@ interface Componente {
   producto: ProductoDto | null;
   unidadId: string;
   cantidad: string;
+  /** RN-PRO-11: vacío = el almacén de consumo de la orden. */
+  almacenId: string;
 }
 
-const nuevoComponente = (): Componente => ({ clave: crypto.randomUUID(), producto: null, unidadId: '', cantidad: '' });
+const nuevoComponente = (): Componente => ({ clave: crypto.randomUUID(), producto: null, unidadId: '', cantidad: '', almacenId: '' });
 
 /** Alta y edición de una receta en Borrador. */
 function EditorReceta({ receta, productos }: { receta?: RecetaDto; productos: Record<string, ProductoDto> }) {
@@ -135,7 +137,13 @@ function EditorReceta({ receta, productos }: { receta?: RecetaDto; productos: Re
   const [merma, setMerma] = useState(receta ? String(Math.round(receta.mermaEsperadaPct * 10000) / 100) : '0');
   const [notas, setNotas] = useState(receta?.notas ?? '');
   const [componentes, setComponentes] = useState<Componente[]>(
-    receta?.componentes.map((c) => ({ clave: c.id, producto: productos[c.productoId] ?? null, unidadId: c.unidadId, cantidad: String(c.cantidad) })) ?? [
+    receta?.componentes.map((c) => ({
+      clave: c.id,
+      producto: productos[c.productoId] ?? null,
+      unidadId: c.unidadId,
+      cantidad: String(c.cantidad),
+      almacenId: c.almacenId ?? '',
+    })) ?? [
       nuevoComponente(),
     ],
   );
@@ -168,7 +176,12 @@ function EditorReceta({ receta, productos }: { receta?: RecetaDto; productos: Re
         rendimientoCantidad: Number(rendimiento),
         mermaEsperadaPct: Number(merma) / 100,
         notas: notas || null,
-        componentes: capturados.map((c) => ({ productoId: c.producto!.id, unidadId: c.unidadId || null, cantidad: Number(c.cantidad) })),
+        componentes: capturados.map((c) => ({
+          productoId: c.producto!.id,
+          unidadId: c.unidadId || null,
+          cantidad: Number(c.cantidad),
+          almacenId: c.almacenId || null,
+        })),
       };
       const guardada = receta ? await actualizar.mutateAsync({ id: receta.id, data: datos }) : await crear.mutateAsync({ data: datos });
       toast.success(receta ? 'Receta actualizada.' : `Receta creada como borrador v${guardada.version}.`);
@@ -265,6 +278,16 @@ function EditorReceta({ receta, productos }: { receta?: RecetaDto; productos: Re
                 disabled={componentes.length === 1}
                 onClick={() => setComponentes((cs) => cs.filter((x) => x.clave !== c.clave))}
               />
+              {c.producto && (
+                <SelectorAlmacenComponente
+                  productoId={c.producto.id}
+                  unidad={c.producto.unidadBaseClave}
+                  className="md:col-span-3"
+                  vacio="Del almacén de consumo de la orden"
+                  value={c.almacenId}
+                  onChange={(v) => cambiar(c.clave, { almacenId: v })}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -389,6 +412,7 @@ export function RecetaDetalle() {
           </span>
         ),
       },
+      { header: 'Sale de', accessorKey: 'almacen', cell: ({ row }) => row.original.almacen ?? 'Almacén de consumo de la orden' },
       { header: 'Cantidad', accessorKey: 'cantidad', cell: ({ row }) => `${formatoCantidad(row.original.cantidad)} ${row.original.unidad}`, meta: { alinear: 'fin' } },
       {
         header: 'En unidad base',

@@ -29,7 +29,7 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { CantidadConSigno, SelectorMotivo, etiquetaMovimiento } from '@/componentes/comunes';
+import { CantidadConSigno, SelectorAlmacenComponente, SelectorMotivo, etiquetaMovimiento } from '@/componentes/comunes';
 import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
@@ -86,6 +86,7 @@ function Captura({ orden }: { orden: OrdenDto }) {
   const terminar = useTerminarOrdenProduccion();
   const [accion, setAccion] = useState<Accion | null>(null);
   const [reales, setReales] = useState<Record<string, string>>({});
+  const [almacenes, setAlmacenes] = useState<Record<string, string>>({});
   const [producida, setProducida] = useState('');
   const [notasCierre, setNotasCierre] = useState('');
   const [merma, setMerma] = useState({ productoId: orden.productoId, motivoMermaId: '', cantidad: '', notas: '' });
@@ -93,12 +94,15 @@ function Captura({ orden }: { orden: OrdenDto }) {
 
   useEffect(() => {
     setReales(Object.fromEntries(orden.consumos.map((c) => [c.productoId, c.cantidadRealBase != null ? String(c.cantidadRealBase) : ''])));
+    setAlmacenes(Object.fromEntries(orden.consumos.map((c) => [c.productoId, c.almacenId])));
   }, [orden.consumos]);
 
   const enProceso = orden.estado === 'EnProceso';
   const opera = enProceso && tienePermiso('produccion.operar');
   const cierra = enProceso && tienePermiso('produccion.cerrar');
   const planea = tienePermiso('produccion.planear');
+  // RN-PRO-11: el almacén de cada componente se puede cambiar hasta terminar.
+  const editaAlmacen = (orden.estado === 'Liberada' || enProceso) && tienePermiso('produccion.operar');
   const producidaNum = Number(producida) > 0 ? Number(producida) : (orden.cantidadProducida ?? null);
 
   const filas = orden.consumos.map((c) => {
@@ -111,12 +115,18 @@ function Captura({ orden }: { orden: OrdenDto }) {
     filas.map((f) => ({ real: f.real, costoUnitario: f.c.costoUnitario })),
     producidaNum ?? orden.cantidadPlaneada,
   );
-  const cambios = orden.consumos.some((c) => (reales[c.productoId] ?? '') !== (c.cantidadRealBase != null ? String(c.cantidadRealBase) : ''));
+  const cambioReal = (c: OrdenDto['consumos'][number]) => (reales[c.productoId] ?? '') !== (c.cantidadRealBase != null ? String(c.cantidadRealBase) : '');
+  const cambioAlmacen = (c: OrdenDto['consumos'][number]) => !!almacenes[c.productoId] && almacenes[c.productoId] !== c.almacenId;
+  const cambios = orden.consumos.some((c) => cambioReal(c) || cambioAlmacen(c));
 
   const guardarConsumos = async () => {
     const consumos = orden.consumos
-      .filter((c) => reales[c.productoId] !== undefined && reales[c.productoId] !== '')
-      .map((c) => ({ productoId: c.productoId, cantidadRealBase: Number(reales[c.productoId]) }));
+      .filter((c) => (cambioReal(c) && reales[c.productoId] !== '') || cambioAlmacen(c))
+      .map((c) => ({
+        productoId: c.productoId,
+        cantidadRealBase: cambioReal(c) && reales[c.productoId] !== '' ? Number(reales[c.productoId]) : null,
+        almacenId: cambioAlmacen(c) ? almacenes[c.productoId] : null,
+      }));
     await capturar.mutateAsync({ id: orden.id, data: { consumos } });
   };
 
@@ -176,7 +186,7 @@ function Captura({ orden }: { orden: OrdenDto }) {
               <div
                 key={c.id}
                 className={cn(
-                  'grid items-center gap-3 rounded-xl border border-row-divider border-l-4 p-3 sm:grid-cols-[1fr_270px]',
+                  'grid items-center gap-3 rounded-xl border border-row-divider border-l-4 p-3 sm:grid-cols-[1fr_320px]',
                   real > teorico ? 'border-l-[var(--tg-status-red-fg)]' : 'border-l-[var(--tg-status-green-fg)]',
                 )}
               >
@@ -184,28 +194,39 @@ function Captura({ orden }: { orden: OrdenDto }) {
                   <p className="m-0 font-medium">{c.producto}</p>
                   <p className="m-0 text-xs text-muted">
                     {c.sku} · teórico {formatoCantidad(teorico)} {c.unidad} · costo {formatoMoneda(c.costoUnitario)}/{c.unidad}
+                    {!editaAlmacen && ` · sale de ${c.almacen}`}
                   </p>
                   <Diferencia real={real} teorico={teorico} unidad={c.unidad} />
                 </div>
-                {opera ? (
-                  <Campo
-                    etiqueta="Consumo real"
-                    type="number"
-                    step="any"
-                    inputMode="decimal"
-                    sufijo={c.unidad}
-                    value={reales[c.productoId] ?? ''}
-                    onChange={(e) => setReales((r) => ({ ...r, [c.productoId]: e.target.value }))}
-                  />
-                ) : (
-                  <p className="m-0 text-right text-lg tabular-nums">
-                    {c.cantidadRealBase != null ? `${formatoCantidad(c.cantidadRealBase)} ${c.unidad}` : '—'}
-                  </p>
-                )}
+                <div className="flex flex-col gap-2">
+                  {editaAlmacen && (
+                    <SelectorAlmacenComponente
+                      productoId={c.productoId}
+                      unidad={c.unidad}
+                      value={almacenes[c.productoId] ?? c.almacenId}
+                      onChange={(v) => setAlmacenes((a) => ({ ...a, [c.productoId]: v }))}
+                    />
+                  )}
+                  {opera ? (
+                    <Campo
+                      etiqueta="Consumo real"
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      sufijo={c.unidad}
+                      value={reales[c.productoId] ?? ''}
+                      onChange={(e) => setReales((r) => ({ ...r, [c.productoId]: e.target.value }))}
+                    />
+                  ) : (
+                    <p className="m-0 text-right text-lg tabular-nums">
+                      {c.cantidadRealBase != null ? `${formatoCantidad(c.cantidadRealBase)} ${c.unidad}` : '—'}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
-          {opera && (
+          {editaAlmacen && (
             <div className="mt-3 flex justify-end">
               <Boton variante="secundario" tamano="grande" disabled={!cambios} cargando={capturar.isPending} onClick={() => guardarConsumos().then(() => toast.success('Consumos guardados.'), (e) => toast.error(mensajeError(e)))}>
                 Guardar consumos

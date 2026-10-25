@@ -5,6 +5,8 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { ComponenteDtoAlmacenId } from './componenteDtoAlmacenId';
+import type { ComponenteDtoAlmacen } from './componenteDtoAlmacen';
 
 export interface ComponenteDto {
   id: string;
@@ -18,4 +20,6 @@ export interface ComponenteDto {
   cantidadBase: number;
   unidadBase: string;
   orden: number;
+  almacenId?: ComponenteDtoAlmacenId;
+  almacen?: ComponenteDtoAlmacen;
 }

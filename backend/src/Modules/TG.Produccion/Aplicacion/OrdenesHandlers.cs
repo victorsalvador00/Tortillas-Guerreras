@@ -13,8 +13,10 @@ using TG.SharedKernel.Tiempo;
 
 namespace TG.Produccion.Aplicacion;
 
+/// <param name="AlmacenId">RN-PRO-11: almacén del que sale el componente.</param>
 public sealed record ConsumoDto(Guid Id, Guid ProductoId, string Sku, string Producto, string Unidad,
-    decimal CantidadTeoricaBase, decimal? CantidadRealBase, string? LoteConsumido, decimal CostoUnitario);
+    decimal CantidadTeoricaBase, decimal? CantidadRealBase, string? LoteConsumido, decimal CostoUnitario, Guid AlmacenId,
+    string Almacen);
 
 public sealed record MermaDto(Guid Id, Guid ProductoId, string Sku, string Producto, string Unidad, decimal CantidadBase,
     Guid MotivoMermaId, string Motivo, string? Notas, DateTimeOffset RegistradaEn);
@@ -67,7 +69,9 @@ public sealed class PlanearOrdenValidator : AbstractValidator<PlanearOrdenReques
     }
 }
 
-public sealed record ConsumoRealRequest(Guid ProductoId, decimal CantidadRealBase, string? LoteConsumido);
+/// <param name="CantidadRealBase">Nulo = deja lo capturado antes.</param>
+/// <param name="AlmacenId">RN-PRO-11: cambia el almacén del que sale el componente; nulo = sin cambio.</param>
+public sealed record ConsumoRealRequest(Guid ProductoId, decimal? CantidadRealBase, string? LoteConsumido, Guid? AlmacenId = null);
 
 public sealed record CapturarConsumosRequest(IReadOnlyList<ConsumoRealRequest> Consumos);
 
@@ -77,7 +81,8 @@ public sealed class CapturarConsumosValidator : AbstractValidator<CapturarConsum
     {
         RuleFor(x => x.Consumos).NotEmpty();
         RuleForEach(x => x.Consumos).ChildRules(c =>
-            c.RuleFor(x => x.CantidadRealBase).GreaterThanOrEqualTo(0).WithMessage("El consumo no puede ser negativo."));
+            c.RuleFor(x => x.CantidadRealBase).GreaterThanOrEqualTo(0).When(x => x.CantidadRealBase is not null)
+                .WithMessage("El consumo no puede ser negativo."));
     }
 }
 
@@ -239,10 +244,13 @@ public sealed class OrdenesHandler(
         orden.Consumos.Clear();
         foreach (var componente in receta.Componentes.OrderBy(c => c.Orden))
         {
+            // RN-PRO-11: el almacén predeterminado del componente, si sigue activo; si no, el de consumo de la orden.
+            var almacen = componente.AlmacenId is { } predeterminado ? await AlmacenAsync(predeterminado, "MP", ct) : null;
             orden.Consumos.Add(new OrdenConsumo
             {
                 OrdenProduccionId = orden.Id,
                 ProductoId = componente.ProductoId,
+                AlmacenId = almacen?.Id ?? orden.AlmacenConsumoId,
                 CantidadTeoricaBase = ReglasProduccion.ConsumoTeorico(componente.CantidadBase, orden.CantidadPlaneada,
                     receta.RendimientoCantidad),
             });
@@ -311,16 +319,30 @@ public sealed class OrdenesHandler(
                 return ErroresProduccion.ComponenteAjeno;
             }
 
-            if (decimal.Round(captura.CantidadRealBase, producto.UnidadBaseDecimales) != captura.CantidadRealBase)
+            if (captura.CantidadRealBase is { } real && decimal.Round(real, producto.UnidadBaseDecimales) != real)
             {
                 return Error.Campo("CAT-006", "cantidadRealBase",
                     $"La cantidad de {producto.Nombre} admite máximo {producto.UnidadBaseDecimales} decimales.");
             }
 
-            consumo.CantidadRealBase = captura.CantidadRealBase;
-            consumo.LoteConsumido = producto.ManejaLote && !string.IsNullOrWhiteSpace(captura.LoteConsumido)
-                ? captura.LoteConsumido.Trim().ToUpperInvariant()
-                : null;
+            // RN-PRO-11.
+            if (captura.AlmacenId is { } almacenId)
+            {
+                if (await AlmacenAsync(almacenId, "MP", ct) is null)
+                {
+                    return ErroresProduccion.AlmacenInvalido("almacenId");
+                }
+
+                consumo.AlmacenId = almacenId;
+            }
+
+            if (captura.CantidadRealBase is not null)
+            {
+                consumo.CantidadRealBase = captura.CantidadRealBase;
+                consumo.LoteConsumido = producto.ManejaLote && !string.IsNullOrWhiteSpace(captura.LoteConsumido)
+                    ? captura.LoteConsumido.Trim().ToUpperInvariant()
+                    : null;
+            }
         }
 
         await db.SaveChangesAsync(ct);
@@ -418,7 +440,7 @@ public sealed class OrdenesHandler(
             }
 
             var salidas = orden.Consumos.Where(x => x.CantidadRealBase > 0)
-                .Select(x => new LineaMovimiento(TipoMovimiento.SalidaConsumo, orden.AlmacenConsumoId, x.ProductoId,
+                .Select(x => new LineaMovimiento(TipoMovimiento.SalidaConsumo, x.AlmacenId, x.ProductoId,
                     x.LoteConsumido, -x.CantidadRealBase!.Value))
                 .ToList();
             var movConsumo = await inventario.RegistrarMovimientosAsync(new RegistrarMovimientosRequest(
@@ -453,7 +475,7 @@ public sealed class OrdenesHandler(
                 lineas.Add(merma.ProductoId == orden.ProductoId
                     ? new LineaMovimiento(TipoMovimiento.Merma, orden.AlmacenDestinoId, merma.ProductoId, lote,
                         -merma.CantidadBase, costoUnitario, merma.MotivoMermaId, Notas: merma.Notas)
-                    : new LineaMovimiento(TipoMovimiento.Merma, orden.AlmacenConsumoId, merma.ProductoId, null,
+                    : new LineaMovimiento(TipoMovimiento.Merma, AlmacenDelComponente(orden, merma.ProductoId), merma.ProductoId, null,
                         -merma.CantidadBase, null, merma.MotivoMermaId, Notas: merma.Notas));
             }
 
@@ -551,6 +573,10 @@ public sealed class OrdenesHandler(
         return Result.Exito();
     }
 
+    /// <summary>RN-PRO-11: la merma de un componente sale del mismo almacén que su consumo.</summary>
+    private static Guid AlmacenDelComponente(OrdenProduccion orden, Guid productoId) =>
+        orden.Consumos.FirstOrDefault(c => c.ProductoId == productoId)?.AlmacenId ?? orden.AlmacenConsumoId;
+
     private async Task<AlmacenInfo?> AlmacenAsync(Guid? id, string codigoPredeterminado, CancellationToken ct)
     {
         var almacen = id is { } valor
@@ -598,7 +624,8 @@ public sealed class OrdenesHandler(
                 almacenes.GetValueOrDefault(o.AlmacenDestinoId) ?? "?", o.Lote, o.Estado, o.LiberadaEn, o.IniciadaEn,
                 o.TerminadaEn, o.CostoTotal, o.CostoUnitario, o.Mermas.Sum(m => m.CantidadBase), o.Notas,
                 o.Consumos.Select(c => new ConsumoDto(c.Id, c.ProductoId, Sku(c.ProductoId), Nombre(c.ProductoId),
-                    Unidad(c.ProductoId), c.CantidadTeoricaBase, c.CantidadRealBase, c.LoteConsumido, c.CostoUnitario)).ToList(),
+                    Unidad(c.ProductoId), c.CantidadTeoricaBase, c.CantidadRealBase, c.LoteConsumido, c.CostoUnitario,
+                    c.AlmacenId, almacenes.GetValueOrDefault(c.AlmacenId) ?? "?")).ToList(),
                 o.Mermas.OrderBy(m => m.RegistradaEn).Select(m => new MermaDto(m.Id, m.ProductoId, Sku(m.ProductoId),
                     Nombre(m.ProductoId), Unidad(m.ProductoId), m.CantidadBase, m.MotivoMermaId,
                     motivos.GetValueOrDefault(m.MotivoMermaId) ?? "?", m.Notas, m.RegistradaEn)).ToList(),

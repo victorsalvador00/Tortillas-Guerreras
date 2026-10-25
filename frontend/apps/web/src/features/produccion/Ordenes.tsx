@@ -74,7 +74,7 @@ export function DialogoPlanear({ abierto, onCambiar, fecha }: { abierto: boolean
       abierto={abierto}
       onCambiar={onCambiar}
       titulo="Planear orden de producción"
-      descripcion="Por defecto consume de Materias primas; el terminado entra a Producto terminado y el semiterminado a Materias primas."
+      descripcion="Los componentes salen del almacén que indica la receta; los que no tienen, del almacén de consumo (Materias primas por omisión). El terminado entra a Producto terminado y el semiterminado a Materias primas."
       acciones={
         <>
           <Boton variante="texto" onClick={() => onCambiar(false)}>

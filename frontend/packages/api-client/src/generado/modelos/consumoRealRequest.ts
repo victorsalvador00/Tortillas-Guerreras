@@ -5,10 +5,13 @@
  * Compras, recetas, producción, inventario, logística, ventas en ruta y facturación.
  * OpenAPI spec version: v1
  */
+import type { ConsumoRealRequestCantidadRealBase } from './consumoRealRequestCantidadRealBase';
 import type { ConsumoRealRequestLoteConsumido } from './consumoRealRequestLoteConsumido';
+import type { ConsumoRealRequestAlmacenId } from './consumoRealRequestAlmacenId';
 
 export interface ConsumoRealRequest {
   productoId: string;
-  cantidadRealBase: number;
+  cantidadRealBase?: ConsumoRealRequestCantidadRealBase;
   loteConsumido?: ConsumoRealRequestLoteConsumido;
+  almacenId?: ConsumoRealRequestAlmacenId;
 }

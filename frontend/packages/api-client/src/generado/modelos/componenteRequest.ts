@@ -6,9 +6,11 @@
  * OpenAPI spec version: v1
  */
 import type { ComponenteRequestUnidadId } from './componenteRequestUnidadId';
+import type { ComponenteRequestAlmacenId } from './componenteRequestAlmacenId';
 
 export interface ComponenteRequest {
   productoId: string;
   unidadId?: ComponenteRequestUnidadId;
   cantidad: number;
+  almacenId?: ComponenteRequestAlmacenId;
 }

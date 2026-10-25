@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TG.Catalogos.Publico;
+using TG.Inventario.Publico;
 using TG.Produccion.Dominio;
 using TG.Produccion.Infraestructura;
 using TG.SharedKernel.Datos;
@@ -127,14 +128,15 @@ public sealed class LineasHandler(ProduccionDbContext db)
 
 // ───────────────────────────── Recetas ─────────────────────────────
 
+/// <param name="AlmacenId">RN-PRO-11: almacén predeterminado del componente; nulo = el de consumo de la orden.</param>
 public sealed record ComponenteDto(Guid Id, Guid ProductoId, string Sku, string Producto, Guid UnidadId, string Unidad,
-    decimal FactorABase, decimal Cantidad, decimal CantidadBase, string UnidadBase, short Orden);
+    decimal FactorABase, decimal Cantidad, decimal CantidadBase, string UnidadBase, short Orden, Guid? AlmacenId, string? Almacen);
 
 public sealed record RecetaDto(Guid Id, Guid ProductoId, string Sku, string Producto, string UnidadBase, int Version,
     string Nombre, decimal RendimientoCantidad, decimal MermaEsperadaPct, EstadoReceta Estado, DateTimeOffset? VigenteDesde,
     string? Notas, DateTimeOffset CreadoEn, IReadOnlyList<ComponenteDto> Componentes);
 
-public sealed record ComponenteRequest(Guid ProductoId, Guid? UnidadId, decimal Cantidad);
+public sealed record ComponenteRequest(Guid ProductoId, Guid? UnidadId, decimal Cantidad, Guid? AlmacenId = null);
 
 public sealed record GuardarRecetaRequest(Guid ProductoId, string Nombre, decimal RendimientoCantidad,
     decimal MermaEsperadaPct, string? Notas, IReadOnlyList<ComponenteRequest> Componentes);
@@ -160,7 +162,12 @@ public sealed class GuardarRecetaValidator : AbstractValidator<GuardarRecetaRequ
 }
 
 /// <summary>Recetas versionadas: una sola Vigente por producto (RN-PRO-01).</summary>
-public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService catalogos, IUnitOfWork unitOfWork, TimeProvider reloj)
+public sealed class RecetasHandler(
+    ProduccionDbContext db,
+    ICatalogosService catalogos,
+    IInventarioService inventario,
+    IUnitOfWork unitOfWork,
+    TimeProvider reloj)
 {
     public async Task<IReadOnlyList<RecetaDto>> ListarAsync(Guid? productoId, EstadoReceta? estado, CancellationToken ct)
     {
@@ -256,6 +263,7 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
             Cantidad = c.Cantidad,
             CantidadBase = c.CantidadBase,
             Orden = c.Orden,
+            AlmacenId = c.AlmacenId,
         }).ToList();
         db.Recetas.Add(copia);
         await db.SaveChangesAsync(ct);
@@ -303,6 +311,7 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
             Cantidad = c.Cantidad,
             CantidadBase = c.CantidadBase,
             Orden = c.Orden,
+            AlmacenId = c.AlmacenId,
         }).ToList();
         db.Recetas.Add(copia);
         await db.SaveChangesAsync(ct);
@@ -370,6 +379,13 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
                 return ErroresProduccion.ComponenteInvalido("Un componente no existe o está inactivo.");
             }
 
+            // RN-PRO-11: el almacén predeterminado debe estar activo y no ser de ruta.
+            if (c.AlmacenId is { } almacenId
+                && await inventario.ObtenerAlmacenAsync(almacenId, ct) is not { Activo: true, Tipo: not TipoAlmacen.Ruta })
+            {
+                return ErroresProduccion.AlmacenInvalido("componentes");
+            }
+
             var unidadId = c.UnidadId ?? componente.UnidadBaseId;
             var conversion = await catalogos.ConvertirABaseAsync(c.ProductoId, unidadId, c.Cantidad, UsoUnidad.Produccion, ct);
             if (!conversion.EsExito)
@@ -386,6 +402,7 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
                 Cantidad = c.Cantidad,
                 CantidadBase = conversion.Valor.Base,
                 Orden = orden++,
+                AlmacenId = c.AlmacenId,
             });
         }
 
@@ -404,6 +421,7 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
         var ids = recetas.Select(r => r.ProductoId).Concat(recetas.SelectMany(r => r.Componentes).Select(c => c.ProductoId));
         var productos = await catalogos.ObtenerProductosAsync(ids, ct);
         var unidades = await catalogos.ObtenerUnidadesAsync(ct);
+        var almacenes = (await inventario.ListarAlmacenesAsync(ct)).ToDictionary(a => a.Id, a => a.Codigo);
         return recetas.Select(r =>
         {
             var p = productos.GetValueOrDefault(r.ProductoId);
@@ -415,7 +433,8 @@ public sealed class RecetasHandler(ProduccionDbContext db, ICatalogosService cat
                     var cp = productos.GetValueOrDefault(c.ProductoId);
                     return new ComponenteDto(c.Id, c.ProductoId, cp?.Sku ?? "?", cp?.Nombre ?? "?", c.UnidadId,
                         unidades.GetValueOrDefault(c.UnidadId)?.Clave ?? "?", c.FactorABase, c.Cantidad, c.CantidadBase,
-                        cp?.UnidadBaseClave ?? string.Empty, c.Orden);
+                        cp?.UnidadBaseClave ?? string.Empty, c.Orden, c.AlmacenId,
+                        c.AlmacenId is { } a ? almacenes.GetValueOrDefault(a) : null);
                 }).ToList());
         }).ToList();
     }

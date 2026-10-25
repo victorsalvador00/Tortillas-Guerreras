@@ -10759,6 +10759,19 @@
           "orden": {
             "type": "integer",
             "format": "int16"
+          },
+          "almacenId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "almacen": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -10783,6 +10796,13 @@
           "cantidad": {
             "type": "number",
             "format": "double"
+          },
+          "almacenId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -10902,7 +10922,9 @@
           "producto",
           "unidad",
           "cantidadTeoricaBase",
-          "costoUnitario"
+          "costoUnitario",
+          "almacenId",
+          "almacen"
         ],
         "type": "object",
         "properties": {
@@ -10943,13 +10965,19 @@
           "costoUnitario": {
             "type": "number",
             "format": "double"
+          },
+          "almacenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "almacen": {
+            "type": "string"
           }
         }
       },
       "ConsumoRealRequest": {
         "required": [
-          "productoId",
-          "cantidadRealBase"
+          "productoId"
         ],
         "type": "object",
         "properties": {
@@ -10958,7 +10986,10 @@
             "format": "uuid"
           },
           "cantidadRealBase": {
-            "type": "number",
+            "type": [
+              "null",
+              "number"
+            ],
             "format": "double"
           },
           "loteConsumido": {
@@ -10966,6 +10997,13 @@
               "null",
               "string"
             ]
+          },
+          "almacenId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },

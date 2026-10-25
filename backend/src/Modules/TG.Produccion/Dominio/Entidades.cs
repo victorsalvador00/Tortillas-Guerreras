@@ -76,6 +76,9 @@ public sealed class RecetaComponente
     public decimal Cantidad { get; set; }
     public decimal CantidadBase { get; set; }
     public short Orden { get; set; }
+
+    /// <summary>RN-PRO-11: almacén del que sale por omisión; nulo = el almacén de consumo de la orden.</summary>
+    public Guid? AlmacenId { get; set; }
 }
 
 public sealed class OrdenProduccion : EntidadAuditable, IConcurrencia
@@ -112,6 +115,9 @@ public sealed class OrdenConsumo
     public Guid Id { get; set; } = SharedKernel.Dominio.Id.Nuevo();
     public Guid OrdenProduccionId { get; set; }
     public Guid ProductoId { get; set; }
+
+    /// <summary>RN-PRO-11: de dónde sale el componente; se toma de la receta al liberar y se puede cambiar.</summary>
+    public Guid AlmacenId { get; set; }
 
     /// <summary>Teórico calculado al liberar con la cantidad planeada (RN-PRO-02).</summary>
     public decimal CantidadTeoricaBase { get; set; }
