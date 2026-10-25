@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
 import { useSesion } from '@/servicios/contextoSesion';
 import { ErrorHttp } from '@/sync/puertos';
 import { Logo } from '@/ui/Logo';
@@ -36,7 +36,7 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.barra }}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: c.barra }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 24 }} keyboardShouldPersistTaps="handled">
         <View style={{ alignItems: 'center', gap: 12 }}>
           <Logo ancho={260} />

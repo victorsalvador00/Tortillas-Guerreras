@@ -1,7 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import type { ComponentProps, ReactNode } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -14,7 +16,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RADIO_PILDORA, RADIO_TARJETA, useColores, type ColorEstado } from './tema';
 
 export type NombreIcono = ComponentProps<typeof MaterialIcons>['name'];
@@ -25,6 +27,24 @@ export function Icono({ nombre, tamano = 24, color }: { nombre: NombreIcono; tam
 }
 
 /** Contenedor de pantalla con fondo lavanda, desplazamiento y "jalar para sincronizar". */
+/**
+ * Alto del teclado visible. Con edge-to-edge (app.json) Android ya no encoge la ventana al abrirlo, así que la
+ * pantalla reserva ese espacio para que el campo enfocado quede a la vista.
+ */
+export function useAltoTeclado() {
+  const [alto, setAlto] = useState(0);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const mostrar = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setAlto(e.endCoordinates.height));
+    const ocultar = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setAlto(0));
+    return () => {
+      mostrar.remove();
+      ocultar.remove();
+    };
+  }, []);
+  return alto;
+}
+
 export function Pantalla({
   children,
   alRefrescar,
@@ -37,8 +57,12 @@ export function Pantalla({
   pie?: ReactNode;
 }) {
   const c = useColores();
+  const teclado = useAltoTeclado();
+  const { bottom } = useSafeAreaInsets();
+  // En Android el alto del teclado no incluye la barra de navegación del sistema.
+  const reserva = teclado > 0 ? teclado + (Platform.OS === 'android' ? bottom : 0) : 0;
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: c.fondo }}>
+    <SafeAreaView edges={reserva > 0 ? [] : ['bottom']} style={{ flex: 1, backgroundColor: c.fondo, paddingBottom: reserva }}>
       <ScrollView
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: pie ? 24 : 40 }}
         keyboardShouldPersistTaps="handled"
