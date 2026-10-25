@@ -35,6 +35,14 @@ export interface LineaMapa {
   discontinua?: boolean;
 }
 
+/**
+ * Coordenada dentro del rango geográfico. Con un valor fuera de rango (p. ej. mientras se teclea en la ficha) Leaflet
+ * intenta centrar en un punto absurdo, calcula millones de mosaicos y congela la pestaña.
+ */
+export function coordenadaValida(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
 function escapar(texto: string): string {
   return texto.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
@@ -101,6 +109,7 @@ export function MapaLeaflet({
     grupo.clearLayers();
     const limites: L.LatLngExpression[] = [];
     for (const l of lineas) {
+      if (!l.puntos.every(([la, ln]) => coordenadaValida(la, ln))) continue;
       L.polyline(l.puntos, {
         color: COLORES[l.color ?? 'azul'],
         weight: 3,
@@ -109,6 +118,7 @@ export function MapaLeaflet({
       limites.push(...l.puntos);
     }
     for (const mk of marcadores) {
+      if (!coordenadaValida(mk.lat, mk.lng)) continue;
       const marcador = L.marker([mk.lat, mk.lng], {
         title: mk.titulo,
         ...(mk.color ? { icon: iconoColor(mk.color) } : {}),

@@ -37,7 +37,7 @@ import { useMemo, useState } from 'react';
 import { useForm, type Path } from 'react-hook-form';
 import { z } from 'zod';
 import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
-import { MapaLeaflet, type MarcadorMapa } from '@/componentes/MapaLeaflet';
+import { coordenadaValida, MapaLeaflet, type MarcadorMapa } from '@/componentes/MapaLeaflet';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { HistorialDocumento } from '@/componentes/historial';
@@ -377,7 +377,7 @@ function FormularioCliente({ cliente }: { cliente?: ClienteDto }) {
   const marcadores: MarcadorMapa[] = [];
   const latNum = lat === '' || lat == null ? null : Number(lat);
   const lngNum = lng === '' || lng == null ? null : Number(lng);
-  if (latNum != null && lngNum != null && Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+  if (latNum != null && lngNum != null && coordenadaValida(latNum, lngNum)) {
     marcadores.push({
       id: 'registrada',
       lat: latNum,
