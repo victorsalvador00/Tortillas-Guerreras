@@ -62,6 +62,8 @@ internal static class ComprasEndpoints
         recepciones.MapGet("/", (EstadoRecepcion? estado, Guid? proveedorId, Guid? ordenCompraId, DateOnly? desde, DateOnly? hasta,
                 int? pagina, int? tamano, ConsultasRecepcionesHandler h, CancellationToken ct) =>
             h.ListarAsync(estado, proveedorId, ordenCompraId, desde, hasta, pagina, tamano, ct)).RequireAuthorization(P.Recibir).WithName("listarRecepciones");
+        recepciones.MapGet("/lotes-propuestos", (Guid[] productoIds, ConsultasRecepcionesHandler h, CancellationToken ct) =>
+            h.ProponerLotesAsync(productoIds, ct)).RequireAuthorization(P.Recibir).WithName("proponerLotesRecepcion");
         recepciones.MapGet("/{id:guid}", async (Guid id, ConsultasRecepcionesHandler h, CancellationToken ct) =>
             (await h.ObtenerAsync(id, ct)).AHttp()).RequireAuthorization(P.Recibir).WithName("obtenerRecepcion");
         recepciones.MapPost("/", async (RegistrarRecepcionRequest r, RegistrarRecepcionHandler h, CancellationToken ct) =>

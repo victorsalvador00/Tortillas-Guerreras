@@ -6,4 +6,6 @@
  * OpenAPI spec version: v1
  */
 
-export type PartidaRecepcionRequestLote = null | string;
+export type ProponerLotesRecepcionParams = {
+productoIds: string[];
+};

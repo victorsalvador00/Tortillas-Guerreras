@@ -30,9 +30,6 @@ public static class ErroresCompras
     public static readonly Error OrdenNoRecibible =
         Error.Conflicto("COM-008", "La orden de compra no está autorizada o ya no admite recepciones.");
 
-    public static Error LoteRequerido(string producto) =>
-        Error.Campo("COM-009", "lote", $"{producto} maneja lote: captura el lote recibido.");
-
     public static readonly Error ProveedorNoEncontrado = Error.NoEncontrado("COM-010", "El proveedor no existe.");
 
     public static readonly Error ProveedorInactivo = Error.Campo("COM-010", "proveedorId", "El proveedor está inactivo.");

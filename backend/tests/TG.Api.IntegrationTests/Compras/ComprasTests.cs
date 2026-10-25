@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     private sealed record PartidaRecPrueba(Guid ProductoId, decimal CantidadBase, decimal CostoUnitarioBase, string? Lote);
 
-    private sealed record RecepcionPrueba(Guid Id, string Folio, string Estado, IReadOnlyList<PartidaRecPrueba> Partidas);
+    private sealed record RecepcionPrueba(Guid Id, string Folio, string Estado, DateOnly FechaOperativa, IReadOnlyList<PartidaRecPrueba> Partidas);
 
     private sealed record PrecioPrueba(Guid ProductoId, decimal UltimoPrecio, IReadOnlyList<object> Historial);
 
@@ -58,12 +59,12 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
         return await compras.PostOkAsync<OrdenPrueba>($"/api/v1/compras/ordenes-compra/{orden.Id}/autorizar");
     }
 
-    private static Task<HttpResponseMessage> RecibirAsync(HttpClient cliente, OrdenPrueba orden, decimal cantidad, string? lote = null) =>
+    private static Task<HttpResponseMessage> RecibirAsync(HttpClient cliente, OrdenPrueba orden, decimal cantidad) =>
         cliente.PostJsonAsync("/api/v1/compras/recepciones", new
         {
             ordenCompraId = orden.Id,
             facturaProveedor = "F-123",
-            partidas = new[] { new { ordenCompraPartidaId = orden.Partidas[0].Id, cantidad, lote } },
+            partidas = new[] { new { ordenCompraPartidaId = orden.Partidas[0].Id, cantidad } },
         });
 
     [Fact]
@@ -241,20 +242,46 @@ public sealed class ComprasTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     [Fact]
     [Trait("Regla", "RN-COM-09")]
-    public async Task Recepcion_DeProductoConLote_SinLote_DevuelveCOM009()
+    public async Task Recepcion_DeProductoConLote_GeneraLoteConsecutivoPorDia()
     {
         var admin = await api.ClienteAsync();
         var compras = await api.ClienteAsync("compras");
         var producto = await admin.CrearProductoAsync(tipo: "Reventa", unidad: "PZA", manejaLote: true);
+        var sinLote = await admin.CrearProductoAsync(manejaLote: false);
         var proveedor = await ProveedorAsync(compras);
         var pt = await admin.AlmacenAsync("PT");
-        var orden = await OrdenAutorizadaAsync(compras, proveedor.Id, pt, producto.Id, producto.UnidadBaseId, 10, 15);
+        var orden = await OrdenAutorizadaAsync(compras, proveedor.Id, pt, producto.Id, producto.UnidadBaseId, 20, 15);
 
-        await (await RecibirAsync(compras, orden, 10)).DebeFallarAsync(HttpStatusCode.BadRequest, "COM-009");
+        // La vista previa anticipa los lotes en el orden de las partidas y no reserva nada.
+        var propuestos = await compras.GetOkAsync<List<string?>>(
+            $"/api/v1/compras/recepciones/lotes-propuestos?productoIds={producto.Id}&productoIds={sinLote.Id}&productoIds={producto.Id}");
+        propuestos[1].ShouldBeNull();
 
-        var recepcion = await (await RecibirAsync(compras, orden, 10, "lt-01")).LeerAsync<RecepcionPrueba>();
-        recepcion.Partidas.Single().Lote.ShouldBe("LT-01");
-        (await admin.ExistenciaAsync(pt, producto.Id, "LT-01")).ShouldBe(10m);
+        var primera = await (await RecibirAsync(compras, orden, 10)).LeerAsync<RecepcionPrueba>();
+        var lote = primera.Partidas.Single().Lote!;
+        propuestos[0].ShouldBe(lote);
+        propuestos[2].ShouldBe(lote[..^3] + "-02");
+        var prefijo = lote[..^3];
+        prefijo.ShouldEndWith("-" + primera.FechaOperativa.ToString("ddMMyy", CultureInfo.InvariantCulture));
+        lote.ShouldBe($"{prefijo}-01");
+        (await admin.ExistenciaAsync(pt, producto.Id, lote)).ShouldBe(10m);
+
+        var segunda = await (await RecibirAsync(compras, orden, 4)).LeerAsync<RecepcionPrueba>();
+        segunda.Partidas.Single().Lote.ShouldBe($"{prefijo}-02");
+
+        // Dos partidas del mismo producto en una recepción toman consecutivos distintos; sin control de lote no hay lote.
+        await CatalogoAsync(compras, proveedor.Id, sinLote.Id, sinLote.UnidadBaseId);
+        var directa = await compras.PostOkAsync<RecepcionPrueba>("/api/v1/compras/recepciones", new
+        {
+            proveedorId = proveedor.Id, almacenId = pt,
+            partidas = new[]
+            {
+                new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 1m, precioUnitario = 15m },
+                new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 2m, precioUnitario = 15m },
+                new { productoId = sinLote.Id, unidadId = sinLote.UnidadBaseId, cantidad = 3m, precioUnitario = 5m },
+            },
+        });
+        directa.Partidas.Select(p => p.Lote).ShouldBe([$"{prefijo}-03", $"{prefijo}-04", null]);
     }
 
     [Fact]

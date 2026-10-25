@@ -5,6 +5,7 @@ import {
   useListarAlmacenes,
   useListarOrdenesCompra,
   useObtenerOrdenCompra,
+  useProponerLotesRecepcion,
   useRegistrarRecepcion,
   type OrdenCompraDto,
   type PartidaRecepcionRequest,
@@ -21,13 +22,13 @@ import { SelectorProveedor } from './comunes';
 
 interface LineaOc {
   partidaId: string;
+  productoId: string;
   producto: string;
   sku: string;
   unidad: string;
   pendiente: number;
   cantidad: string;
   manejaLote: boolean;
-  lote: string;
   caducidad: string;
 }
 
@@ -37,7 +38,6 @@ interface LineaDirecta {
   unidadId: string;
   cantidad: string;
   precioUnitario: string;
-  lote: string;
   caducidad: string;
 }
 
@@ -47,7 +47,6 @@ const nuevaLinea = (): LineaDirecta => ({
   unidadId: '',
   cantidad: '',
   precioUnitario: '',
-  lote: '',
   caducidad: '',
 });
 
@@ -61,23 +60,37 @@ function useErrores() {
   return { errores, setErrores, general, setGeneral, aplicar };
 }
 
-/** Lote y caducidad, solo para productos que manejan lote (RN-COM-09). */
+/**
+ * RN-COM-09: vista previa de los lotes que generará la recepción, uno por partida recibida y en el mismo orden en que
+ * se envían. Devuelve el lote propuesto por clave de línea; las líneas sin lote o sin cantidad no llevan.
+ */
+function useLotesPropuestos(lineas: { clave: string; productoId?: string; manejaLote: boolean; cantidad: string }[]) {
+  const conLote = lineas.filter((l) => l.productoId && l.manejaLote && Number(l.cantidad) > 0);
+  const productoIds = conLote.map((l) => l.productoId!);
+  const { data, isFetching } = useProponerLotesRecepcion({ productoIds }, { query: { enabled: productoIds.length > 0 } });
+  const lotes = new Map<string, string>();
+  if (!isFetching && data?.length === conLote.length) conLote.forEach((l, i) => data[i] && lotes.set(l.clave, data[i]));
+  return { lotes, calculando: isFetching };
+}
+
+/** Productos que manejan lote: el sistema genera el lote al registrar (RN-COM-09); la caducidad se captura. */
 function CamposLote({
   lote,
+  calculando,
   caducidad,
-  onLote,
   onCaducidad,
-  error,
 }: {
-  lote: string;
+  lote?: string;
+  calculando: boolean;
   caducidad: string;
-  onLote: (v: string) => void;
   onCaducidad: (v: string) => void;
-  error?: string;
 }) {
   return (
     <>
-      <Campo etiqueta="Lote" value={lote} onChange={(e) => onLote(e.target.value.toUpperCase())} error={error} />
+      <div className="self-center">
+        <p className="m-0 text-xs text-muted">Lote que se generará</p>
+        <p className="m-0 font-mono text-sm font-medium">{lote ?? (calculando ? 'Calculando…' : '—')}</p>
+      </div>
       <Campo etiqueta="Caducidad (opcional)" type="date" value={caducidad} onChange={(e) => onCaducidad(e.target.value)} />
     </>
   );
@@ -102,13 +115,13 @@ function ContraOrden({ ordenInicial }: { ordenInicial?: string }) {
     setLineas(
       orden.partidas.map((p) => ({
         partidaId: p.id,
+        productoId: p.productoId,
         producto: p.producto,
         sku: p.sku,
         unidad: p.unidad,
         pendiente: pendientePartida(p),
         cantidad: String(pendientePartida(p)),
         manejaLote: p.manejaLote,
-        lote: '',
         caducidad: '',
       })),
     );
@@ -120,13 +133,13 @@ function ContraOrden({ ordenInicial }: { ordenInicial?: string }) {
   }));
 
   const cambiar = (id: string, c: Partial<LineaOc>) => setLineas((ls) => ls.map((l) => (l.partidaId === id ? { ...l, ...c } : l)));
+  const propuestos = useLotesPropuestos(lineas.map((l) => ({ ...l, clave: l.partidaId })));
 
   const guardar = async (o: OrdenCompraDto) => {
     setGeneral(null);
     const recibir = lineas.filter((l) => Number(l.cantidad) > 0);
     const e: Record<string, string> = {};
     if (recibir.length === 0) e.partidas = 'Captura al menos una cantidad recibida.';
-    recibir.filter((l) => l.manejaLote && !l.lote.trim()).forEach((l) => (e[`${l.partidaId}.lote`] = 'Captura el lote.'));
     setErrores(e);
     if (Object.keys(e).length) return;
     setGuardando(true);
@@ -139,7 +152,6 @@ function ContraOrden({ ordenInicial }: { ordenInicial?: string }) {
           partidas: recibir.map<PartidaRecepcionRequest>((l) => ({
             ordenCompraPartidaId: l.partidaId,
             cantidad: Number(l.cantidad),
-            lote: l.manejaLote ? l.lote.trim() : null,
             fechaCaducidad: l.manejaLote && l.caducidad ? l.caducidad : null,
           })),
         },
@@ -191,11 +203,10 @@ function ContraOrden({ ordenInicial }: { ordenInicial?: string }) {
                 />
                 {l.manejaLote ? (
                   <CamposLote
-                    lote={l.lote}
+                    lote={propuestos.lotes.get(l.partidaId)}
+                    calculando={propuestos.calculando}
                     caducidad={l.caducidad}
-                    onLote={(v) => cambiar(l.partidaId, { lote: v })}
                     onCaducidad={(v) => cambiar(l.partidaId, { caducidad: v })}
-                    error={errores[`${l.partidaId}.lote`]}
                   />
                 ) : (
                   <span className="hidden md:block" />
@@ -239,6 +250,9 @@ function CompraDirecta() {
 
   const cambiar = (clave: string, c: Partial<LineaDirecta>) => setLineas((ls) => ls.map((l) => (l.clave === clave ? { ...l, ...c } : l)));
   const capturadas = lineas.filter((l) => l.producto);
+  const propuestos = useLotesPropuestos(
+    capturadas.map((l) => ({ clave: l.clave, productoId: l.producto!.id, manejaLote: l.producto!.manejaLote, cantidad: l.cantidad })),
+  );
   const totales = totalesOrden(capturadas.map((l) => ({ cantidad: l.cantidad, precioUnitario: l.precioUnitario, tasaIva: l.producto!.tasaIva })));
 
   const guardar = async () => {
@@ -250,7 +264,6 @@ function CompraDirecta() {
     capturadas.forEach((l) => {
       if (!(Number(l.cantidad) > 0)) e[`${l.clave}.cantidad`] = 'Mayor que cero.';
       if (l.precioUnitario === '') e[`${l.clave}.precio`] = 'Captura el precio.';
-      if (l.producto!.manejaLote && !l.lote.trim()) e[`${l.clave}.lote`] = 'Captura el lote.';
     });
     setErrores(e);
     if (Object.keys(e).length) return;
@@ -267,7 +280,6 @@ function CompraDirecta() {
             unidadId: l.unidadId,
             cantidad: Number(l.cantidad),
             precioUnitario: Number(l.precioUnitario),
-            lote: l.producto!.manejaLote ? l.lote.trim() : null,
             fechaCaducidad: l.producto!.manejaLote && l.caducidad ? l.caducidad : null,
           })),
         },
@@ -354,11 +366,10 @@ function CompraDirecta() {
               />
               {l.producto?.manejaLote && (
                 <CamposLote
-                  lote={l.lote}
+                  lote={propuestos.lotes.get(l.clave)}
+                  calculando={propuestos.calculando}
                   caducidad={l.caducidad || (l.producto.vidaUtilDias ? sumarDias(fechaOperativa(), l.producto.vidaUtilDias) : '')}
-                  onLote={(v) => cambiar(l.clave, { lote: v })}
                   onCaducidad={(v) => cambiar(l.clave, { caducidad: v })}
-                  error={errores[`${l.clave}.lote`]}
                 />
               )}
             </div>

@@ -9,7 +9,6 @@ import type { PartidaRecepcionRequestOrdenCompraPartidaId } from './partidaRecep
 import type { PartidaRecepcionRequestProductoId } from './partidaRecepcionRequestProductoId';
 import type { PartidaRecepcionRequestUnidadId } from './partidaRecepcionRequestUnidadId';
 import type { PartidaRecepcionRequestPrecioUnitario } from './partidaRecepcionRequestPrecioUnitario';
-import type { PartidaRecepcionRequestLote } from './partidaRecepcionRequestLote';
 import type { PartidaRecepcionRequestFechaCaducidad } from './partidaRecepcionRequestFechaCaducidad';
 
 export interface PartidaRecepcionRequest {
@@ -18,6 +17,5 @@ export interface PartidaRecepcionRequest {
   unidadId?: PartidaRecepcionRequestUnidadId;
   cantidad: number;
   precioUnitario?: PartidaRecepcionRequestPrecioUnitario;
-  lote?: PartidaRecepcionRequestLote;
   fechaCaducidad?: PartidaRecepcionRequestFechaCaducidad;
 }

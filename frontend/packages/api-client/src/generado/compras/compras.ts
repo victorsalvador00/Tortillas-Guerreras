@@ -42,6 +42,7 @@ import type {
   PaginadoOfRecepcionResumenDto,
   PrecioProveedorDto,
   ProductoProveedorDto,
+  ProponerLotesRecepcionParams,
   ProveedorDto,
   RecepcionDto,
   RegistrarRecepcionRequest
@@ -1454,7 +1455,94 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const obtenerRecepcion = (
+    export const proponerLotesRecepcion = (
+    params: ProponerLotesRecepcionParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      
+      return clienteApi<string[]>(
+      {url: `/api/v1/compras/recepciones/lotes-propuestos`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProponerLotesRecepcionQueryKey = (params?: ProponerLotesRecepcionParams,) => {
+    return [
+    `/api/v1/compras/recepciones/lotes-propuestos`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getProponerLotesRecepcionQueryOptions = <TData = Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError = ErrorType<unknown>>(params: ProponerLotesRecepcionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProponerLotesRecepcionQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof proponerLotesRecepcion>>> = ({ signal }) => proponerLotesRecepcion(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProponerLotesRecepcionQueryResult = NonNullable<Awaited<ReturnType<typeof proponerLotesRecepcion>>>
+export type ProponerLotesRecepcionQueryError = ErrorType<unknown>
+
+
+export function useProponerLotesRecepcion<TData = Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError = ErrorType<unknown>>(
+ params: ProponerLotesRecepcionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof proponerLotesRecepcion>>,
+          TError,
+          Awaited<ReturnType<typeof proponerLotesRecepcion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProponerLotesRecepcion<TData = Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError = ErrorType<unknown>>(
+ params: ProponerLotesRecepcionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof proponerLotesRecepcion>>,
+          TError,
+          Awaited<ReturnType<typeof proponerLotesRecepcion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProponerLotesRecepcion<TData = Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError = ErrorType<unknown>>(
+ params: ProponerLotesRecepcionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useProponerLotesRecepcion<TData = Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError = ErrorType<unknown>>(
+ params: ProponerLotesRecepcionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof proponerLotesRecepcion>>, TError, TData>>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProponerLotesRecepcionQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const obtenerRecepcion = (
     id: string,
  options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
 ) => {

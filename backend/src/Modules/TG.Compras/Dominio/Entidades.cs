@@ -1,3 +1,4 @@
+using System.Globalization;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Dominio;
 
@@ -159,6 +160,24 @@ public static class ReglasCompras
     /// <summary>RN-COM-04: se puede recibir de más hasta la tolerancia; arriba se rechaza.</summary>
     public static bool ExcedeTolerancia(decimal pedidaBase, decimal recibidaBase, decimal nuevaBase, decimal tolerancia) =>
         recibidaBase + nuevaBase > Dinero.RedondearCantidad(pedidaBase * (1 + tolerancia));
+
+    /// <summary>RN-COM-09: prefijo del lote de compra, <c>{SKU sin separadores}-{DDMMAA}</c>.</summary>
+    public static string PrefijoLote(string sku, DateOnly fecha) =>
+        new string(sku.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant() + "-" + fecha.ToString("ddMMyy", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// RN-COM-09: siguiente lote del prefijo, con consecutivo de al menos 2 dígitos. Solo cuentan los lotes
+    /// <c>{prefijo}-{número}</c>; uno con el prefijo pero sin número al final se ignora.
+    /// </summary>
+    public static string SiguienteLote(string prefijo, IEnumerable<string> existentes)
+    {
+        var maximo = existentes
+            .Where(l => l.StartsWith(prefijo + "-", StringComparison.Ordinal))
+            .Select(l => int.TryParse(l.AsSpan(prefijo.Length + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+        return string.Create(CultureInfo.InvariantCulture, $"{prefijo}-{maximo + 1:D2}");
+    }
 
     public static EstadoOrdenCompra EstadoPorRecepciones(IEnumerable<OrdenCompraPartida> partidas)
     {

@@ -22,7 +22,6 @@ public sealed record PartidaRecepcionRequest(
     Guid? UnidadId,
     decimal Cantidad,
     decimal? PrecioUnitario,
-    string? Lote,
     DateOnly? FechaCaducidad);
 
 /// <param name="OrdenCompraId"><c>null</c> = compra directa sin orden (permiso <c>compras.compra_directa</c>) [SUP-04].</param>
@@ -103,8 +102,54 @@ public sealed record RecepcionResumenDto(
     EstadoRecepcion Estado,
     int Partidas);
 
-public sealed class ConsultasRecepcionesHandler(ComprasDbContext db, ICatalogosService catalogos, IInventarioService inventario)
+/// <summary>RN-COM-09: lotes de compra ya generados para un producto y prefijo.</summary>
+internal static class LotesCompra
 {
+    public static Task<List<string>> ExistentesAsync(ComprasDbContext db, Guid productoId, string prefijo, CancellationToken ct) =>
+        db.RecepcionesPartidas.AsNoTracking()
+            .Where(x => x.ProductoId == productoId && x.Lote != null && x.Lote.StartsWith(prefijo + "-"))
+            .Select(x => x.Lote!)
+            .ToListAsync(ct);
+}
+
+public sealed class ConsultasRecepcionesHandler(
+    ComprasDbContext db,
+    ICatalogosService catalogos,
+    IInventarioService inventario,
+    IFechaOperativa fechaOperativa)
+{
+    /// <summary>
+    /// RN-COM-09: vista previa de los lotes que generaría una recepción con estas partidas, en el mismo orden
+    /// (<c>null</c> si el producto no maneja lote). No bloquea: otra recepción registrada antes puede tomar el consecutivo.
+    /// </summary>
+    public async Task<IReadOnlyList<string?>> ProponerLotesAsync(IReadOnlyList<Guid> productoIds, CancellationToken ct)
+    {
+        var productos = await catalogos.ObtenerProductosAsync(productoIds.Distinct(), ct);
+        var hoy = fechaOperativa.Hoy();
+        var lotes = new Dictionary<Guid, List<string>>();
+        var propuestos = new List<string?>(productoIds.Count);
+        foreach (var id in productoIds)
+        {
+            if (!productos.TryGetValue(id, out var producto) || !producto.ManejaLote)
+            {
+                propuestos.Add(null);
+                continue;
+            }
+
+            var prefijo = ReglasCompras.PrefijoLote(producto.Sku, hoy);
+            if (!lotes.TryGetValue(id, out var existentes))
+            {
+                lotes[id] = existentes = await LotesCompra.ExistentesAsync(db, id, prefijo, ct);
+            }
+
+            var lote = ReglasCompras.SiguienteLote(prefijo, existentes);
+            existentes.Add(lote);
+            propuestos.Add(lote);
+        }
+
+        return propuestos;
+    }
+
     public async Task<Paginado<RecepcionResumenDto>> ListarAsync(EstadoRecepcion? estado, Guid? proveedorId, Guid? ordenCompraId,
         DateOnly? desde, DateOnly? hasta, int? pagina, int? tamano, CancellationToken ct)
     {
@@ -195,6 +240,19 @@ public sealed class RegistrarRecepcionHandler(
 
         var resultado = await unitOfWork.EjecutarAsync(c => RegistrarAsync(r, c), ct);
         return resultado.EsExito ? await consultas.ObtenerAsync(resultado.Valor, ct) : resultado.Error!;
+    }
+
+    /// <summary>
+    /// RN-COM-09: el sistema genera el lote de compra. El bloqueo hace que dos recepciones simultáneas del mismo producto
+    /// y día tomen consecutivos distintos; las partidas de esta recepción aún sin guardar también cuentan.
+    /// </summary>
+    private async Task<string> SiguienteLoteAsync(ProductoInfo producto, Recepcion recepcion, CancellationToken ct)
+    {
+        var prefijo = ReglasCompras.PrefijoLote(producto.Sku, recepcion.FechaOperativa);
+        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtext({"lote-compra:" + prefijo}))", ct);
+        var existentes = await LotesCompra.ExistentesAsync(db, producto.Id, prefijo, ct);
+        existentes.AddRange(recepcion.Partidas.Where(x => x.ProductoId == producto.Id && x.Lote is not null).Select(x => x.Lote!));
+        return ReglasCompras.SiguienteLote(prefijo, existentes);
     }
 
     private async Task<Result<Guid>> RegistrarAsync(RegistrarRecepcionRequest r, CancellationToken ct)
@@ -290,13 +348,6 @@ public sealed class RegistrarRecepcionHandler(
                 return ErroresCompras.NoComprable(producto.Nombre);
             }
 
-            // RN-COM-09.
-            var lote = string.IsNullOrWhiteSpace(p.Lote) ? null : p.Lote.Trim().ToUpperInvariant();
-            if (producto.ManejaLote && lote is null)
-            {
-                return ErroresCompras.LoteRequerido(producto.Nombre);
-            }
-
             var conversion = await catalogos.ConvertirABaseAsync(productoId, unidadId, p.Cantidad,
                 orden is null ? UsoUnidad.Compra : null, ct);
             if (!conversion.EsExito)
@@ -329,7 +380,7 @@ public sealed class RegistrarRecepcionHandler(
                 CantidadBase = cantidadBase,
                 PrecioUnitario = precio,
                 CostoUnitarioBase = ReglasCompras.CostoUnitarioBase(precio, conversion.Valor.FactorABase),
-                Lote = producto.ManejaLote ? lote : null,
+                Lote = producto.ManejaLote ? await SiguienteLoteAsync(producto, recepcion, ct) : null,
                 FechaCaducidad = p.FechaCaducidad,
             });
         }

@@ -37,8 +37,15 @@ Registra lo que entra al negocio desde proveedores: materias primas, empaques y 
 - **RN-COM-08** Al registrar una recepción se actualizan `proveedores_productos.ultimo_precio`,
   `ultima_unidad_id` y `ultima_compra_en`; si el producto no estaba en el catálogo del proveedor (compra directa)
   se agrega activo con la unidad y el precio recibidos como pactado.
-- **RN-COM-09** Productos con `maneja_lote` exigen lote (y caducidad si `vida_util_dias` no es nulo
-  y el proveedor la informa).
+- **RN-COM-09** El lote de cada partida recibida de un producto con `maneja_lote` lo **genera el sistema** al
+  registrar la recepción; no se captura (guía: RN-117 de panissimo). Formato `{SKU sin separadores, en mayúsculas}-{fecha
+  operativa DDMMAA}-{NN}`, donde `NN` es el consecutivo de ese producto en ese día con al menos 2 dígitos (`01`, `02`…;
+  pasa a 3 después de `99`). Ej.: `MP-MAIZ-BCO` recibido el 25/10/2026 → `MPMAIZBCO-251026-01`. Cada partida (también
+  dos del mismo producto en una recepción, o dos recepciones simultáneas) toma su propio consecutivo; cuentan los lotes
+  de recepciones anteriores aunque estén canceladas. La caducidad se sigue capturando si `vida_util_dias` no es nulo y
+  el proveedor la informa. El lote del proveedor no se registra. La pantalla muestra una **vista previa** de los lotes
+  (`GET /recepciones/lotes-propuestos`); no reserva el consecutivo, así que el lote final puede cambiar si otra
+  recepción del mismo producto se registra antes.
 - **RN-COM-10** El catálogo de un proveedor solo admite productos comprables y activos, una vez cada uno; la unidad
   es la base o una con conversión de compra. El precio pactado es **opcional** (sin IVA, ≥ 0, por esa unidad); los
   días de entrega van de 0 a 365. Los productos de un proveedor inactivo no se editan hasta reactivarlo (`COM-020`).
@@ -62,6 +69,7 @@ Fuera de alcance por ahora: cuentas por pagar y facturas de proveedor `[SUP-04]`
 | POST | `/ordenes-compra/{id}/autorizar` | `compras.autorizar` |
 | POST | `/ordenes-compra/{id}/cancelar`, `/cerrar` | `compras.autorizar` |
 | GET/POST | `/recepciones` | `compras.recibir` |
+| GET | `/recepciones/lotes-propuestos?productoIds` | `compras.recibir` |
 | POST | `/recepciones/{id}/cancelar` | `compras.autorizar` |
 
 ## Criterios de aceptación

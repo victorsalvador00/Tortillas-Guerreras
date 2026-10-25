@@ -3002,6 +3002,43 @@
         }
       }
     },
+    "/api/v1/compras/recepciones/lotes-propuestos": {
+      "get": {
+        "tags": [
+          "Compras"
+        ],
+        "operationId": "proponerLotesRecepcion",
+        "parameters": [
+          {
+            "name": "productoIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/compras/recepciones/{id}": {
       "get": {
         "tags": [
@@ -16680,12 +16717,6 @@
               "number"
             ],
             "format": "double"
-          },
-          "lote": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "fechaCaducidad": {
             "type": [

@@ -22,6 +22,24 @@ public sealed class ReglasComprasTests
     public void CostoUnitarioBase_PrecioEntreFactor(decimal precio, decimal factor, decimal esperado) =>
         ReglasCompras.CostoUnitarioBase(precio, factor).ShouldBe(esperado);
 
+    [Theory]
+    [Trait("Regla", "RN-COM-09")]
+    [InlineData("MP-MAIZ-BCO", "MPMAIZBCO-251026")]
+    [InlineData("emp.papel 01", "EMPPAPEL01-251026")]
+    public void PrefijoLote_SkuSinSeparadoresYFecha(string sku, string esperado) =>
+        ReglasCompras.PrefijoLote(sku, new DateOnly(2026, 10, 25)).ShouldBe(esperado);
+
+    [Fact]
+    [Trait("Regla", "RN-COM-09")]
+    public void SiguienteLote_ConsecutivoDelPrefijo()
+    {
+        ReglasCompras.SiguienteLote("MP1-251026", []).ShouldBe("MP1-251026-01");
+        ReglasCompras.SiguienteLote("MP1-251026", ["MP1-251026-01", "MP1-251026-09"]).ShouldBe("MP1-251026-10");
+        ReglasCompras.SiguienteLote("MP1-251026", Enumerable.Range(1, 99).Select(n => $"MP1-251026-{n:D2}")).ShouldBe("MP1-251026-100");
+        // Un lote con el prefijo pero sin número al final, o de otro día, no cuenta.
+        ReglasCompras.SiguienteLote("MP1-251026", ["MP1-251026-A", "MP1-251026X-05", "MP1-241026-07"]).ShouldBe("MP1-251026-01");
+    }
+
     [Fact]
     public void Importes_RedondeaPorPartida()
     {

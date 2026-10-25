@@ -34,14 +34,18 @@ public sealed class TrazabilidadTests(ApiFixture api) : IClassFixture<ApiFixture
 
     private sealed record Opcion(string Tipo, Guid? Id, Guid? ProductoId, string? Lote, string Etiqueta);
 
+    private sealed record PartidaRecepcion(string? Lote);
+
+    private sealed record RecepcionPrueba(Guid Id, string Folio, IReadOnlyList<PartidaRecepcion> Partidas);
+
     private sealed record Cadena(
         ProductoPrueba Maiz,
         ProductoPrueba Cal,
         ProductoPrueba Masa,
         ProductoPrueba Tortilla,
         Guid ProveedorId,
-        IdFolio RecepcionA,
-        IdFolio RecepcionB,
+        RecepcionPrueba RecepcionA,
+        RecepcionPrueba RecepcionB,
         OrdenPrueba OrdenMasa,
         OrdenPrueba OrdenTortilla,
         IdFolio Envio,
@@ -107,19 +111,19 @@ public sealed class TrazabilidadTests(ApiFixture api) : IClassFixture<ApiFixture
         {
             codigo = DatosPrueba.Unico("PRV"), razonSocial = "Molinos de prueba SA", diasCredito = 0,
         });
-        var loteA = DatosPrueba.Unico("MZA");
-        var loteB = DatosPrueba.Unico("MZB");
-        async Task<IdFolio> RecibirAsync(Guid productoId, decimal cantidad, string? lote, DateOnly? caducidad) =>
-            await admin.PostOkAsync<IdFolio>("/api/v1/compras/recepciones", new
+        async Task<RecepcionPrueba> RecibirAsync(Guid productoId, decimal cantidad, DateOnly? caducidad) =>
+            await admin.PostOkAsync<RecepcionPrueba>("/api/v1/compras/recepciones", new
             {
                 proveedorId = proveedor.Id, almacenId = mp, facturaProveedor = "F-TRZ",
-                partidas = new[] { new { productoId, unidadId = (await admin.UnidadAsync("KG")), cantidad, precioUnitario = 6m, lote, fechaCaducidad = caducidad } },
+                partidas = new[] { new { productoId, unidadId = (await admin.UnidadAsync("KG")), cantidad, precioUnitario = 6m, fechaCaducidad = caducidad } },
             });
 
-        // FEFO: el lote A caduca antes, así que la masa toma 40 kg de A y 18 de B.
-        var recepcionA = await RecibirAsync(maiz.Id, 40, loteA, hoy.AddDays(10));
-        var recepcionB = await RecibirAsync(maiz.Id, 40, loteB, hoy.AddDays(20));
-        await RecibirAsync(cal.Id, 10, null, null);
+        // FEFO: el lote A caduca antes, así que la masa toma 40 kg de A y 18 de B. Los lotes los genera la recepción (RN-COM-09).
+        var recepcionA = await RecibirAsync(maiz.Id, 40, hoy.AddDays(10));
+        var recepcionB = await RecibirAsync(maiz.Id, 40, hoy.AddDays(20));
+        await RecibirAsync(cal.Id, 10, null);
+        var loteA = recepcionA.Partidas.Single().Lote!;
+        var loteB = recepcionB.Partidas.Single().Lote!;
 
         var ordenMasa = await ProducirAsync(admin, masa.Id, 100, hoy);
         var ordenTortilla = await ProducirAsync(admin, tortilla.Id, 50, hoy, await admin.MotivoAsync("TORT_ROTA"), 2);
@@ -302,11 +306,11 @@ public sealed class TrazabilidadTests(ApiFixture api) : IClassFixture<ApiFixture
             partidas = new[] { new { productoId = producto.Id, unidadId = producto.UnidadBaseId, cantidad = 20m, precioUnitario = 5m } },
         });
         orden = await admin.PostOkAsync<OrdenConPartidas>($"/api/v1/compras/ordenes-compra/{orden.Id}/autorizar");
-        var lote = DatosPrueba.Unico("OC");
-        await admin.PostOkAsync<IdFolio>("/api/v1/compras/recepciones", new
+        var recepcion = await admin.PostOkAsync<RecepcionPrueba>("/api/v1/compras/recepciones", new
         {
-            ordenCompraId = orden.Id, partidas = new[] { new { ordenCompraPartidaId = orden.Partidas[0].Id, cantidad = 20m, lote } },
+            ordenCompraId = orden.Id, partidas = new[] { new { ordenCompraPartidaId = orden.Partidas[0].Id, cantidad = 20m } },
         });
+        var lote = recepcion.Partidas.Single().Lote;
 
         var opciones = await admin.GetOkAsync<List<Opcion>>($"/api/v1/inventario/trazabilidad/buscar?q={orden.Folio}");
         opciones.ShouldContain(o => o.Tipo == "OrdenCompra" && o.Id == orden.Id);
