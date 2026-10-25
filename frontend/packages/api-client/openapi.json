@@ -8458,6 +8458,182 @@
         }
       }
     },
+    "/api/v1/importacion/grupos_clientes": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarGruposClientes",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/rutas": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarRutas",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/rutas_clientes": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarRutasClientes",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/importacion/precios": {
+      "post": {
+        "tags": [
+          "Carga inicial"
+        ],
+        "operationId": "importarPrecios",
+        "parameters": [
+          {
+            "name": "validarSolo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/importacion/{entidad}/plantilla": {
       "get": {
         "tags": [

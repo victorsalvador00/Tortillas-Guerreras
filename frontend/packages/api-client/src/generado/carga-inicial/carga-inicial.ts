@@ -30,12 +30,20 @@ import type {
   ImportarClientesParams,
   ImportarExistenciasBody,
   ImportarExistenciasParams,
+  ImportarGruposClientesBody,
+  ImportarGruposClientesParams,
+  ImportarPreciosBody,
+  ImportarPreciosParams,
   ImportarProductosBody,
   ImportarProductosParams,
   ImportarProveedoresBody,
   ImportarProveedoresParams,
   ImportarRecetasBody,
   ImportarRecetasParams,
+  ImportarRutasBody,
+  ImportarRutasClientesBody,
+  ImportarRutasClientesParams,
+  ImportarRutasParams,
   ResultadoImportacionDto
 } from '.././modelos';
 
@@ -368,6 +376,262 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getImportarExistenciasMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const importarGruposClientes = (
+    importarGruposClientesBody: BodyType<ImportarGruposClientesBody>,
+    params?: ImportarGruposClientesParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+if(importarGruposClientesBody.archivo !== undefined) {
+ formData.append(`archivo`, importarGruposClientesBody.archivo)
+ }
+
+      return clienteApi<ResultadoImportacionDto>(
+      {url: `/api/v1/importacion/grupos_clientes`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getImportarGruposClientesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarGruposClientes>>, TError,{data: BodyType<ImportarGruposClientesBody>;params?: ImportarGruposClientesParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof importarGruposClientes>>, TError,{data: BodyType<ImportarGruposClientesBody>;params?: ImportarGruposClientesParams}, TContext> => {
+
+const mutationKey = ['importarGruposClientes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importarGruposClientes>>, {data: BodyType<ImportarGruposClientesBody>;params?: ImportarGruposClientesParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importarGruposClientes(data,params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportarGruposClientesMutationResult = NonNullable<Awaited<ReturnType<typeof importarGruposClientes>>>
+    export type ImportarGruposClientesMutationBody = BodyType<ImportarGruposClientesBody>
+    export type ImportarGruposClientesMutationError = ErrorType<unknown>
+
+    export const useImportarGruposClientes = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarGruposClientes>>, TError,{data: BodyType<ImportarGruposClientesBody>;params?: ImportarGruposClientesParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importarGruposClientes>>,
+        TError,
+        {data: BodyType<ImportarGruposClientesBody>;params?: ImportarGruposClientesParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportarGruposClientesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const importarRutas = (
+    importarRutasBody: BodyType<ImportarRutasBody>,
+    params?: ImportarRutasParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+if(importarRutasBody.archivo !== undefined) {
+ formData.append(`archivo`, importarRutasBody.archivo)
+ }
+
+      return clienteApi<ResultadoImportacionDto>(
+      {url: `/api/v1/importacion/rutas`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getImportarRutasMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarRutas>>, TError,{data: BodyType<ImportarRutasBody>;params?: ImportarRutasParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof importarRutas>>, TError,{data: BodyType<ImportarRutasBody>;params?: ImportarRutasParams}, TContext> => {
+
+const mutationKey = ['importarRutas'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importarRutas>>, {data: BodyType<ImportarRutasBody>;params?: ImportarRutasParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importarRutas(data,params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportarRutasMutationResult = NonNullable<Awaited<ReturnType<typeof importarRutas>>>
+    export type ImportarRutasMutationBody = BodyType<ImportarRutasBody>
+    export type ImportarRutasMutationError = ErrorType<unknown>
+
+    export const useImportarRutas = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarRutas>>, TError,{data: BodyType<ImportarRutasBody>;params?: ImportarRutasParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importarRutas>>,
+        TError,
+        {data: BodyType<ImportarRutasBody>;params?: ImportarRutasParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportarRutasMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const importarRutasClientes = (
+    importarRutasClientesBody: BodyType<ImportarRutasClientesBody>,
+    params?: ImportarRutasClientesParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+if(importarRutasClientesBody.archivo !== undefined) {
+ formData.append(`archivo`, importarRutasClientesBody.archivo)
+ }
+
+      return clienteApi<ResultadoImportacionDto>(
+      {url: `/api/v1/importacion/rutas_clientes`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getImportarRutasClientesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarRutasClientes>>, TError,{data: BodyType<ImportarRutasClientesBody>;params?: ImportarRutasClientesParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof importarRutasClientes>>, TError,{data: BodyType<ImportarRutasClientesBody>;params?: ImportarRutasClientesParams}, TContext> => {
+
+const mutationKey = ['importarRutasClientes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importarRutasClientes>>, {data: BodyType<ImportarRutasClientesBody>;params?: ImportarRutasClientesParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importarRutasClientes(data,params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportarRutasClientesMutationResult = NonNullable<Awaited<ReturnType<typeof importarRutasClientes>>>
+    export type ImportarRutasClientesMutationBody = BodyType<ImportarRutasClientesBody>
+    export type ImportarRutasClientesMutationError = ErrorType<unknown>
+
+    export const useImportarRutasClientes = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarRutasClientes>>, TError,{data: BodyType<ImportarRutasClientesBody>;params?: ImportarRutasClientesParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importarRutasClientes>>,
+        TError,
+        {data: BodyType<ImportarRutasClientesBody>;params?: ImportarRutasClientesParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportarRutasClientesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const importarPrecios = (
+    importarPreciosBody: BodyType<ImportarPreciosBody>,
+    params?: ImportarPreciosParams,
+ options?: SecondParameter<typeof clienteApi>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+if(importarPreciosBody.archivo !== undefined) {
+ formData.append(`archivo`, importarPreciosBody.archivo)
+ }
+
+      return clienteApi<ResultadoImportacionDto>(
+      {url: `/api/v1/importacion/precios`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getImportarPreciosMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarPrecios>>, TError,{data: BodyType<ImportarPreciosBody>;params?: ImportarPreciosParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+): UseMutationOptions<Awaited<ReturnType<typeof importarPrecios>>, TError,{data: BodyType<ImportarPreciosBody>;params?: ImportarPreciosParams}, TContext> => {
+
+const mutationKey = ['importarPrecios'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importarPrecios>>, {data: BodyType<ImportarPreciosBody>;params?: ImportarPreciosParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importarPrecios(data,params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportarPreciosMutationResult = NonNullable<Awaited<ReturnType<typeof importarPrecios>>>
+    export type ImportarPreciosMutationBody = BodyType<ImportarPreciosBody>
+    export type ImportarPreciosMutationError = ErrorType<unknown>
+
+    export const useImportarPrecios = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importarPrecios>>, TError,{data: BodyType<ImportarPreciosBody>;params?: ImportarPreciosParams}, TContext>, request?: SecondParameter<typeof clienteApi>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importarPrecios>>,
+        TError,
+        {data: BodyType<ImportarPreciosBody>;params?: ImportarPreciosParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportarPreciosMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

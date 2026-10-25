@@ -167,9 +167,10 @@ regenerado (definición de terminado).
   instrucciones de instalación y de actualización encima de la versión anterior en el README; `app-update.yml` solo
   publica a `production` desde un tag. *Acepta:* RN-APP-10; instalar el APK nuevo sobre el anterior conserva las
   operaciones pendientes.
-- [ ] **T-8.14 Carga inicial v0.2** *(ajusta T-7.3)*. Plantillas nuevas `rutas` (código, nombre, canal, chofer, vehículo),
+- [x] **T-8.14 Carga inicial v0.2** *(ajusta T-7.3)*. Plantillas nuevas `rutas` (código, nombre, canal, chofer, vehículo),
   `rutas_clientes` (ruta, cliente, orden, días), `precios` (lista o cliente, sku, unidad, precio), `grupos_clientes`;
   columnas nuevas en `productos` (`nombre_corto`, `producto_a_cobro`, uso `traslado` en conversiones) y `clientes`
   (`grupo`, canal `DET`/`CEDIS`). Carga del catálogo depurado del cliente **cuando se resuelvan las inconsistencias
   de `docs/cliente/mapeo.md`** (P-06). *Acepta:* importar las plantillas de ejemplo deja rutas, clientes por ruta y
-  precios listos para operar.
+  precios listos para operar. *(Hecho: plantillas y columnas, ver `07-web.md` "Carga inicial por CSV". Pendiente
+  solo la carga real del catálogo del cliente, que espera P-06.)*

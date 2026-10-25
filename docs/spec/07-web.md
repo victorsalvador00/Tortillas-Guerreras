@@ -44,6 +44,33 @@ Pautas:
 - Listados con filtros por fecha operativa, estado y ruta; exportar a CSV.
 - Toda acción de cambio de estado pide confirmación y muestra el resultado (movimientos generados).
 
+## Carga inicial por CSV (T-7.3, T-8.14)
+
+Pantalla Catálogos → Carga inicial. Cada plantilla se descarga con encabezados y una fila de ejemplo
+(`GET /importacion/{entidad}/plantilla`), admite vista previa (`validarSolo=true`) y se importa en una sola
+transacción: con un error en cualquier fila no se guarda nada y se reportan fila y columna. Los importadores reusan
+los handlers de cada módulo (mismas validaciones que la captura en pantalla). Orden sugerido, porque cada una usa
+claves de las anteriores:
+
+| Plantilla | Llave | Columnas (`*` obligatoria) | Permiso |
+|---|---|---|---|
+| `productos` | sku | sku\*, nombre\*, tipo\*, unidad_base\*, `nombre_corto`, `producto_a_cobro`, conversiones (`UNIDAD=factor:usos`, incluye uso `traslado`)… | `catalogos.editar` |
+| `proveedores` | codigo | … | `compras.editar` |
+| `grupos_clientes` | clave | clave\*, nombre\*, canal\*, lista_precio, activo | `ventas.configurar` |
+| `clientes` | codigo | …, canal\* (`AUTO`, `DET`, `INST`, `CEDIS`; `TRAD` = `DET`), `grupo` (sin `lista_precio` hereda la del grupo, RN-VEN-12) | `ventas.clientes` |
+| `rutas` | codigo | codigo\*, nombre\*, canal\*, chofer (usuario Vendedor), vehiculo (placas), activo; una ruta nueva se crea con su almacén y cliente genérico | `logistica.configurar` |
+| `rutas_clientes` | ruta + cliente | ruta\*, cliente\*, orden\*, dias (`L,M,X,J,V,S,D`, nombres o `1`–`7`; vacío = lunes a sábado) | `logistica.configurar` |
+| `precios` | lista o cliente + sku + unidad | lista \| cliente (exactamente uno), sku\*, unidad (vacío = base), precio\* (sin impuestos), vigente_desde (solo cliente; vacío = hoy) | `ventas.configurar` |
+| `recetas`, `existencias` | — | sin cambios (existencias entran por kardex como ajuste "Carga inicial") | |
+
+Decisiones:
+- `rutas_clientes` **reemplaza por ruta**: cada ruta que aparece en el archivo queda solo con sus clientes (los que no
+  vienen se quitan; el genérico se queda). Las rutas que no aparecen no se tocan. Valida canal (RN-LOG-31).
+- `precios` **combina**: agrega o actualiza los renglones del archivo y deja los demás precios de la lista o del
+  cliente como estaban.
+- Reimportar la misma plantilla actualiza por la llave, no duplica.
+- El catálogo depurado del cliente se cargará con estas plantillas cuando se resuelva P-06 (`docs/cliente/mapeo.md`).
+
 ## Portal de autofactura (`apps/portal`)
 
 Pantallas públicas, sin login:

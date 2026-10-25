@@ -127,6 +127,106 @@ public sealed class ImportacionTests(ApiFixture api) : IClassFixture<ApiFixture>
         r.Creados.ShouldBe(1);
     }
 
+    // ───────────── v0.2 (T-8.14): grupos, rutas, clientes por ruta y precios ─────────────
+
+    private sealed record RutaImportada(Guid Id, string Codigo, string CanalNombre, Guid? VendedorId, Guid? VehiculoId);
+
+    private sealed record ClienteRutaImportado(Guid ClienteId, string Codigo, short OrdenVisita, List<short> DiasVisita, bool EsGenerico);
+
+    private sealed record ClienteImportado(Guid Id, string Codigo, Guid? GrupoClienteId, Guid? ListaPrecioId);
+
+    private sealed record Pagina<T>(List<T> Items);
+
+    private sealed record PrecioImportado(string Sku, decimal PrecioUnitario);
+
+    private sealed record ListaImportada(Guid Id, string Nombre, List<PrecioImportado> Partidas);
+
+    private sealed record ListaResumen(Guid Id, string Nombre);
+
+    private sealed record GrupoImportado(Guid Id, string Clave, Guid? ListaPrecioId);
+
+    private static async Task<Resultado> ImportarPlantillaAsync(HttpClient cliente, string entidad)
+    {
+        var plantilla = await cliente.GetStringAsync($"/api/v1/importacion/{entidad}/plantilla");
+        return await ImportarAsync(cliente, entidad, plantilla.TrimStart('\uFEFF'));
+    }
+
+    private static async Task<ClienteImportado> ClienteAsync(HttpClient admin, string codigo) =>
+        (await admin.GetOkAsync<Pagina<ClienteImportado>>($"/api/v1/ventas/clientes?buscar={codigo}")).Items.Single(c => c.Codigo == codigo);
+
+    [Fact]
+    [Trait("Regla", "RN-VEN-12")]
+    public async Task PlantillasDeEjemplo_EnOrden_DejanRutaClientesYPreciosListosParaOperar()
+    {
+        var admin = await api.ClienteAsync();
+        foreach (var entidad in new[] { "grupos_clientes", "clientes", "rutas", "rutas_clientes", "precios" })
+        {
+            var r = await ImportarPlantillaAsync(admin, entidad);
+            r.Errores.ShouldBeEmpty($"{entidad}: {string.Join("; ", r.Errores.Select(e => $"{e.Fila} {e.Campo} {e.Mensaje}"))}");
+            r.Aplicado.ShouldBeTrue();
+        }
+
+        // Ruta con canal, chofer y vehículo; su genérico y el cliente asignado con sus días.
+        var ruta = (await admin.GetOkAsync<List<RutaImportada>>("/api/v1/logistica/rutas")).Single(x => x.Codigo == "R90");
+        ruta.VendedorId.ShouldNotBeNull();
+        ruta.VehiculoId.ShouldNotBeNull();
+        var clientesRuta = await admin.GetOkAsync<List<ClienteRutaImportado>>($"/api/v1/logistica/rutas/{ruta.Id}/clientes");
+        clientesRuta.ShouldContain(c => c.EsGenerico);
+        var lupita = clientesRuta.Single(c => c.Codigo == "LUPITA");
+        lupita.OrdenVisita.ShouldBe((short)1);
+        lupita.DiasVisita.ShouldBe([1, 3, 5]);
+
+        // El cliente del grupo hereda la lista del grupo.
+        var grupo = (await admin.GetOkAsync<List<GrupoImportado>>("/api/v1/ventas/grupos-clientes")).Single(g => g.Clave == "SANBORNS");
+        var sanborns = await ClienteAsync(admin, "SANB-CENTRO");
+        sanborns.GrupoClienteId.ShouldBe(grupo.Id);
+        sanborns.ListaPrecioId.ShouldBe(grupo.ListaPrecioId);
+
+        // Precio de lista actualizado y precio especial del cliente.
+        var listas = await admin.GetOkAsync<List<ListaResumen>>("/api/v1/ventas/listas-precio");
+        var detalle = await admin.GetOkAsync<ListaImportada>($"/api/v1/ventas/listas-precio/{listas.Single(l => l.Nombre == "Lista Detalle").Id}");
+        detalle.Partidas.ShouldContain(p => p.Sku == "PT-TOSTADA" && p.PrecioUnitario == 18.50m);
+        detalle.Partidas.Count.ShouldBeGreaterThan(1, "combina: no borra las demás partidas");
+        var precios = await admin.GetOkAsync<List<PrecioImportado>>($"/api/v1/ventas/clientes/{lupita.ClienteId}/precios");
+        precios.ShouldContain(p => p.Sku == "PT-TOSTADA" && p.PrecioUnitario == 17.00m);
+
+        // Reimportar es idempotente: actualiza, no duplica.
+        var otra = await ImportarPlantillaAsync(admin, "rutas");
+        otra.Creados.ShouldBe(0);
+        otra.Actualizados.ShouldBe(1);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-LOG-31")]
+    public async Task RutasClientes_ClienteDeOtroCanal_NoSeAsignaNadie()
+    {
+        var admin = await api.ClienteAsync();
+        (await ImportarAsync(admin, "rutas", "codigo,nombre,canal\nR91,Ruta 91,DET\n")).Errores.ShouldBeEmpty();
+        (await ImportarAsync(admin, "clientes", "codigo,nombre,canal\nDET-91,Tienda 91,DET\nAUTO-91,Super 91,AUTO\n")).Errores.ShouldBeEmpty();
+
+        var r = await ImportarAsync(admin, "rutas_clientes", "ruta,cliente,orden,dias\nR91,DET-91,1,\nR91,AUTO-91,2,L|jueves\n");
+        r.Errores.ShouldNotBeEmpty();
+        r.Aplicado.ShouldBeFalse();
+
+        var ruta = (await admin.GetOkAsync<List<RutaImportada>>("/api/v1/logistica/rutas")).Single(x => x.Codigo == "R91");
+        (await admin.GetOkAsync<List<ClienteRutaImportado>>($"/api/v1/logistica/rutas/{ruta.Id}/clientes")).ShouldAllBe(c => c.EsGenerico);
+    }
+
+    [Fact]
+    public async Task Precios_ValidaListaOClienteSkuYDias()
+    {
+        var admin = await api.ClienteAsync();
+        var r = await ImportarAsync(admin, "precios",
+            "lista,cliente,sku,unidad,precio,vigente_desde\nLista Detalle,X,PT-TOSTADA,,10,\n,,PT-TOSTADA,,10,\nLista Detalle,,NO-EXISTE,,10,\n");
+        r.Aplicado.ShouldBeFalse();
+        r.Errores.ShouldContain(e => e.Fila == 2 && e.Campo == "lista");
+        r.Errores.ShouldContain(e => e.Fila == 3 && e.Campo == "lista");
+        r.Errores.ShouldContain(e => e.Fila == 4 && e.Campo == "sku");
+
+        var dias = await ImportarAsync(admin, "rutas_clientes", "ruta,cliente,orden,dias\nR90,LUPITA,1,lunes|feriado\n", validarSolo: true);
+        dias.Errores.ShouldContain(e => e.Campo == "dias");
+    }
+
     [Fact]
     public async Task Plantilla_SeDescarga_YSinPermisoNoSeImporta()
     {

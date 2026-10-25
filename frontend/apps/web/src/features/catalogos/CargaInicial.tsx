@@ -2,9 +2,13 @@ import {
   clienteApi,
   importarClientes,
   importarExistencias,
+  importarGruposClientes,
+  importarPrecios,
   importarProductos,
   importarProveedores,
   importarRecetas,
+  importarRutas,
+  importarRutasClientes,
   mensajeError,
   useColumnasImportacion,
   type ErrorImportacionDto,
@@ -15,10 +19,20 @@ import { useRef, useState } from 'react';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 
-type Entidad = 'productos' | 'clientes' | 'proveedores' | 'recetas' | 'existencias';
+type Entidad =
+  | 'productos'
+  | 'clientes'
+  | 'proveedores'
+  | 'recetas'
+  | 'existencias'
+  | 'grupos_clientes'
+  | 'rutas'
+  | 'rutas_clientes'
+  | 'precios';
 
 type Importador = (body: { archivo?: Blob }, params?: { validarSolo?: boolean }) => Promise<ResultadoImportacionDto>;
 
+/** En el orden sugerido de carga: cada plantilla usa claves de las anteriores (grupo → cliente → ruta → precios). */
 export const ENTIDADES: { entidad: Entidad; titulo: string; descripcion: string; icono: string; permiso: string; importar: Importador }[] = [
   {
     entidad: 'productos',
@@ -37,12 +51,44 @@ export const ENTIDADES: { entidad: Entidad; titulo: string; descripcion: string;
     importar: importarProveedores,
   },
   {
+    entidad: 'grupos_clientes',
+    titulo: 'Grupos de clientes',
+    descripcion: 'Cadenas o grupos (Sanborns…) con su canal y la lista de precios que heredan sus clientes.',
+    icono: 'workspaces',
+    permiso: 'ventas.configurar',
+    importar: importarGruposClientes,
+  },
+  {
     entidad: 'clientes',
     titulo: 'Clientes',
-    descripcion: 'Con canal (AUTO, DET, INST, CEDIS), lista de precios y datos fiscales.',
+    descripcion: 'Con canal (AUTO, DET, INST, CEDIS), grupo, lista de precios y datos fiscales.',
     icono: 'groups',
     permiso: 'ventas.clientes',
     importar: importarClientes,
+  },
+  {
+    entidad: 'rutas',
+    titulo: 'Rutas',
+    descripcion: 'Alta o actualización por código, con canal, chofer y vehículo; cada ruta nueva lleva su almacén y cliente genérico.',
+    icono: 'route',
+    permiso: 'logistica.configurar',
+    importar: importarRutas,
+  },
+  {
+    entidad: 'rutas_clientes',
+    titulo: 'Clientes por ruta',
+    descripcion: 'Orden y días de visita; cada ruta del archivo queda solo con los clientes que trae.',
+    icono: 'pin_drop',
+    permiso: 'logistica.configurar',
+    importar: importarRutasClientes,
+  },
+  {
+    entidad: 'precios',
+    titulo: 'Precios',
+    descripcion: 'Por lista o especiales por cliente; agrega o actualiza sin borrar los que no vienen.',
+    icono: 'sell',
+    permiso: 'ventas.configurar',
+    importar: importarPrecios,
   },
   {
     entidad: 'recetas',

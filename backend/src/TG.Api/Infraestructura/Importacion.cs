@@ -9,7 +9,9 @@ using TG.Catalogos.Dominio;
 using TG.Catalogos.Publico;
 using TG.Compras.Aplicacion;
 using TG.Inventario.Publico;
+using TG.Logistica.Aplicacion;
 using TG.Produccion.Aplicacion;
+using TG.Seguridad.Publico;
 using TG.SharedKernel.Api;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Folios;
@@ -21,7 +23,7 @@ using TG.Ventas.Publico;
 
 namespace TG.Api.Infraestructura;
 
-// Carga inicial por CSV (T-7.3). Cada fila pasa por los handlers y servicios públicos de su módulo; las existencias
+// Carga inicial por CSV (T-7.3; rutas, clientes por ruta, precios y grupos en T-8.14). Cada fila pasa por los handlers y servicios públicos de su módulo; las existencias
 // entran solo por el kardex (regla 3). Todo el archivo va en una transacción: si una fila falla no se importa nada.
 
 public sealed record ErrorImportacionDto(int Fila, string? Campo, string Mensaje);
@@ -320,6 +322,10 @@ internal sealed class ImportadorCsv(
                     "proveedores" => await ProveedoresAsync(csv, bitacora, c),
                     "recetas" => await RecetasAsync(csv, bitacora, c),
                     "existencias" => await ExistenciasAsync(csv, bitacora, c),
+                    "grupos_clientes" => await GruposClientesAsync(csv, bitacora, c),
+                    "rutas" => await RutasAsync(csv, bitacora, c),
+                    "rutas_clientes" => await RutasClientesAsync(csv, bitacora, c),
+                    "precios" => await PreciosAsync(csv, bitacora, c),
                     _ => throw new ArgumentOutOfRangeException(nameof(entidad)),
                 };
                 return bitacora.Errores.Count > 0 || validarSolo ? Result<bool>.Falla(Revertir) : Result<bool>.Exito(true);
@@ -352,11 +358,19 @@ internal sealed class ImportadorCsv(
         return r.IsValid;
     }
 
-    private async Task<Guid?> ProductoPorSkuAsync(string sku, CancellationToken ct)
+    private async Task<Guid?> ProductoPorSkuAsync(string sku, CancellationToken ct) => (await ProductoInfoPorSkuAsync(sku, ct))?.Id;
+
+    private async Task<ProductoInfo?> ProductoInfoPorSkuAsync(string sku, CancellationToken ct)
     {
         var ids = await catalogos.BuscarProductosAsync(sku, ct);
         var productos = await catalogos.ObtenerProductosAsync(ids, ct);
-        return productos.Values.FirstOrDefault(p => string.Equals(p.Sku, sku, StringComparison.OrdinalIgnoreCase))?.Id;
+        return productos.Values.FirstOrDefault(p => string.Equals(p.Sku, sku, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<Guid?> ClientePorCodigoAsync(string codigo, CancellationToken ct)
+    {
+        var encontrados = await servicios.GetRequiredService<ClientesHandler>().ListarAsync(codigo, null, null, null, null, 1, 20, ct);
+        return encontrados.Items.FirstOrDefault(c => string.Equals(c.Codigo, codigo, StringComparison.OrdinalIgnoreCase))?.Id;
     }
 
     // ───────────────────────────── Productos ─────────────────────────────
@@ -470,12 +484,20 @@ internal sealed class ImportadorCsv(
         var canalesExistentes = await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct);
         var canales = canalesExistentes.ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
         var listas = await servicios.GetRequiredService<ListasPrecioHandler>().ListarAsync(ct);
+        var grupos = (await servicios.GetRequiredService<GruposClientesHandler>().ListarAsync(null, ct))
+            .ToDictionary(g => g.Clave, StringComparer.OrdinalIgnoreCase);
         var clientes = servicios.GetRequiredService<ClientesHandler>();
         int creados = 0, actualizados = 0;
         foreach (var f in csv.Filas)
         {
             var antes = b.Errores.Count;
             var nombre = b.Requerido(f, "nombre");
+            GrupoClienteDto? grupo = null;
+            if (f.Opcional("grupo") is { } claveGrupo && !grupos.TryGetValue(claveGrupo.Trim(), out grupo))
+            {
+                b.Agregar(f.Numero, "grupo", $"No existe el grupo '{claveGrupo}'; impórtalo antes en grupos_clientes.");
+            }
+
             // TRAD es la clave anterior de DET (v0.2).
             var claveCanal = b.Requerido(f, "canal");
             Guid canal = Guid.Empty;
@@ -485,10 +507,13 @@ internal sealed class ImportadorCsv(
                     $"No existe el canal '{claveCanal}' ({string.Join(", ", canalesExistentes.Select(c => c.Clave))}).");
             }
 
+            // RN-VEN-12: sin lista explícita, el cliente de un grupo hereda la del grupo; si no, la del canal.
             var nombreLista = f.Opcional("lista_precio");
-            var lista = nombreLista is null
-                ? listas.FirstOrDefault(l => l.CanalId == canal && l.Activo)
-                : listas.FirstOrDefault(l => string.Equals(l.Nombre, nombreLista, StringComparison.OrdinalIgnoreCase));
+            var lista = nombreLista is not null
+                ? listas.FirstOrDefault(l => string.Equals(l.Nombre, nombreLista, StringComparison.OrdinalIgnoreCase))
+                : grupo?.ListaPrecioId is { } listaGrupo
+                    ? listas.FirstOrDefault(l => l.Id == listaGrupo)
+                    : listas.FirstOrDefault(l => l.CanalId == canal && l.Activo);
             if (lista is null && canal != Guid.Empty)
             {
                 b.Agregar(f.Numero, "lista_precio", nombreLista is null ? "El canal no tiene lista de precios." : $"No existe la lista '{nombreLista}'.");
@@ -500,18 +525,13 @@ internal sealed class ImportadorCsv(
                 b.Booleano(f, "requiere_factura") ?? false, f.Opcional("rfc")?.ToUpperInvariant(), f.Opcional("razon_social"),
                 f.Opcional("regimen_fiscal"), f.Opcional("cp_fiscal"), f.Opcional("uso_cfdi"), f.Opcional("email_facturacion"),
                 f.Opcional("telefono"), f.Opcional("calle"), f.Opcional("colonia"), f.Opcional("municipio"), f.Opcional("estado"),
-                f.Opcional("codigo_postal"), b.Decimal(f, "latitud"), b.Decimal(f, "longitud"), true);
+                f.Opcional("codigo_postal"), b.Decimal(f, "latitud"), b.Decimal(f, "longitud"), true, grupo?.Id);
             if (b.Errores.Count > antes || !await ValidarAsync(request, f.Numero, b, ct))
             {
                 continue;
             }
 
-            Guid? existente = null;
-            if (request.Codigo is { } codigo)
-            {
-                var encontrados = await clientes.ListarAsync(codigo, null, null, null, null, 1, 20, ct);
-                existente = encontrados.Items.FirstOrDefault(c => string.Equals(c.Codigo, codigo, StringComparison.OrdinalIgnoreCase))?.Id;
-            }
+            var existente = request.Codigo is { } codigo ? await ClientePorCodigoAsync(codigo, ct) : null;
 
             var r = await clientes.GuardarAsync(existente, request, ct);
             if (!r.EsExito)
@@ -525,6 +545,438 @@ internal sealed class ImportadorCsv(
             else
             {
                 actualizados++;
+            }
+        }
+
+        return new Conteo(creados, actualizados);
+    }
+
+    // ───────────────────────────── Grupos de clientes (v0.2) ─────────────────────────────
+
+    private async Task<Conteo> GruposClientesAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
+    {
+        var canalesExistentes = await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct);
+        var canales = canalesExistentes.ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
+        var listas = await servicios.GetRequiredService<ListasPrecioHandler>().ListarAsync(ct);
+        var handler = servicios.GetRequiredService<GruposClientesHandler>();
+        var existentes = (await handler.ListarAsync(null, ct)).ToDictionary(g => g.Clave, g => g.Id, StringComparer.OrdinalIgnoreCase);
+        int creados = 0, actualizados = 0;
+        var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in csv.Filas)
+        {
+            var antes = b.Errores.Count;
+            var clave = b.Requerido(f, "clave").Trim().ToUpperInvariant();
+            if (clave.Length > 0 && !vistos.Add(clave))
+            {
+                b.Agregar(f.Numero, "clave", "La clave está repetida en el archivo.");
+            }
+
+            var nombre = b.Requerido(f, "nombre");
+            var claveCanal = b.Requerido(f, "canal");
+            Guid canal = Guid.Empty;
+            if (claveCanal.Length > 0 && !canales.TryGetValue(ClavesCanal.Normalizar(claveCanal), out canal))
+            {
+                b.Agregar(f.Numero, "canal", $"No existe el canal '{claveCanal}' ({string.Join(", ", canalesExistentes.Select(c => c.Clave))}).");
+            }
+
+            Guid? lista = null;
+            if (f.Opcional("lista_precio") is { } nombreLista)
+            {
+                lista = listas.FirstOrDefault(l => string.Equals(l.Nombre, nombreLista, StringComparison.OrdinalIgnoreCase))?.Id;
+                if (lista is null)
+                {
+                    b.Agregar(f.Numero, "lista_precio", $"No existe la lista '{nombreLista}'.");
+                }
+            }
+
+            var request = new GuardarGrupoClienteRequest(clave, nombre, canal, lista, b.Booleano(f, "activo") ?? true);
+            if (b.Errores.Count > antes || !await ValidarAsync(request, f.Numero, b, ct))
+            {
+                continue;
+            }
+
+            Guid? existente = existentes.TryGetValue(clave, out var id) ? id : null;
+            var r = await handler.GuardarAsync(existente, request, ct);
+            if (!r.EsExito)
+            {
+                b.Agregar(f.Numero, r.Error!);
+            }
+            else if (existente is null)
+            {
+                creados++;
+            }
+            else
+            {
+                actualizados++;
+            }
+        }
+
+        return new Conteo(creados, actualizados);
+    }
+
+    // ───────────────────────────── Rutas (v0.2) ─────────────────────────────
+
+    private async Task<Conteo> RutasAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
+    {
+        var canalesExistentes = await servicios.GetRequiredService<CanalesHandler>().ListarAsync(ct);
+        var canales = canalesExistentes.ToDictionary(c => c.Clave, c => c.Id, StringComparer.OrdinalIgnoreCase);
+        var vehiculos = (await servicios.GetRequiredService<VehiculosHandler>().ListarAsync(null, ct))
+            .ToDictionary(v => v.Placas, v => v.Id, StringComparer.OrdinalIgnoreCase);
+        var seguridad = servicios.GetRequiredService<ISeguridadService>();
+        var rutas = servicios.GetRequiredService<RutasHandler>();
+        var existentes = (await rutas.ListarAsync(null, ct)).ToDictionary(r => r.Codigo, r => r.Id, StringComparer.OrdinalIgnoreCase);
+        int creados = 0, actualizados = 0;
+        var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in csv.Filas)
+        {
+            var antes = b.Errores.Count;
+            var codigo = b.Requerido(f, "codigo").Trim().ToUpperInvariant();
+            if (codigo.Length > 0 && !vistos.Add(codigo))
+            {
+                b.Agregar(f.Numero, "codigo", "El código está repetido en el archivo.");
+            }
+
+            var nombre = b.Requerido(f, "nombre");
+            var claveCanal = b.Requerido(f, "canal");
+            Guid canal = Guid.Empty;
+            if (claveCanal.Length > 0 && !canales.TryGetValue(ClavesCanal.Normalizar(claveCanal), out canal))
+            {
+                b.Agregar(f.Numero, "canal", $"No existe el canal '{claveCanal}' ({string.Join(", ", canalesExistentes.Select(c => c.Clave))}).");
+            }
+
+            Guid? chofer = null;
+            if (f.Opcional("chofer") is { } usuario)
+            {
+                chofer = await seguridad.UsuarioPorNombreAsync(usuario.Trim(), ct);
+                if (chofer is null)
+                {
+                    b.Agregar(f.Numero, "chofer", $"No existe el usuario '{usuario}'.");
+                }
+            }
+
+            Guid? vehiculo = null;
+            if (f.Opcional("vehiculo") is { } placas)
+            {
+                if (vehiculos.TryGetValue(placas.Trim(), out var v))
+                {
+                    vehiculo = v;
+                }
+                else
+                {
+                    b.Agregar(f.Numero, "vehiculo", $"No existe el vehículo con placas '{placas}'.");
+                }
+            }
+
+            var request = new GuardarRutaRequest(codigo, nombre, canal, chofer, vehiculo, b.Booleano(f, "activo") ?? true);
+            if (b.Errores.Count > antes || !await ValidarAsync(request, f.Numero, b, ct))
+            {
+                continue;
+            }
+
+            // Una ruta nueva se crea con su almacén y su cliente genérico, igual que desde la web.
+            Guid? existente = existentes.TryGetValue(codigo, out var id) ? id : null;
+            var r = existente is { } rutaId ? await rutas.ActualizarAsync(rutaId, request, ct) : await rutas.CrearAsync(request, ct);
+            if (!r.EsExito)
+            {
+                b.Agregar(f.Numero, r.Error!);
+            }
+            else if (existente is null)
+            {
+                creados++;
+            }
+            else
+            {
+                actualizados++;
+            }
+        }
+
+        return new Conteo(creados, actualizados);
+    }
+
+    private static readonly Dictionary<string, short> Dias = new()
+    {
+        ["l"] = 1, ["lu"] = 1, ["lun"] = 1, ["lunes"] = 1,
+        ["m"] = 2, ["ma"] = 2, ["mar"] = 2, ["martes"] = 2,
+        ["x"] = 3, ["mi"] = 3, ["mie"] = 3, ["miercoles"] = 3,
+        ["j"] = 4, ["ju"] = 4, ["jue"] = 4, ["jueves"] = 4,
+        ["v"] = 5, ["vi"] = 5, ["vie"] = 5, ["viernes"] = 5,
+        ["s"] = 6, ["sa"] = 6, ["sab"] = 6, ["sabado"] = 6,
+        ["d"] = 7, ["do"] = 7, ["dom"] = 7, ["domingo"] = 7,
+    };
+
+    /// <summary>"L,X,V", "lunes|jueves" o "1,3,5" (1 = lunes); vacío = el valor por omisión de la ruta (lunes a sábado).</summary>
+    private static List<short>? DiasVisita(FilaCsv f, BitacoraImportacion b)
+    {
+        var texto = f.Texto("dias");
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            return null;
+        }
+
+        var dias = new List<short>();
+        foreach (var parte in texto.Split([',', '|', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var clave = ArchivoCsv.Normalizar(parte);
+            if (short.TryParse(clave, out var n) && n is >= 1 and <= 7)
+            {
+                dias.Add(n);
+            }
+            else if (Dias.TryGetValue(clave, out var dia))
+            {
+                dias.Add(dia);
+            }
+            else
+            {
+                b.Agregar(f.Numero, "dias", $"Día '{parte}' no válido; usa L, M, X, J, V, S, D o 1 a 7.");
+            }
+        }
+
+        return dias.Distinct().Order().ToList();
+    }
+
+    /// <summary>
+    /// Clientes por ruta: cada ruta del archivo queda con los clientes que trae (los que no vienen se quitan de la ruta;
+    /// el genérico siempre se queda). Valida canal (RN-LOG-31) en el handler de Logística.
+    /// </summary>
+    private async Task<Conteo> RutasClientesAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
+    {
+        var rutasHandler = servicios.GetRequiredService<RutasHandler>();
+        var rutas = (await rutasHandler.ListarAsync(null, ct)).ToDictionary(r => r.Codigo, r => r.Id, StringComparer.OrdinalIgnoreCase);
+        var porRuta = new Dictionary<Guid, List<(int Fila, ClienteRutaRequest Cliente)>>();
+        var codigos = new Dictionary<string, Guid?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in csv.Filas)
+        {
+            var antes = b.Errores.Count;
+            var codigoRuta = b.Requerido(f, "ruta").Trim();
+            Guid ruta = Guid.Empty;
+            if (codigoRuta.Length > 0 && !rutas.TryGetValue(codigoRuta, out ruta))
+            {
+                b.Agregar(f.Numero, "ruta", $"No existe la ruta '{codigoRuta}'; impórtala antes en rutas.");
+            }
+
+            var codigoCliente = b.Requerido(f, "cliente").Trim();
+            Guid? cliente = null;
+            if (codigoCliente.Length > 0)
+            {
+                if (!codigos.TryGetValue(codigoCliente, out cliente))
+                {
+                    codigos[codigoCliente] = cliente = await ClientePorCodigoAsync(codigoCliente, ct);
+                }
+
+                if (cliente is null)
+                {
+                    b.Agregar(f.Numero, "cliente", $"No existe el cliente con código '{codigoCliente}'.");
+                }
+            }
+
+            var orden = b.Entero(f, "orden");
+            if (orden is null && b.Errores.Count == antes)
+            {
+                b.Agregar(f.Numero, "orden", "Este dato es obligatorio.");
+            }
+            else if (orden is < 0 or > short.MaxValue)
+            {
+                b.Agregar(f.Numero, "orden", "El orden de visita debe ser 0 o mayor.");
+            }
+
+            var dias = DiasVisita(f, b);
+            if (b.Errores.Count > antes)
+            {
+                continue;
+            }
+
+            var lista = porRuta.TryGetValue(ruta, out var l) ? l : porRuta[ruta] = [];
+            if (lista.Any(x => x.Cliente.ClienteId == cliente!.Value))
+            {
+                b.Agregar(f.Numero, "cliente", "El cliente está repetido en la misma ruta.");
+                continue;
+            }
+
+            lista.Add((f.Numero, new ClienteRutaRequest(cliente!.Value, (short)orden!.Value, dias)));
+        }
+
+        if (b.Errores.Count > 0)
+        {
+            return new Conteo(0, 0);
+        }
+
+        var asignados = 0;
+        foreach (var (ruta, filas) in porRuta)
+        {
+            var request = new ClientesRutaRequest(filas.Select(x => x.Cliente).ToList());
+            if (!await ValidarAsync(request, filas[0].Fila, b, ct))
+            {
+                continue;
+            }
+
+            var r = await rutasHandler.ReemplazarClientesAsync(ruta, request, ct);
+            if (!r.EsExito)
+            {
+                b.Agregar(filas[0].Fila, r.Error!);
+                continue;
+            }
+
+            asignados += filas.Count;
+        }
+
+        return new Conteo(0, asignados);
+    }
+
+    // ───────────────────────────── Precios (v0.2) ─────────────────────────────
+
+    /// <summary>
+    /// Precios de lista o especiales por cliente (RN-VEN-12). Se combinan con los existentes: lo que viene se agrega o
+    /// actualiza y lo que no viene se queda.
+    /// </summary>
+    private async Task<Conteo> PreciosAsync(ArchivoCsv csv, BitacoraImportacion b, CancellationToken ct)
+    {
+        var unidades = (await servicios.GetRequiredService<UnidadesHandler>().ListarAsync(ct))
+            .ToDictionary(u => u.Clave, u => u.Id, StringComparer.OrdinalIgnoreCase);
+        var listasHandler = servicios.GetRequiredService<ListasPrecioHandler>();
+        var listas = (await listasHandler.ListarAsync(ct)).ToDictionary(l => l.Nombre, l => l.Id, StringComparer.OrdinalIgnoreCase);
+        var hoy = servicios.GetRequiredService<IFechaOperativa>().Hoy();
+        var deLista = new Dictionary<Guid, List<(int Fila, PartidaListaRequest Precio)>>();
+        var deCliente = new Dictionary<Guid, List<(int Fila, PrecioClienteRequest Precio)>>();
+        var productos = new Dictionary<string, ProductoInfo?>(StringComparer.OrdinalIgnoreCase);
+        var clientes = new Dictionary<string, Guid?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in csv.Filas)
+        {
+            var antes = b.Errores.Count;
+            var nombreLista = f.Opcional("lista");
+            var codigoCliente = f.Opcional("cliente");
+            if ((nombreLista is null) == (codigoCliente is null))
+            {
+                b.Agregar(f.Numero, "lista", "Indica la lista o el cliente (uno de los dos).");
+            }
+
+            Guid lista = Guid.Empty;
+            if (nombreLista is not null && !listas.TryGetValue(nombreLista.Trim(), out lista))
+            {
+                b.Agregar(f.Numero, "lista", $"No existe la lista '{nombreLista}'.");
+            }
+
+            Guid? cliente = null;
+            if (codigoCliente is not null)
+            {
+                if (!clientes.TryGetValue(codigoCliente.Trim(), out cliente))
+                {
+                    clientes[codigoCliente.Trim()] = cliente = await ClientePorCodigoAsync(codigoCliente.Trim(), ct);
+                }
+
+                if (cliente is null)
+                {
+                    b.Agregar(f.Numero, "cliente", $"No existe el cliente con código '{codigoCliente}'.");
+                }
+            }
+
+            var sku = b.Requerido(f, "sku").Trim();
+            ProductoInfo? producto = null;
+            if (sku.Length > 0)
+            {
+                if (!productos.TryGetValue(sku, out producto))
+                {
+                    productos[sku] = producto = await ProductoInfoPorSkuAsync(sku, ct);
+                }
+
+                if (producto is null)
+                {
+                    b.Agregar(f.Numero, "sku", $"No existe el producto '{sku}'.");
+                }
+            }
+
+            var unidad = producto?.UnidadBaseId ?? Guid.Empty;
+            if (f.Opcional("unidad") is { } claveUnidad && !unidades.TryGetValue(claveUnidad.Trim(), out unidad))
+            {
+                b.Agregar(f.Numero, "unidad", $"No existe la unidad '{claveUnidad}'.");
+            }
+
+            var precio = b.Decimal(f, "precio", requerido: true);
+            if (precio < 0)
+            {
+                b.Agregar(f.Numero, "precio", "El precio no puede ser negativo.");
+            }
+
+            var vigente = b.Fecha(f, "vigente_desde");
+            if (vigente is not null && nombreLista is not null)
+            {
+                b.Agregar(f.Numero, "vigente_desde", "La vigencia solo aplica a precios de cliente.");
+            }
+
+            if (b.Errores.Count > antes)
+            {
+                continue;
+            }
+
+            if (cliente is { } clienteId)
+            {
+                var filas = deCliente.TryGetValue(clienteId, out var l) ? l : deCliente[clienteId] = [];
+                if (filas.Any(x => x.Precio.ProductoId == producto!.Id && x.Precio.UnidadId == unidad))
+                {
+                    b.Agregar(f.Numero, "sku", "El producto con esa unidad está repetido para el cliente.");
+                    continue;
+                }
+
+                filas.Add((f.Numero, new PrecioClienteRequest(producto!.Id, unidad, precio!.Value, vigente ?? hoy)));
+            }
+            else
+            {
+                var filas = deLista.TryGetValue(lista, out var l) ? l : deLista[lista] = [];
+                if (filas.Any(x => x.Precio.ProductoId == producto!.Id && x.Precio.UnidadId == unidad))
+                {
+                    b.Agregar(f.Numero, "sku", "El producto con esa unidad está repetido en la lista.");
+                    continue;
+                }
+
+                filas.Add((f.Numero, new PartidaListaRequest(producto!.Id, unidad, precio!.Value)));
+            }
+        }
+
+        if (b.Errores.Count > 0)
+        {
+            return new Conteo(0, 0);
+        }
+
+        int creados = 0, actualizados = 0;
+        foreach (var (lista, filas) in deLista)
+        {
+            var actual = await listasHandler.ObtenerAsync(lista, ct);
+            var existentes = actual.Valor.Partidas.Select(p => new PartidaListaRequest(p.ProductoId, p.UnidadId, p.PrecioUnitario)).ToList();
+            var nuevos = filas.Select(x => x.Precio).ToList();
+            actualizados += nuevos.Count(n => existentes.Any(e => e.ProductoId == n.ProductoId && e.UnidadId == n.UnidadId));
+            creados += nuevos.Count(n => !existentes.Any(e => e.ProductoId == n.ProductoId && e.UnidadId == n.UnidadId));
+            var request = new PartidasListaRequest(
+                [.. existentes.Where(e => !nuevos.Any(n => n.ProductoId == e.ProductoId && n.UnidadId == e.UnidadId)), .. nuevos]);
+            if (!await ValidarAsync(request, filas[0].Fila, b, ct))
+            {
+                continue;
+            }
+
+            var r = await listasHandler.GuardarPartidasAsync(lista, request, ct);
+            if (!r.EsExito)
+            {
+                b.Agregar(filas[0].Fila, r.Error!);
+            }
+        }
+
+        var preciosCliente = servicios.GetRequiredService<PreciosClienteHandler>();
+        foreach (var (cliente, filas) in deCliente)
+        {
+            var actual = await preciosCliente.ListarAsync(cliente, ct);
+            var existentes = actual.Valor.Select(p => new PrecioClienteRequest(p.ProductoId, p.UnidadId, p.PrecioUnitario, p.VigenteDesde)).ToList();
+            var nuevos = filas.Select(x => x.Precio).ToList();
+            actualizados += nuevos.Count(n => existentes.Any(e => e.ProductoId == n.ProductoId && e.UnidadId == n.UnidadId));
+            creados += nuevos.Count(n => !existentes.Any(e => e.ProductoId == n.ProductoId && e.UnidadId == n.UnidadId));
+            var request = new PreciosClienteRequest(
+                [.. existentes.Where(e => !nuevos.Any(n => n.ProductoId == e.ProductoId && n.UnidadId == e.UnidadId)), .. nuevos]);
+            if (!await ValidarAsync(request, filas[0].Fila, b, ct))
+            {
+                continue;
+            }
+
+            var r = await preciosCliente.ReemplazarAsync(cliente, request, ct);
+            if (!r.EsExito)
+            {
+                b.Agregar(filas[0].Fila, r.Error!);
             }
         }
 
@@ -730,7 +1182,8 @@ public sealed record ColumnaPlantilla(string Nombre, bool Obligatoria, string De
 /// <summary>Columnas de cada plantilla (encabezados en español, normalizados) y filas de ejemplo de la semilla.</summary>
 public static class PlantillasImportacion
 {
-    public static readonly string[] Entidades = ["productos", "clientes", "proveedores", "recetas", "existencias"];
+    public static readonly string[] Entidades =
+        ["productos", "clientes", "proveedores", "recetas", "existencias", "grupos_clientes", "rutas", "rutas_clientes", "precios"];
 
     public static IReadOnlyList<ColumnaPlantilla> Columnas(string entidad) => entidad switch
     {
@@ -757,6 +1210,30 @@ public static class PlantillasImportacion
             new("email_facturacion", false, ""), new("telefono", false, ""), new("calle", false, ""), new("colonia", false, ""),
             new("municipio", false, ""), new("estado", false, ""), new("codigo_postal", false, ""), new("latitud", false, ""),
             new("longitud", false, ""),
+            new("grupo", false, "Clave del grupo (SANBORNS…); sin lista_precio hereda la del grupo"),
+        ],
+        "grupos_clientes" =>
+        [
+            new("clave", true, "Si existe, se actualiza"), new("nombre", true, ""), new("canal", true, "AUTO, DET, INST o CEDIS"),
+            new("lista_precio", false, "Nombre; la heredan los clientes del grupo"), new("activo", false, "sí/no; vacío = sí"),
+        ],
+        "rutas" =>
+        [
+            new("codigo", true, "R51, R1…; si existe, se actualiza"), new("nombre", true, ""), new("canal", true, "AUTO, DET, INST o CEDIS"),
+            new("chofer", false, "Usuario con rol Vendedor (chofer predeterminado)"), new("vehiculo", false, "Placas"),
+            new("activo", false, "sí/no; vacío = sí"),
+        ],
+        "rutas_clientes" =>
+        [
+            new("ruta", true, "Código de la ruta; la ruta queda solo con los clientes del archivo (el genérico se queda)"),
+            new("cliente", true, "Código del cliente (del mismo canal que la ruta)"), new("orden", true, "Orden de visita"),
+            new("dias", false, "L,M,X,J,V,S,D o 1 a 7; vacío = lunes a sábado"),
+        ],
+        "precios" =>
+        [
+            new("lista", false, "Nombre de la lista (o cliente, no ambos)"), new("cliente", false, "Código del cliente: precio especial"),
+            new("sku", true, ""), new("unidad", false, "Clave de unidad de venta; vacío = unidad base"),
+            new("precio", true, "Sin impuestos"), new("vigente_desde", false, "Solo cliente; AAAA-MM-DD, vacío = hoy"),
         ],
         "proveedores" =>
         [
@@ -788,8 +1265,18 @@ public static class PlantillasImportacion
         ],
         ["clientes"] =
         [
-            ["", "Abarrotes Lupita", "DET", "", "Contado", "0", "", "no", "", "", "", "", "", "", "2291234567", "Av. Díaz Mirón 123",
-                "Centro", "Veracruz", "Veracruz", "91700", "19.1800", "-96.1400"],
+            ["LUPITA", "Abarrotes Lupita", "DET", "", "Contado", "0", "", "no", "", "", "", "", "", "", "2291234567", "Av. Díaz Mirón 123",
+                "Centro", "Veracruz", "Veracruz", "91700", "19.1800", "-96.1400", ""],
+            ["SANB-CENTRO", "Sanborns Centro", "AUTO", "", "Credito", "30", "", "no", "", "", "", "", "", "", "", "Independencia 1050",
+                "Centro", "Veracruz", "Veracruz", "91700", "", "", "SANBORNS"],
+        ],
+        ["grupos_clientes"] = [["SANBORNS", "Sanborns", "AUTO", "Lista Autoservicio", "sí"]],
+        ["rutas"] = [["R90", "Ruta 90 Centro", "DET", "vendedor3", "XC-9012-C", "sí"]],
+        ["rutas_clientes"] = [["R90", "LUPITA", "1", "L,X,V"]],
+        ["precios"] =
+        [
+            ["Lista Detalle", "", "PT-TOSTADA", "", "18.50", ""],
+            ["", "LUPITA", "PT-TOSTADA", "", "17.00", ""],
         ],
         ["proveedores"] = [["GRANOS", "Granos del Golfo S.A. de C.V.", "Granos del Golfo", "GGO010101AB1", "Juan Pérez", "2291112233", "ventas@granos.example", "15"]],
         ["recetas"] =
@@ -829,6 +1316,10 @@ public static class ImportacionEndpoints
         ["proveedores"] = Permisos.Compras.Editar,
         ["recetas"] = Permisos.Produccion.Recetas,
         ["existencias"] = Permisos.Inventario.Ajustar,
+        ["grupos_clientes"] = Permisos.Ventas.Configurar,
+        ["rutas"] = Permisos.Logistica.Configurar,
+        ["rutas_clientes"] = Permisos.Logistica.Configurar,
+        ["precios"] = Permisos.Ventas.Configurar,
     };
 
     public static IEndpointRouteBuilder MapImportacionEndpoints(this IEndpointRouteBuilder api)
@@ -842,7 +1333,7 @@ public static class ImportacionEndpoints
                 .RequireAuthorization(permiso)
                 .DisableAntiforgery()
                 .Accepts<IFormFile>("multipart/form-data")
-                .WithName($"importar{char.ToUpperInvariant(entidad[0])}{entidad[1..]}");
+                .WithName($"importar{string.Concat(entidad.Split('_').Select(p => char.ToUpperInvariant(p[0]) + p[1..]))}");
         }
 
         grupo.MapGet("/{entidad}/plantilla", Results<FileContentHttpResult, NotFound> (string entidad) =>

@@ -23,6 +23,16 @@ describe('Carga inicial', () => {
   });
 
   it('cubre las cinco entidades de T-7.3', () => {
-    expect(ENTIDADES.map((e) => e.entidad)).toEqual(['productos', 'proveedores', 'clientes', 'recetas', 'existencias']);
+    expect(ENTIDADES.map((e) => e.entidad)).toEqual([
+      'productos',
+      'proveedores',
+      'grupos_clientes',
+      'clientes',
+      'rutas',
+      'rutas_clientes',
+      'precios',
+      'recetas',
+      'existencias',
+    ]);
   });
 });
