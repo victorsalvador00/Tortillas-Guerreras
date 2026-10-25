@@ -15,4 +15,7 @@ export const TipoAlmacen = {
   ProductoTerminado: 'ProductoTerminado',
   General: 'General',
   Ruta: 'Ruta',
+  ProductoSemiterminado: 'ProductoSemiterminado',
+  Subalmacen: 'Subalmacen',
+  Empaquetado: 'Empaquetado',
 } as const;

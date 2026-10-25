@@ -340,14 +340,19 @@ export function Kardex() {
 const ETIQUETAS_TIPO_ALMACEN: Record<string, string> = {
   MateriaPrima: 'Materia prima',
   ProductoTerminado: 'Producto terminado',
+  ProductoSemiterminado: 'Producto semiterminado',
+  Subalmacen: 'Subalmacén',
+  Empaquetado: 'Empaquetado',
   General: 'General',
   Ruta: 'Ruta',
 };
 
+const TIPOS_ALMACEN = ['MateriaPrima', 'ProductoSemiterminado', 'ProductoTerminado', 'Empaquetado', 'Subalmacen', 'General'] as const;
+
 const esquemaAlmacen = z.object({
   codigo: z.string().trim().min(1, 'Captura el código.').max(10, 'Máximo 10 caracteres.'),
   nombre: z.string().trim().min(1, 'Captura el nombre.'),
-  tipo: z.enum(['MateriaPrima', 'ProductoTerminado', 'General']),
+  tipo: z.enum(TIPOS_ALMACEN),
   activo: z.boolean(),
 });
 type DatosAlmacen = z.infer<typeof esquemaAlmacen>;
@@ -401,7 +406,7 @@ function DialogoAlmacen({ almacen, abierto, onCambiar }: { almacen: AlmacenDto |
         <Campo etiqueta="Nombre" error={formState.errors.nombre?.message} {...register('nombre')} />
         <Selector
           etiqueta="Tipo"
-          opciones={['MateriaPrima', 'ProductoTerminado', 'General'].map((t) => ({ valor: t, etiqueta: ETIQUETAS_TIPO_ALMACEN[t] }))}
+          opciones={TIPOS_ALMACEN.map((t) => ({ valor: t, etiqueta: ETIQUETAS_TIPO_ALMACEN[t] }))}
           {...register('tipo')}
         />
         <Casilla etiqueta="Activo" className="pt-3" {...register('activo')} />

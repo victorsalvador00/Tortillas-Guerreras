@@ -246,7 +246,7 @@ capturada; alimenta el historial de precios), `costo_unitario_base numeric(18,6)
 | id | uuid PK | |
 | codigo | text UX | `MP`, `PT`, `R01`… |
 | nombre | text | |
-| tipo | text | `MateriaPrima`, `ProductoTerminado`, `General`, `Ruta` |
+| tipo | text | `MateriaPrima`, `ProductoSemiterminado`, `ProductoTerminado`, `Empaquetado`, `Subalmacen`, `General`, `Ruta` |
 | ruta_id | uuid null | solo tipo `Ruta` (1 a 1 con `logistica.rutas`) |
 | permite_negativo | boolean | `true` solo en `Ruta` (ventas offline) |
 | activo | boolean | |

@@ -86,7 +86,7 @@ namespace TG.Inventario.Infraestructura.Migraciones
 
                     b.ToTable("almacenes", "inventario", t =>
                         {
-                            t.HasCheckConstraint("ck_almacenes_tipo", "tipo IN ('MateriaPrima', 'ProductoTerminado', 'General', 'Ruta')");
+                            t.HasCheckConstraint("ck_almacenes_tipo", "tipo IN ('MateriaPrima', 'ProductoTerminado', 'General', 'Ruta', 'ProductoSemiterminado', 'Subalmacen', 'Empaquetado')");
                         });
                 });
 

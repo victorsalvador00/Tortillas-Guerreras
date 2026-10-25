@@ -19922,7 +19922,10 @@
           "MateriaPrima",
           "ProductoTerminado",
           "General",
-          "Ruta"
+          "Ruta",
+          "ProductoSemiterminado",
+          "Subalmacen",
+          "Empaquetado"
         ]
       },
       "TipoAristaTraza": {

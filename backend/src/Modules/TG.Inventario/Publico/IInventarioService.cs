@@ -39,6 +39,9 @@ public enum TipoAlmacen
     ProductoTerminado,
     General,
     Ruta,
+    ProductoSemiterminado,
+    Subalmacen,
+    Empaquetado,
 }
 
 /// <summary>Una línea a registrar. <see cref="Cantidad"/> lleva signo: + entrada, − salida, en unidad base.</summary>
