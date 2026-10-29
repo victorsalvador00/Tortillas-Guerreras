@@ -86,7 +86,9 @@ public sealed class PullHandler(
         }
 
         var cursor = Math.Max(0, desde ?? 0);
-        var rutaCambiada = rutaId is not null && rutaId != r.Valor.Ruta?.Id;
+        // Una app que bajó cambios sin ruta (cursor > 0, sin rutaId) y ahora tiene una también cambió de ruta: lo anterior de la
+        // ruta nunca le llegó y sus versiones ya quedaron atrás del cursor.
+        var rutaCambiada = rutaId != r.Valor.Ruta?.Id && (rutaId is not null || cursor > 0);
         if (rutaCambiada && cursor > 0)
         {
             var actual = r.Valor.Ruta;

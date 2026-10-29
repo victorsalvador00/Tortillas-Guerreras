@@ -226,6 +226,31 @@ public sealed class RutasChoferTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     [Fact]
     [Trait("Regla", "RN-SYN-09")]
+    public async Task Alcance_DeSinRutaAUnaCarga_TambienEsCambio_YBajaLosClientesAnteriores()
+    {
+        var admin = await api.ClienteAsync();
+        var (choferId, usuario) = await admin.CrearUsuarioChoferAsync();
+        var ruta = await CrearRutaAsync();
+        var (app, _, _) = await SesionAppAsync(usuario);
+
+        // Sin carga ni ruta predeterminada baja lo general y el cursor ya queda adelante de los clientes de la ruta.
+        var sinRuta = await app.GetOkAsync<RespuestaPull>("/api/v1/sync/pull?desde=0");
+        sinRuta.Ruta.ShouldBeNull();
+        sinRuta.Cursor.ShouldBeGreaterThan(0);
+
+        await admin.PostOkAsync<EnvioPrueba>("/api/v1/logistica/envios", await CargaAsync(ruta, choferId));
+
+        var cambio = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={sinRuta.Cursor}");
+        cambio.RutaCambiada.ShouldBeTrue();
+        cambio.Cursor.ShouldBe(0);
+        cambio.Ruta!.Id.ShouldBe(ruta.Id);
+
+        var completa = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde=0&rutaId={ruta.Id}");
+        completa.Cambios.Clientes.ShouldContain(c => c.Id == ruta.ClienteGenericoId);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-SYN-09")]
     public async Task Operacion_SeAplicaALaRutaDeSuFechaOperativa_YSinRutaSeRechaza()
     {
         var admin = await api.ClienteAsync();

@@ -198,7 +198,9 @@ public sealed class PreciosEspecialesTests(ApiFixture api) : IClassFixture<ApiFi
     private sealed record CambiosPull(List<ClientePull> Clientes, List<PrecioClientePull> PreciosCliente, List<ExclusivoPull> ProductosExclusivos,
         Dictionary<string, List<Guid>> Eliminados);
 
-    private sealed record RespuestaPull(long Cursor, CambiosPull Cambios);
+    private sealed record RespuestaPull(long Cursor, RutaPull? Ruta, CambiosPull Cambios);
+
+    private sealed record RutaPull(Guid Id);
 
     [Fact]
     [Trait("Regla", "RN-VEN-12")]
@@ -230,14 +232,14 @@ public sealed class PreciosEspecialesTests(ApiFixture api) : IClassFixture<ApiFi
         await admin.PutOkAsync<List<object>>($"/api/v1/ventas/productos/{e.ProductoId}/exclusivos",
             new { exclusivos = new[] { new { clienteId = fuera.Id } } });
 
-        var cambios = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={inicial.Cursor}");
+        var cambios = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={inicial.Cursor}&rutaId={inicial.Ruta!.Id}");
         cambios.Cambios.PreciosCliente.ShouldHaveSingleItem().ClienteId.ShouldBe(clienteRuta);
         var exclusivo = cambios.Cambios.ProductosExclusivos.ShouldHaveSingleItem();
         exclusivo.ClienteId.ShouldBe(fuera.Id);
 
         await admin.PutOkAsync<List<PrecioRespuesta>>($"/api/v1/ventas/clientes/{clienteRuta}/precios", new { precios = Array.Empty<object>() });
         await admin.PutOkAsync<List<object>>($"/api/v1/ventas/productos/{e.ProductoId}/exclusivos", new { exclusivos = Array.Empty<object>() });
-        var bajas = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={cambios.Cursor}");
+        var bajas = await app.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={cambios.Cursor}&rutaId={inicial.Ruta!.Id}");
         bajas.Cambios.PreciosCliente.ShouldHaveSingleItem().Activo.ShouldBeFalse();
         bajas.Cambios.Eliminados["productosExclusivos"].ShouldContain(exclusivo.Id);
     }

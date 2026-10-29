@@ -21,7 +21,8 @@ Devuelve cambios con `version_sync > desde` de las colecciones del alcance del d
 > el usuario, para la fecha operativa de hoy (o la de ayer si sigue `EnRuta`); si no tiene carga, la ruta donde es
 > chofer predeterminado (`rutas.vendedor_id`, comportamiento actual de `RutaDeVendedorAsync`). Si la ruta del alcance
 > cambia, el servidor responde `rutaCambiada = true` y la app hace una bajada completa (`desde = 0`) de las
-> colecciones por ruta, conservando su cola de operaciones y su consecutivo.
+> colecciones por ruta, conservando su cola de operaciones y su consecutivo. Pasar de no tener ruta (la app ya
+> bajó cambios, `desde > 0`, sin `rutaId`) a tener una también es cambio: lo de la ruta quedó atrás del cursor.
 
 | Colección | Filtro |
 |---|---|

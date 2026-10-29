@@ -127,13 +127,13 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
             partidas = new[] { new { productoId = producto.Id, cantidad = 2m } },
         });
 
-        var conCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}");
+        var conCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}&rutaId={pull.Ruta.Id}");
         var enCarga = conCarga.Cambios.Pedidos.Single(p => p.Id == pedido.Id);
         enCarga.EnvioId.ShouldBe(carga.Id);
         enCarga.EnvioFolio.ShouldStartWith("ENV-");
 
         await admin.PostOkAsync<CargaPull>($"/api/v1/logistica/envios/{carga.Id}/cancelar");
-        var sinCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={conCarga.Cursor}");
+        var sinCarga = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={conCarga.Cursor}&rutaId={pull.Ruta.Id}");
         var liberado = sinCarga.Cambios.Pedidos.Single(p => p.Id == pedido.Id);
         liberado.EnvioId.ShouldBeNull();
         liberado.EnvioFolio.ShouldBeNull();
@@ -151,7 +151,7 @@ public sealed class SincronizacionTests(ApiFixture api) : IClassFixture<ApiFixtu
         pull.Cambios.RutasClientes.Count.ShouldBe(6);
         pull.Cursor.ShouldBeGreaterThan(0);
 
-        var siguiente = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}");
+        var siguiente = await s.Cliente.GetOkAsync<RespuestaPull>($"/api/v1/sync/pull?desde={pull.Cursor}&rutaId={pull.Ruta.Id}");
         siguiente.Cambios.Productos.ShouldBeEmpty();
         siguiente.Cambios.Clientes.ShouldBeEmpty();
     }
