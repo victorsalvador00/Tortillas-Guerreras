@@ -286,7 +286,7 @@ function Captura({ orden }: { orden: OrdenDto }) {
               type="number"
               step="any"
               inputMode="decimal"
-              className="[&_input]:text-2xl"
+              className="[&_input]:text-left [&_input]:text-2xl"
               value={producida}
               onChange={(e) => setProducida(e.target.value)}
               ayuda={`Planeado ${formatoCantidad(orden.cantidadPlaneada)} ${orden.unidad}. Lo que realmente se produjo (RN-PRO-09).`}
