@@ -2611,7 +2611,10 @@
             "name": "estado",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/EstadoOrdenCompra"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/EstadoOrdenCompra"
+              }
             }
           },
           {

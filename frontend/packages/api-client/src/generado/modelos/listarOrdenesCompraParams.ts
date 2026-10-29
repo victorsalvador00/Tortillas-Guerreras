@@ -8,7 +8,7 @@
 import type { EstadoOrdenCompra } from './estadoOrdenCompra';
 
 export type ListarOrdenesCompraParams = {
-estado?: EstadoOrdenCompra;
+estado?: EstadoOrdenCompra[];
 proveedorId?: string;
 desde?: string;
 hasta?: string;

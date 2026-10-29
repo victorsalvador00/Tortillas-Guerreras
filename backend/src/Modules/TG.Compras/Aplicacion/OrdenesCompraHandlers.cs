@@ -90,13 +90,13 @@ public sealed class GuardarOrdenCompraValidator : AbstractValidator<GuardarOrden
 /// <summary>Consultas de órdenes de compra.</summary>
 public sealed class ConsultasOrdenesCompraHandler(ComprasDbContext db, ICatalogosService catalogos, IInventarioService inventario)
 {
-    public async Task<Paginado<OrdenCompraResumenDto>> ListarAsync(EstadoOrdenCompra? estado, Guid? proveedorId, DateOnly? desde,
+    public async Task<Paginado<OrdenCompraResumenDto>> ListarAsync(EstadoOrdenCompra[]? estado, Guid? proveedorId, DateOnly? desde,
         DateOnly? hasta, string? buscar, int? pagina, int? tamano, CancellationToken ct)
     {
         var consulta = db.OrdenesCompra.AsNoTracking();
-        if (estado is not null)
+        if (estado is { Length: > 0 })
         {
-            consulta = consulta.Where(o => o.Estado == estado);
+            consulta = consulta.Where(o => estado.Contains(o.Estado));
         }
 
         if (proveedorId is not null)
@@ -114,14 +114,18 @@ public sealed class ConsultasOrdenesCompraHandler(ComprasDbContext db, ICatalogo
             consulta = consulta.Where(o => o.Fecha <= hasta);
         }
 
+        var unidas = from o in consulta
+                     join p in db.Proveedores on o.ProveedorId equals p.Id
+                     select new { o, p };
         if (!string.IsNullOrWhiteSpace(buscar))
         {
             var patron = $"%{buscar.Trim()}%";
-            consulta = consulta.Where(o => EF.Functions.ILike(o.Folio, patron));
+            unidas = unidas.Where(x => EF.Functions.ILike(x.o.Folio, patron) || EF.Functions.ILike(x.p.RazonSocial, patron));
         }
 
-        var proyeccion = from o in consulta
-                         join p in db.Proveedores on o.ProveedorId equals p.Id
+        var proyeccion = from x in unidas
+                         let o = x.o
+                         let p = x.p
                          orderby o.Fecha descending, o.Folio descending
                          select new OrdenCompraResumenDto(o.Id, o.Folio, o.ProveedorId, p.RazonSocial, o.Fecha, o.FechaEntregaEsperada,
                              o.Estado, o.Total, o.Partidas.Count);

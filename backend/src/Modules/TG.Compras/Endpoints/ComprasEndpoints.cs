@@ -42,7 +42,7 @@ internal static class ComprasEndpoints
             (await h.CambiarActivoAsync(id, true, ct)).AHttp()).RequireAuthorization(P.Editar).WithName("activarProveedor");
 
         var ordenes = grupo.MapGroup("/ordenes-compra");
-        ordenes.MapGet("/", (EstadoOrdenCompra? estado, Guid? proveedorId, DateOnly? desde, DateOnly? hasta, string? buscar, int? pagina,
+        ordenes.MapGet("/", (EstadoOrdenCompra[]? estado, Guid? proveedorId, DateOnly? desde, DateOnly? hasta, string? buscar, int? pagina,
                 int? tamano, ConsultasOrdenesCompraHandler h, CancellationToken ct) =>
             h.ListarAsync(estado, proveedorId, desde, hasta, buscar, pagina, tamano, ct)).RequireAuthorization(P.Ver).WithName("listarOrdenesCompra");
         ordenes.MapGet("/{id:guid}", async (Guid id, ConsultasOrdenesCompraHandler h, CancellationToken ct) =>

@@ -194,11 +194,14 @@ export function Pestanas({
   valor,
   onCambiar,
   pestanas,
+  estirar,
   className,
 }: {
   valor: string;
   onCambiar: (valor: string) => void;
   pestanas: { valor: string; etiqueta: ReactNode; contenido: ReactNode }[];
+  /** Reparte el ancho entre las pestañas en lugar de alinearlas a la izquierda. */
+  estirar?: boolean;
   className?: string;
 }) {
   return (
@@ -208,7 +211,10 @@ export function Pestanas({
           <Tabs.Trigger
             key={p.valor}
             value={p.valor}
-            className="relative h-12 shrink-0 px-4 text-sm font-medium text-muted transition-colors hover:text-on-surface data-[state=active]:text-primary data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-[3px] data-[state=active]:after:rounded-t-full data-[state=active]:after:bg-primary"
+            className={cn(
+              'relative h-12 shrink-0 px-4 text-sm font-medium text-muted transition-colors hover:text-on-surface data-[state=active]:text-primary data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-[3px] data-[state=active]:after:rounded-t-full data-[state=active]:after:bg-primary',
+              estirar && 'flex-1',
+            )}
           >
             {p.etiqueta}
           </Tabs.Trigger>

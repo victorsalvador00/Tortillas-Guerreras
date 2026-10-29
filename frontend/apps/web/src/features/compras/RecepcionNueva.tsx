@@ -99,8 +99,8 @@ function CamposLote({
 function ContraOrden({ ordenInicial }: { ordenInicial?: string }) {
   const navegar = useNavigate();
   const registrar = useRegistrarRecepcion();
-  const autorizadas = useListarOrdenesCompra({ estado: 'Autorizada', tamano: 200 });
-  const parciales = useListarOrdenesCompra({ estado: 'RecibidaParcial', tamano: 200 });
+  const autorizadas = useListarOrdenesCompra({ estado: ['Autorizada'], tamano: 200 });
+  const parciales = useListarOrdenesCompra({ estado: ['RecibidaParcial'], tamano: 200 });
   const [ordenId, setOrdenId] = useState(ordenInicial ?? '');
   const { data: orden } = useObtenerOrdenCompra(ordenId, { query: { enabled: !!ordenId } });
   const [lineas, setLineas] = useState<LineaOc[]>([]);
