@@ -84,7 +84,8 @@ export function PlanSugerido() {
   const { data, isLoading, error } = useObtenerPlanSugerido({ fechaEntrega: fecha, incluirReferencia: referencia });
   const filas = data?.filas ?? [];
   const puedePlanear = tienePermiso('produccion.planear');
-  const seleccion = filas.filter((f) => elegidos.has(f.productoId));
+  // Un elegido que ya quedó cubierto (p. ej. tras crear su orden) pierde la casilla y no se envía.
+  const seleccion = filas.filter((f) => elegidos.has(f.productoId) && f.accion === 'Producir' && f.faltante > 0);
 
   const columnas = useMemo<ColumnDef<PlanSugeridoFilaDto, unknown>[]>(() => {
     const cant = (k: keyof PlanSugeridoFilaDto) => ({
