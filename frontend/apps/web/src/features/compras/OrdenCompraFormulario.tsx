@@ -62,14 +62,17 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
   const [almacenId, setAlmacenId] = useState(orden?.almacenDestinoId ?? '');
   const [fechaEntrega, setFechaEntrega] = useState(orden?.fechaEntregaEsperada ?? '');
   const [notas, setNotas] = useState(orden?.notas ?? '');
+  // El renglón más reciente va arriba: se muestran en orden inverso al de captura y se guardan en el de captura.
   const [partidas, setPartidas] = useState<Partida[]>(
-    orden?.partidas.map((p) => ({
-      clave: p.id,
-      producto: productos[p.productoId] ?? null,
-      unidadId: p.unidadId,
-      cantidad: String(p.cantidad),
-      precioUnitario: String(p.precioUnitario),
-    })) ?? [nuevaPartida()],
+    orden?.partidas
+      .map((p) => ({
+        clave: p.id,
+        producto: productos[p.productoId] ?? null,
+        unidadId: p.unidadId,
+        cantidad: String(p.cantidad),
+        precioUnitario: String(p.precioUnitario),
+      }))
+      .reverse() ?? [nuevaPartida()],
   );
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +136,7 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
         almacenDestinoId: almacenId,
         fechaEntregaEsperada: fechaEntrega || null,
         notas: notas || null,
-        partidas: capturadas.map((p) => ({
+        partidas: [...capturadas].reverse().map((p) => ({
           productoId: p.producto!.id,
           unidadId: p.unidadId,
           cantidad: Number(p.cantidad),
@@ -177,7 +180,7 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
           titulo="Productos"
           subtitulo="Solo productos que se compran (RN-COM-01)."
           acciones={
-            <Boton variante="secundario" tamano="chico" icono="add" onClick={() => setPartidas((ps) => [...ps, nuevaPartida()])}>
+            <Boton variante="secundario" tamano="chico" icono="add" onClick={() => setPartidas((ps) => [nuevaPartida(), ...ps])}>
               Agregar producto
             </Boton>
           }
@@ -196,7 +199,7 @@ function Formulario({ orden, productos }: { orden?: OrdenCompraDto; productos: R
               return (
                 <div key={p.clave} className="grid items-start gap-3 rounded-xl border border-row-divider p-3 lg:grid-cols-[2fr_1fr_162px_189px_auto]">
                   <SelectorProducto
-                    etiqueta={`Producto ${i + 1}`}
+                    etiqueta={`Producto ${partidas.length - i}`}
                     valor={p.producto?.id}
                     producto={p.producto}
                     filtro={{ esComprable: true }}
