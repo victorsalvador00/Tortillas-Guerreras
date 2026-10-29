@@ -11,3 +11,10 @@ public interface IConsultaProduccion
 {
     Task<ResumenProduccion> ResumenAsync(DateOnly desde, DateOnly hasta, CancellationToken ct);
 }
+
+/// <summary>RN-WEB-01: lo que Producción tiene esperando al usuario, para los globos del menú.</summary>
+public interface IPendientesProduccion
+{
+    /// <summary>Renglones del plan sugerido (RN-PRO-13) por producir con faltante, como abre la pantalla (con referencia).</summary>
+    Task<int> PlanPorProgramarAsync(DateOnly fechaEntrega, CancellationToken ct);
+}

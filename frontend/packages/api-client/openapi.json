@@ -8356,6 +8356,26 @@
         }
       }
     },
+    "/api/v1/pendientes": {
+      "get": {
+        "tags": [
+          "Tablero"
+        ],
+        "operationId": "obtenerPendientes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendientesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reportes/mermas": {
       "get": {
         "tags": [
@@ -17281,6 +17301,102 @@
           "esRuta": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "PendientesDto": {
+        "type": "object",
+        "properties": {
+          "ordenesCompraPorAutorizar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "ordenesCompraPorRecibir": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "planPorProgramar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "ordenesPorLiberar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "ordenesPorProducir": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "ordenesEnProceso": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "liquidacionesPorConfirmar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "liquidacionesPorRevisar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "liquidacionesPorCerrar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "pedidosPorValidar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "incidenciasAbiertas": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "clientesPorAprobar": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "solicitudesAutofactura": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },

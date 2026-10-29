@@ -17,6 +17,7 @@ public static class ProduccionModule
         services.AgregarHandlers(typeof(ProduccionModule).Assembly);
         services.AddScoped<IConsultaOrdenesProduccion>(sp => sp.GetRequiredService<ConsultaOrdenesProduccionHandler>());
         services.AddScoped<IConsultaProduccion>(sp => sp.GetRequiredService<ReportesProduccionHandler>());
+        services.AddScoped<IPendientesProduccion>(sp => sp.GetRequiredService<PlanSugeridoHandler>());
         services.AddScoped<IInicializadorModulo, InicializadorProduccion>();
         return services;
     }

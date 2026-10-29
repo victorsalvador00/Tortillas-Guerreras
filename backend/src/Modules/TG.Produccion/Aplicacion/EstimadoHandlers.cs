@@ -5,6 +5,7 @@ using TG.Inventario.Publico;
 using TG.Logistica.Publico;
 using TG.Produccion.Dominio;
 using TG.Produccion.Infraestructura;
+using TG.Produccion.Publico;
 using TG.SharedKernel.Datos;
 using TG.SharedKernel.Resultados;
 using TG.SharedKernel.Tiempo;
@@ -262,7 +263,7 @@ public sealed class PlanSugeridoHandler(
     ILogisticaService logistica,
     ICatalogosService catalogos,
     IInventarioService inventario,
-    OrdenesHandler ordenes)
+    OrdenesHandler ordenes) : IPendientesProduccion
 {
     private static readonly EstadoOrden[] Abiertas = [EstadoOrden.Planeada, EstadoOrden.Liberada, EstadoOrden.EnProceso];
 
@@ -356,6 +357,9 @@ public sealed class PlanSugeridoHandler(
         return new PlanSugeridoDto(fechaEntrega, incluirReferencia,
             filas.OrderBy(f => f.Accion).ThenByDescending(f => f.Faltante).ThenBy(f => f.Sku).ToList());
     }
+
+    public async Task<int> PlanPorProgramarAsync(DateOnly fechaEntrega, CancellationToken ct) =>
+        (await ObtenerAsync(fechaEntrega, true, ct)).Filas.Count(f => f.Accion == AccionPlan.Producir && f.Faltante > 0);
 
     private sealed record ConsumoPendiente(Guid ProductoId, Guid AlmacenId, decimal CantidadBase);
 

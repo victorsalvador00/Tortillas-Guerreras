@@ -128,6 +128,7 @@ public static class HostApi
         servicios.AddFacturacionModule(configuracion);
         servicios.AddSincronizacionModule(configuracion);
         servicios.AddScoped<ConsultasTablero>();
+        servicios.AddScoped<ConsultasPendientes>();
         servicios.AddScoped<ImportadorCsv>();
         servicios.AddScoped<ServicioTrazabilidad>();
 
@@ -181,6 +182,7 @@ public static class HostApi
         api.MapFacturacionEndpoints();
         api.MapSincronizacionEndpoints();
         api.MapTableroEndpoints();
+        api.MapPendientesEndpoints();
         api.MapImportacionEndpoints();
         api.MapTrazabilidadEndpoints();
         return app;

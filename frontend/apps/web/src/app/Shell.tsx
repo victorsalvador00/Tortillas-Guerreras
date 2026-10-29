@@ -3,6 +3,7 @@ import { fechaOperativa, formatoFechaLarga } from '@tg/shared';
 import { BotonIcono, Icono, Logo, MenuAcciones, OPCIONES_TEMA, cn, useTema } from '@tg/ui';
 import { useEffect, useState } from 'react';
 import { MENU } from './menu';
+import { textoGlobo, usePendientes, type Globo } from './pendientes';
 import { useSesion } from './sesion';
 
 const CLAVE_CONTRAIDO = 'tg-menu-contraido';
@@ -15,6 +16,22 @@ function leerSecciones(): Record<string, boolean> | null {
   } catch {
     return null;
   }
+}
+
+/** RN-WEB-01: globo rojo con cuántos documentos esperan; el detalle va en el título y para lectores de pantalla. */
+function GloboPendientes({ globo, className }: { globo: Globo; className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#c62828] px-1.5 text-[11px] leading-none font-semibold text-white tabular-nums',
+        className,
+      )}
+      title={globo.detalle}
+    >
+      <span aria-hidden>{textoGlobo(globo.total)}</span>
+      <span className="sr-only">{`, ${globo.detalle}`}</span>
+    </span>
+  );
 }
 
 function useEsMovil(): boolean {
@@ -56,12 +73,20 @@ export function Shell() {
     }
   };
 
+  const globos = usePendientes();
+  const sumar = (rutas: string[]): Globo | undefined => {
+    const partes = rutas.map((r) => globos.get(r)).filter((g): g is Globo => !!g);
+    const total = partes.reduce((suma, g) => suma + g.total, 0);
+    return total > 0 ? { total, detalle: partes.map((g) => g.detalle).join(' · ') } : undefined;
+  };
+
   const secciones = MENU.map((s) => ({ ...s, opciones: s.opciones.filter((o) => tienePermiso(o.permiso)) })).filter(
     (s) => s.opciones.length > 0,
   );
 
   const activa = (destino: string) => (destino === '/' ? ruta === '/' : ruta === destino || ruta.startsWith(`${destino}/`));
   const seccionActiva = secciones.find((s) => s.opciones.some((o) => activa(o.ruta)))?.etiqueta;
+  const globoTotal = sumar(secciones.flatMap((s) => s.opciones.map((o) => o.ruta)));
 
   // Acordeón: cada módulo se abre o cierra; la primera vez solo está abierto el de la página actual. Se recuerda en
   // el navegador y, al navegar a otro módulo, ese se abre solo.
@@ -93,14 +118,20 @@ export function Shell() {
         role="banner"
         className="flex h-[var(--tg-topbar-height)] shrink-0 items-center gap-2 bg-topbar px-2 text-topbar-ink sm:px-4 print:hidden"
       >
-        <BotonIcono
-          icono={!movil && contraido ? 'menu_open' : 'menu'}
-          etiqueta={movil ? 'Abrir menú' : contraido ? 'Expandir menú' : 'Contraer menú'}
-          aria-expanded={movil ? abiertoMovil : !contraido}
-          plano
-          className="text-topbar-ink"
-          onClick={alternarMenu}
-        />
+        <span className="relative">
+          <BotonIcono
+            icono={!movil && contraido ? 'menu_open' : 'menu'}
+            etiqueta={movil ? 'Abrir menú' : contraido ? 'Expandir menú' : 'Contraer menú'}
+            aria-expanded={movil ? abiertoMovil : !contraido}
+            plano
+            className="text-topbar-ink"
+            onClick={alternarMenu}
+          />
+          {/* En el celular, con el menú cerrado, el botón muestra todo lo que espera. */}
+          {movil && !abiertoMovil && globoTotal && (
+            <GloboPendientes globo={globoTotal} className="pointer-events-none absolute -top-0.5 -right-0.5" />
+          )}
+        </span>
         <Link to="/" className="flex min-h-12 items-center gap-3 text-inherit no-underline" aria-label="Guerreras, ir al tablero">
           <Logo chico className="h-10 drop-shadow-[0_1px_2px_rgb(0_0_0/35%)]" titulo="" />
           <span className="hidden text-20 font-semibold sm:inline">Sistema de Gestión</span>
@@ -167,6 +198,7 @@ export function Shell() {
               // Con el menú contraído (solo íconos) no hay acordeón: se ven todas las opciones.
               const abierta = mostrarContraido || !!abiertas[seccion.etiqueta];
               const idLista = `menu-${i}`;
+              const globoSeccion = abierta ? undefined : sumar(seccion.opciones.map((o) => o.ruta));
               return (
               <div key={seccion.etiqueta}>
                 {mostrarContraido ? (
@@ -186,6 +218,8 @@ export function Shell() {
                           <span className="size-2 rounded-full bg-primary" aria-label="(página actual)" />
                         )}
                       </span>
+                      {/* Una sección plegada suma los globos de sus opciones. */}
+                      {globoSeccion && <GloboPendientes globo={globoSeccion} className="mr-2 ml-auto tracking-normal normal-case" />}
                       <Icono
                         nombre="expand_more"
                         tamano={20}
@@ -203,24 +237,35 @@ export function Shell() {
                   )}
                 >
                 <ul className="m-0 min-h-0 list-none overflow-hidden px-2">
-                  {seccion.opciones.map((o) => (
+                  {seccion.opciones.map((o) => {
+                    const globo = globos.get(o.ruta);
+                    return (
                     <li key={o.ruta}>
                       <Link
                         to={o.ruta}
                         className="tg-nav-item"
                         aria-current={activa(o.ruta) ? 'page' : undefined}
-                        aria-label={mostrarContraido ? o.etiqueta : undefined}
-                        title={mostrarContraido ? o.etiqueta : undefined}
+                        aria-label={mostrarContraido ? o.etiqueta + (globo ? `, ${globo.detalle}` : '') : undefined}
+                        title={mostrarContraido ? o.etiqueta + (globo ? ` (${globo.detalle})` : '') : undefined}
                       >
                         <span className="tg-nav-tag" aria-hidden>
                           <span className="tg-nav-tag-block" />
                           <span className="tg-nav-tag-dots" />
                         </span>
                         <Icono nombre={o.icono} />
-                        {!mostrarContraido && <span className="tg-nav-label text-sm leading-tight">{o.etiqueta}</span>}
+                        {!mostrarContraido && <span className="tg-nav-label flex-1 text-sm leading-tight">{o.etiqueta}</span>}
+                        {globo &&
+                          (mostrarContraido ? (
+                            <span aria-hidden className="absolute top-1 right-2">
+                              <GloboPendientes globo={globo} />
+                            </span>
+                          ) : (
+                            <GloboPendientes globo={globo} />
+                          ))}
                       </Link>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
                 </div>
               </div>

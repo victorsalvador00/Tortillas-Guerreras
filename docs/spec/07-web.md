@@ -38,6 +38,26 @@ Regresar · Cerrar. **Imprimir hoja** con las 4 firmas (RN-LOG-22).
 **Corte semanal.** Filtro por semana y chofer; tabla por chofer con ventas, cargos por tipo y total a descontar;
 detalle por día y producto; "Cerrar corte" y "Exportar CSV".
 
+**Pendientes en el menú (RN-WEB-01).** Cada opción del menú muestra un globo rojo con cuántos documentos esperan al
+usuario; `GET /pendientes` devuelve los conteos y cada uno llega nulo sin su permiso:
+
+| Opción | Cuenta | Permiso |
+|---|---|---|
+| Órdenes de compra | por autorizar (`Borrador`) + por recibir (`Autorizada`, `RecibidaParcial`) | `compras.autorizar` / `compras.recibir` |
+| Plan sugerido | productos con faltante por producir para mañana, con referencia (como abre la pantalla) | `produccion.planear` |
+| Órdenes de producción | por liberar (`Planeada`) + por producir (`Liberada`) + en proceso (`EnProceso`) | `produccion.planear` / `produccion.operar` / `produccion.cerrar` |
+| Liquidaciones | por confirmar producto (`Abierta`) + por revisar (`ProductoConfirmado` con revisión) + por cerrar (`Revisada`, o `ProductoConfirmado` sin revisión; RN-LOG-20) | `logistica.liquidar_producto` / `logistica.revisar_liquidacion` / `logistica.liquidar` |
+| Pedidos | por validar (origen App, `Capturado`; RN-VEN-18) | `ventas.pedidos` |
+| Incidencias | `Abierta` | `ventas.supervisar` |
+| Clientes | con ubicación propuesta por aprobar | `ventas.clientes` |
+| Autofactura | solicitudes `Recibida` o `Error` | `facturacion.emitir` |
+
+Los pendientes son de un permiso, no de una persona: el globo se apaga para todos cuando alguien atiende el documento;
+no hay "leído" ni historial. Se refresca cada minuto, al navegar, al volver a la pestaña y después de guardar un cambio.
+Una sección plegada suma los globos de sus opciones; con el menú contraído el globo va sobre el ícono, y en el celular
+el botón del menú muestra el total con el menú cerrado. Arriba de 99 se muestra "99+". Tomado de RN-118 de Panissimo
+(decidido con el usuario el 2026-10-29).
+
 Pautas:
 - Captura rápida en tablets de planta: formularios de una columna, teclado numérico, botones
   grandes en Producción.
