@@ -196,12 +196,20 @@ public sealed class LiquidacionV02Tests(ApiFixture api) : IClassFixture<ApiFixtu
         var admin = await api.ClienteAsync();
         var ruta = await RutaAsync(admin);
         var (tortilla, lote, id) = await CargarAsync(admin, ruta, 2);
+        // Las pestañas de la lista: cada etapa muestra lo que espera a su área.
+        async Task<bool> EnEtapaAsync(string etapa) =>
+            (await admin.GetOkAsync<PaginaPrueba<IdRespuesta>>($"/api/v1/logistica/liquidaciones?rutaId={ruta.Id}&etapa={etapa}"))
+            .Items.Any(l => l.Id == id);
+        (await EnEtapaAsync("PorConfirmarProducto")).ShouldBeTrue();
         await ContarAsync(admin, id, tortilla.Id, lote, 2);
         await admin.PostOkAsync<LiquidacionPrueba>(Url(id, "/confirmar-producto"), new { forzar = false });
+        (await EnEtapaAsync("PorConfirmarProducto"), await EnEtapaAsync("PorRevisar"), await EnEtapaAsync("PorCerrar"))
+            .ShouldBe((false, true, false));
 
         await admin.PutOkAsync<JsonObject>("/api/v1/catalogos/parametros/logistica.requiere_revision_supervisor", new { valor = "false" });
         try
         {
+            (await EnEtapaAsync("PorRevisar"), await EnEtapaAsync("PorCerrar")).ShouldBe((false, true));
             (await admin.PostOkAsync<LiquidacionPrueba>(Url(id, "/cerrar"), new { efectivoEntregado = 0 })).Estado.ShouldBe("Cerrada");
         }
         finally

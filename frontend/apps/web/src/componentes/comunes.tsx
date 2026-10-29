@@ -249,6 +249,11 @@ export function TablaMovimientos({ movimientos, cargando, conCosto = true }: { m
   return <TablaDatos columnas={columnas} datos={movimientos} cargando={cargando} mensajeVacio="Sin movimientos de inventario." ordenable={false} />;
 }
 
+/** Contador de una pestaña de listado: cuántos esperan en ella ("–" mientras carga). */
+export function Contador({ valor }: { valor: number | undefined }) {
+  return <span className="ml-2 rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-primary">{valor ?? '–'}</span>;
+}
+
 /** Barra de filtros de los listados (fila que se acomoda en celular). */
 export function BarraFiltros({ children, acciones }: { children: ReactNode; acciones?: ReactNode }) {
   return (

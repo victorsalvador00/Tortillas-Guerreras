@@ -16,6 +16,7 @@ import {
   useObtenerPedido,
   type ClienteDto,
   type EstadoPedido,
+  type ListarPedidosParams,
   type PedidoDto,
   type PedidoPartidaDto,
   type VentaDto,
@@ -38,7 +39,7 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useMemo, useState } from 'react';
-import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
+import { BarraFiltros, Contador, exportarCsv } from '@/componentes/comunes';
 import { HistorialDocumento } from '@/componentes/historial';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
@@ -50,27 +51,49 @@ const ETIQUETA_ORIGEN: Record<string, string> = { App: 'App de ruta', Web: 'Web'
 
 const ESTADOS: EstadoPedido[] = ['Capturado', 'Confirmado', 'Asignado', 'Entregado', 'EntregadoParcial', 'Cancelado'];
 
+/** Lo que espera en cada pestaña; «todos» usa los filtros de estado y fechas. */
+const FILTRO_PESTANA = {
+  // RN-VEN-18: "Por validar" = pedidos de la app todavía Capturado.
+  porValidar: { estado: 'Capturado', origen: 'App' },
+  porAsignar: { estado: 'Confirmado' },
+  porCargar: { estado: 'Asignado', sinCarga: true },
+} as const satisfies Record<string, ListarPedidosParams>;
+
+const VACIO_PESTANA: Record<string, string> = {
+  todos: 'No hay pedidos con esos filtros.',
+  porValidar: 'No hay pedidos de la app por validar.',
+  porAsignar: 'No hay pedidos confirmados sin ruta.',
+  porCargar: 'No hay pedidos asignados pendientes de cargar.',
+};
+
 export function Pedidos() {
   const navegar = useNavigate();
   const { tienePermiso } = useSesion();
   const rutas = useRutas();
+  const [pestana, setPestana] = useState('todos');
   const [estado, setEstado] = useState('');
-  const [bandeja, setBandeja] = useState('');
   const [rutaId, setRutaId] = useState('');
   const [desde, setDesde] = useState(sumarDias(fechaOperativa(), -30));
   const [hasta, setHasta] = useState('');
   const [pagina, setPagina] = useState(1);
-  // RN-VEN-18: "Por validar" = pedidos de la app todavía Capturado.
-  const porValidar = bandeja === 'porValidar';
+  const todos = pestana === 'todos';
+  // Lo pendiente lo es sin importar la fecha: las pestañas no filtran por fechas.
   const { data, isLoading, isFetching } = useListarPedidos({
-    estado: porValidar ? 'Capturado' : ((estado || undefined) as EstadoPedido | undefined),
-    origen: porValidar ? 'App' : undefined,
+    ...(todos
+      ? { estado: (estado || undefined) as EstadoPedido | undefined, desde: desde || undefined, hasta: hasta || undefined }
+      : FILTRO_PESTANA[pestana as keyof typeof FILTRO_PESTANA]),
     rutaId: rutaId || undefined,
-    desde: desde || undefined,
-    hasta: hasta || undefined,
     pagina,
     tamano: 50,
   });
+  // Los contadores muestran todo lo pendiente, sin importar los filtros.
+  const porValidar = useListarPedidos({ ...FILTRO_PESTANA.porValidar, tamano: 1 });
+  const porAsignar = useListarPedidos({ ...FILTRO_PESTANA.porAsignar, tamano: 1 });
+  const porCargar = useListarPedidos({ ...FILTRO_PESTANA.porCargar, tamano: 1 });
+  const cambiarPagina = <T,>(fijar: (v: T) => void) => (v: T) => {
+    fijar(v);
+    setPagina(1);
+  };
   const nombreRuta = (id?: string | null) => rutas.find((r) => r.rutaId === id)?.codigo ?? '—';
 
   const columnas = useMemo<ColumnDef<PedidoDto, unknown>[]>(
@@ -95,6 +118,39 @@ export function Pedidos() {
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [rutas],
+  );
+
+  const contenido = (
+    <>
+      <BarraFiltros>
+        {todos && (
+          <Selector
+            etiqueta="Estado"
+            vacio="Todos"
+            opciones={ESTADOS.map((e) => ({ valor: e, etiqueta: e === 'EntregadoParcial' ? 'Entregado parcial' : e }))}
+            value={estado}
+            onChange={(e) => cambiarPagina(setEstado)(e.target.value)}
+          />
+        )}
+        <SelectorRuta vacio="Todas" value={rutaId} onChange={cambiarPagina(setRutaId)} />
+        {todos && (
+          <>
+            <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => cambiarPagina(setDesde)(e.target.value)} />
+            <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => cambiarPagina(setHasta)(e.target.value)} />
+          </>
+        )}
+      </BarraFiltros>
+      <TablaDatos
+        columnas={columnas}
+        datos={data?.items}
+        cargando={isLoading}
+        actualizando={isFetching}
+        idFila={(p) => p.id}
+        alClicFila={(p) => navegar({ to: '/ventas/pedidos/$id', params: { id: p.id } })}
+        mensajeVacio={VACIO_PESTANA[pestana]}
+        paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      />
+    </>
   );
 
   return (
@@ -129,41 +185,43 @@ export function Pedidos() {
           </>
         }
       />
-      <BarraFiltros>
-        <Selector
-          etiqueta="Bandeja"
-          vacio="Todos los pedidos"
-          opciones={[{ valor: 'porValidar', etiqueta: 'Por validar (app)' }]}
-          value={bandeja}
-          onChange={(e) => {
-            setBandeja(e.target.value);
-            setPagina(1);
-          }}
-        />
-        <Selector
-          etiqueta="Estado"
-          disabled={porValidar}
-          vacio="Todos"
-          opciones={ESTADOS.map((e) => ({ valor: e, etiqueta: e === 'EntregadoParcial' ? 'Entregado parcial' : e }))}
-          value={estado}
-          onChange={(e) => {
-            setEstado(e.target.value);
-            setPagina(1);
-          }}
-        />
-        <SelectorRuta vacio="Todas" value={rutaId} onChange={(v) => { setRutaId(v); setPagina(1); }} />
-        <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPagina(1); }} />
-        <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPagina(1); }} />
-      </BarraFiltros>
-      <TablaDatos
-        columnas={columnas}
-        datos={data?.items}
-        cargando={isLoading}
-        actualizando={isFetching}
-        idFila={(p) => p.id}
-        alClicFila={(p) => navegar({ to: '/ventas/pedidos/$id', params: { id: p.id } })}
-        mensajeVacio="No hay pedidos con esos filtros."
-        paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      <Pestanas
+        estirar
+        valor={pestana}
+        onCambiar={cambiarPagina(setPestana)}
+        pestanas={[
+          { valor: 'todos', etiqueta: 'Todos', contenido },
+          {
+            valor: 'porValidar',
+            etiqueta: (
+              <>
+                Por validar
+                <Contador valor={porValidar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'porAsignar',
+            etiqueta: (
+              <>
+                Por asignar ruta
+                <Contador valor={porAsignar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'porCargar',
+            etiqueta: (
+              <>
+                Por cargar
+                <Contador valor={porCargar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+        ]}
       />
     </Pagina>
   );

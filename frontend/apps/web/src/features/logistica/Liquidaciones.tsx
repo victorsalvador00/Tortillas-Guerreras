@@ -14,6 +14,7 @@ import {
   useObtenerLiquidacion,
   type DestinoSobrante,
   type EstadoLiquidacion,
+  type EtapaLiquidacion,
   type LiquidacionDto,
   type LiquidacionResumenDto,
 } from '@tg/api-client';
@@ -29,6 +30,7 @@ import {
   Dialogo,
   DialogoConfirmacion,
   EtiquetaEstado,
+  Pestanas,
   Selector,
   TablaDatos,
   Tarjeta,
@@ -38,29 +40,44 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { BarraFiltros } from '@/componentes/comunes';
+import { BarraFiltros, Contador } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { SelectorRuta } from './comunes-logistica';
 import { DialogoNuevoCargo, TablaCargos } from './CuentaChoferes';
 import { capturasIniciales, diferencia, llavePartida, resumenCierre, type CapturaPartida } from './liquidacion';
 
+const VACIO_PESTANA: Record<string, string> = {
+  todas: 'No hay liquidaciones en ese periodo.',
+  PorConfirmarProducto: 'No hay liquidaciones por confirmar producto.',
+  PorRevisar: 'No hay liquidaciones por revisar.',
+  PorCerrar: 'No hay liquidaciones por cerrar.',
+};
+
 export function Liquidaciones() {
   const navegar = useNavigate();
   const hoy = fechaOperativa();
+  const [pestana, setPestana] = useState('todas');
   const [desde, setDesde] = useState(sumarDias(hoy, -7));
   const [hasta, setHasta] = useState(hoy);
   const [rutaId, setRutaId] = useState('');
   const [estado, setEstado] = useState('');
   const [pagina, setPagina] = useState(1);
+  const todas = pestana === 'todas';
+  // Cada pestaña es una etapa (RN-LOG-20): lo que espera a un área, sin importar la fecha.
   const { data, isLoading, isFetching } = useListarLiquidaciones({
-    desde: desde || undefined,
-    hasta: hasta || undefined,
+    desde: todas ? desde || undefined : undefined,
+    hasta: todas ? hasta || undefined : undefined,
     rutaId: rutaId || undefined,
-    estado: (estado || undefined) as EstadoLiquidacion | undefined,
+    estado: todas ? ((estado || undefined) as EstadoLiquidacion | undefined) : undefined,
+    etapa: todas ? undefined : (pestana as EtapaLiquidacion),
     pagina,
     tamano: 50,
   });
+  // Los contadores muestran todo lo pendiente, sin importar los filtros.
+  const porConfirmar = useListarLiquidaciones({ etapa: 'PorConfirmarProducto', tamano: 1 });
+  const porRevisar = useListarLiquidaciones({ etapa: 'PorRevisar', tamano: 1 });
+  const porCerrar = useListarLiquidaciones({ etapa: 'PorCerrar', tamano: 1 });
   const columnas = useMemo<ColumnDef<LiquidacionResumenDto, unknown>[]>(
     () => [
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
@@ -84,25 +101,31 @@ export function Liquidaciones() {
     ],
     [],
   );
-  return (
-    <Pagina>
-      <EncabezadoPagina titulo="Liquidaciones" subtitulo="Cierre diario de cada ruta: almacén confirma el producto, el supervisor revisa y liquidaciones cierra el dinero." />
+
+  const contenido = (
+    <>
       <BarraFiltros>
-        <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => (setDesde(e.target.value), setPagina(1))} />
-        <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => (setHasta(e.target.value), setPagina(1))} />
+        {todas && (
+          <>
+            <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => (setDesde(e.target.value), setPagina(1))} />
+            <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => (setHasta(e.target.value), setPagina(1))} />
+          </>
+        )}
         <SelectorRuta vacio="Todas" value={rutaId} onChange={(v) => (setRutaId(v), setPagina(1))} />
-        <Selector
-          etiqueta="Estado"
-          vacio="Todos"
-          opciones={[
-            { valor: 'Abierta', etiqueta: 'Abierta' },
-            { valor: 'ProductoConfirmado', etiqueta: 'Producto confirmado' },
-            { valor: 'Revisada', etiqueta: 'Revisada' },
-            { valor: 'Cerrada', etiqueta: 'Cerrada' },
-          ]}
-          value={estado}
-          onChange={(e) => (setEstado(e.target.value), setPagina(1))}
-        />
+        {todas && (
+          <Selector
+            etiqueta="Estado"
+            vacio="Todos"
+            opciones={[
+              { valor: 'Abierta', etiqueta: 'Abierta' },
+              { valor: 'ProductoConfirmado', etiqueta: 'Producto confirmado' },
+              { valor: 'Revisada', etiqueta: 'Revisada' },
+              { valor: 'Cerrada', etiqueta: 'Cerrada' },
+            ]}
+            value={estado}
+            onChange={(e) => (setEstado(e.target.value), setPagina(1))}
+          />
+        )}
       </BarraFiltros>
       <TablaDatos
         columnas={columnas}
@@ -111,8 +134,52 @@ export function Liquidaciones() {
         actualizando={isFetching}
         idFila={(l) => l.id}
         alClicFila={(l) => navegar({ to: '/logistica/liquidaciones/$id', params: { id: l.id } })}
-        mensajeVacio="No hay liquidaciones en ese periodo."
+        mensajeVacio={VACIO_PESTANA[pestana]}
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      />
+    </>
+  );
+
+  return (
+    <Pagina>
+      <EncabezadoPagina titulo="Liquidaciones" subtitulo="Cierre diario de cada ruta: almacén confirma el producto, el supervisor revisa y liquidaciones cierra el dinero." />
+      <Pestanas
+        estirar
+        valor={pestana}
+        onCambiar={(v) => (setPestana(v), setPagina(1))}
+        pestanas={[
+          { valor: 'todas', etiqueta: 'Todas', contenido },
+          {
+            valor: 'PorConfirmarProducto',
+            etiqueta: (
+              <>
+                Por confirmar producto
+                <Contador valor={porConfirmar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'PorRevisar',
+            etiqueta: (
+              <>
+                Por revisar
+                <Contador valor={porRevisar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'PorCerrar',
+            etiqueta: (
+              <>
+                Por cerrar
+                <Contador valor={porCerrar.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+        ]}
       />
     </Pagina>
   );

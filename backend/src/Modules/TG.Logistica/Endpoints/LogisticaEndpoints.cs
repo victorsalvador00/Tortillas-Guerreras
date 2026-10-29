@@ -84,8 +84,8 @@ internal static class LogisticaEndpoints
 
         var liquidaciones = grupo.MapGroup("/liquidaciones");
         liquidaciones.MapGet("/", (Guid? rutaId, DateOnly? fecha, DateOnly? desde, DateOnly? hasta, EstadoLiquidacion? estado, int? pagina,
-                int? tamano, LiquidacionesHandler h, CancellationToken ct) =>
-            h.ListarAsync(rutaId, fecha, desde, hasta, estado, pagina, tamano, ct)).AlgunPermiso(P.Ver, P.Liquidar).WithName("listarLiquidaciones");
+                int? tamano, EtapaLiquidacion? etapa, LiquidacionesHandler h, CancellationToken ct) =>
+            h.ListarAsync(rutaId, fecha, desde, hasta, estado, pagina, tamano, ct, etapa)).AlgunPermiso(P.Ver, P.Liquidar).WithName("listarLiquidaciones");
         liquidaciones.MapGet("/{id:guid}", async (Guid id, LiquidacionesHandler h, CancellationToken ct) => (await h.ObtenerAsync(id, ct)).AHttp())
             .AlgunPermiso(P.Ver, P.Liquidar).WithName("obtenerLiquidacion");
         liquidaciones.MapPut("/{id:guid}/conteo", async (Guid id, CapturarConteoLiquidacionRequest r, LiquidacionesHandler h, CancellationToken ct) =>

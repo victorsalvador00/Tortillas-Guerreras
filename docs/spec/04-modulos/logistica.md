@@ -227,7 +227,7 @@ mayor que lo devuelto, `LOG-023` cargo aplicado no cancelable, `LOG-024` corte c
 | GET/POST/PUT | `/envios` | `logistica.ver` / `logistica.cargar` |
 | POST | `/envios/{id}/despachar`, `/cancelar` | `logistica.cargar` |
 | GET/POST | `/retornos` | `logistica.retornos` |
-| GET | `/liquidaciones?rutaId&fecha` | `logistica.ver` |
+| GET | `/liquidaciones?rutaId&fecha&estado&etapa` (`etapa`: `PorConfirmarProducto`, `PorRevisar`, `PorCerrar` según RN-LOG-20 y `logistica.requiere_revision_supervisor`) | `logistica.ver` |
 | PUT | `/liquidaciones/{id}/conteo` | `logistica.liquidar` (**v0.2:** `logistica.liquidar_producto`) |
 | POST | `/liquidaciones/{id}/cerrar` | `logistica.liquidar` |
 | GET/POST | **(v0.2)** `/envios/sugeridos` (`GET ?fecha` previsualiza; `POST { fecha, rutaIds? }` genera) | `logistica.ver` o `logistica.cargar` / `logistica.cargar` |

@@ -30,6 +30,7 @@ import {
   Datos,
   DialogoConfirmacion,
   EtiquetaEstado,
+  Pestanas,
   Selector,
   TablaDatos,
   Tarjeta,
@@ -38,7 +39,7 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useMemo, useState } from 'react';
-import { BarraFiltros, SelectorProducto, TablaMovimientos } from '@/componentes/comunes';
+import { BarraFiltros, Contador, SelectorProducto, TablaMovimientos } from '@/componentes/comunes';
 import { BotonRastrear } from '@/features/inventario/Trazabilidad';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
@@ -51,21 +52,36 @@ const TIPOS_ENVIO: { valor: TipoEnvio; etiqueta: string }[] = [
   { valor: 'Recarga', etiqueta: 'Recarga' },
 ];
 
+/** Estado que espera en cada pestaña; «todas» usa los filtros de fecha y estado. */
+const ESTADO_PESTANA: Record<string, EstadoEnvio | undefined> = { todas: undefined, preparadas: 'Preparado', enRuta: 'EnRuta' };
+
+const VACIO_PESTANA: Record<string, string> = {
+  todas: 'No hay cargas para esos filtros.',
+  preparadas: 'No hay cargas preparadas por despachar.',
+  enRuta: 'No hay cargas en ruta.',
+};
+
 export function Cargas() {
   const navegar = useNavigate();
   const { tienePermiso } = useSesion();
+  const [pestana, setPestana] = useState('todas');
   const [fecha, setFecha] = useState(fechaOperativa());
   const [rutaId, setRutaId] = useState('');
   const [estado, setEstado] = useState('');
   const [pagina, setPagina] = useState(1);
   const [sugeridas, setSugeridas] = useState(false);
+  const todas = pestana === 'todas';
+  // Una carga sin despachar o una camioneta que no ha liquidado siguen pendientes aunque sean de otro día.
   const { data, isLoading, isFetching } = useListarEnvios({
-    fecha: fecha || undefined,
+    fecha: todas ? fecha || undefined : undefined,
     rutaId: rutaId || undefined,
-    estado: (estado || undefined) as EstadoEnvio | undefined,
+    estado: todas ? ((estado || undefined) as EstadoEnvio | undefined) : ESTADO_PESTANA[pestana],
     pagina,
     tamano: 50,
   });
+  // Los contadores muestran todo lo pendiente, sin importar los filtros.
+  const preparadas = useListarEnvios({ estado: 'Preparado', tamano: 1 });
+  const enRuta = useListarEnvios({ estado: 'EnRuta', tamano: 1 });
   const columnas = useMemo<ColumnDef<EnvioDto, unknown>[]>(
     () => [
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
@@ -84,6 +100,37 @@ export function Cargas() {
     ],
     [],
   );
+
+  const contenido = (
+    <>
+      <BarraFiltros>
+        {todas && (
+          <Campo etiqueta="Fecha operativa" type="date" value={fecha} onChange={(e) => (setFecha(e.target.value), setPagina(1))} />
+        )}
+        <SelectorRuta vacio="Todas" value={rutaId} onChange={(v) => (setRutaId(v), setPagina(1))} />
+        {todas && (
+          <Selector
+            etiqueta="Estado"
+            vacio="Todos"
+            opciones={ESTADOS_ENVIO.map((e) => ({ valor: e, etiqueta: etiquetaEnum(e) }))}
+            value={estado}
+            onChange={(e) => (setEstado(e.target.value), setPagina(1))}
+          />
+        )}
+      </BarraFiltros>
+      <TablaDatos
+        columnas={columnas}
+        datos={data?.items}
+        cargando={isLoading}
+        actualizando={isFetching}
+        idFila={(e) => e.id}
+        alClicFila={(e) => navegar({ to: '/logistica/cargas/$id', params: { id: e.id } })}
+        mensajeVacio={VACIO_PESTANA[pestana]}
+        paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      />
+    </>
+  );
+
   return (
     <Pagina>
       <EncabezadoPagina
@@ -102,26 +149,33 @@ export function Cargas() {
           )
         }
       />
-      <BarraFiltros>
-        <Campo etiqueta="Fecha operativa" type="date" value={fecha} onChange={(e) => (setFecha(e.target.value), setPagina(1))} />
-        <SelectorRuta vacio="Todas" value={rutaId} onChange={(v) => (setRutaId(v), setPagina(1))} />
-        <Selector
-          etiqueta="Estado"
-          vacio="Todos"
-          opciones={ESTADOS_ENVIO.map((e) => ({ valor: e, etiqueta: etiquetaEnum(e) }))}
-          value={estado}
-          onChange={(e) => (setEstado(e.target.value), setPagina(1))}
-        />
-      </BarraFiltros>
-      <TablaDatos
-        columnas={columnas}
-        datos={data?.items}
-        cargando={isLoading}
-        actualizando={isFetching}
-        idFila={(e) => e.id}
-        alClicFila={(e) => navegar({ to: '/logistica/cargas/$id', params: { id: e.id } })}
-        mensajeVacio="No hay cargas para esos filtros."
-        paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      <Pestanas
+        estirar
+        valor={pestana}
+        onCambiar={(v) => (setPestana(v), setPagina(1))}
+        pestanas={[
+          { valor: 'todas', etiqueta: 'Todas', contenido },
+          {
+            valor: 'preparadas',
+            etiqueta: (
+              <>
+                Preparadas
+                <Contador valor={preparadas.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'enRuta',
+            etiqueta: (
+              <>
+                En ruta
+                <Contador valor={enRuta.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+        ]}
       />
       {sugeridas && <DialogoCargasSugeridas fecha={fecha || fechaOperativa()} onCerrar={() => setSugeridas(false)} />}
     </Pagina>

@@ -252,6 +252,7 @@ export * from './estadoSolicitud';
 export * from './estadoTraspaso';
 export * from './estadoVenta';
 export * from './estimadoDto';
+export * from './etapaLiquidacion';
 export * from './eventoTrazaDto';
 export * from './eventoTrazaDtoNodoId';
 export * from './existenciaDto';

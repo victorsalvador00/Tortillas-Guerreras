@@ -11,9 +11,9 @@ import {
   type Turno,
 } from '@tg/api-client';
 import { fechaOperativa, formatoCantidad, formatoFecha, formatoFechaLarga, formatoMoneda } from '@tg/shared';
-import { Aviso, Boton, Campo, Dialogo, EstadoVacio, EtiquetaEstado, Selector, TablaDatos, cn, toast, type ColumnDef } from '@tg/ui';
+import { Aviso, Boton, Campo, Dialogo, EstadoVacio, EtiquetaEstado, Pestanas, Selector, TablaDatos, cn, toast, type ColumnDef } from '@tg/ui';
 import { useMemo, useState } from 'react';
-import { BarraFiltros, SelectorAlmacen, SelectorProducto, exportarCsv } from '@/componentes/comunes';
+import { BarraFiltros, Contador, SelectorAlmacen, SelectorProducto, exportarCsv } from '@/componentes/comunes';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { avanceOrden } from './calculos';
@@ -228,22 +228,44 @@ export function PlanDia() {
   );
 }
 
+/** Estado que espera en cada pestaña; «todas» usa los filtros de fecha y estado. */
+const ESTADO_PESTANA: Record<string, EstadoOrden | undefined> = {
+  todas: undefined,
+  porLiberar: 'Planeada',
+  porProducir: 'Liberada',
+  enProceso: 'EnProceso',
+};
+
+const VACIO_PESTANA: Record<string, string> = {
+  todas: 'No hay órdenes con esos filtros.',
+  porLiberar: 'No hay órdenes por liberar.',
+  porProducir: 'No hay órdenes por producir.',
+  enProceso: 'No hay órdenes en proceso.',
+};
+
 export function OrdenesProduccion() {
   const navegar = useNavigate();
   const { tienePermiso } = useSesion();
+  const [pestana, setPestana] = useState('todas');
   const [desde, setDesde] = useState(fechaOperativa());
   const [hasta, setHasta] = useState(fechaOperativa());
   const [estado, setEstado] = useState('');
   const [turno, setTurno] = useState('');
   const [producto, setProducto] = useState<ProductoDto | null>(null);
   const [planear, setPlanear] = useState(false);
+  const todas = pestana === 'todas';
+  // Lo pendiente lo es sin importar el día en que se planeó: las pestañas no filtran por fecha.
   const { data, isLoading, isFetching } = useListarOrdenesProduccion({
-    desde: desde || undefined,
-    hasta: hasta || undefined,
-    estado: (estado || undefined) as EstadoOrden | undefined,
+    desde: todas ? desde || undefined : undefined,
+    hasta: todas ? hasta || undefined : undefined,
+    estado: todas ? ((estado || undefined) as EstadoOrden | undefined) : ESTADO_PESTANA[pestana],
     turno: (turno || undefined) as Turno | undefined,
     productoId: producto?.id,
   });
+  // Los contadores muestran todo lo pendiente, sin importar los filtros.
+  const porLiberar = useListarOrdenesProduccion({ estado: 'Planeada' });
+  const porProducir = useListarOrdenesProduccion({ estado: 'Liberada' });
+  const enProceso = useListarOrdenesProduccion({ estado: 'EnProceso' });
   const columnas = useMemo<ColumnDef<OrdenDto, unknown>[]>(
     () => [
       { header: 'Folio', accessorKey: 'folio', cell: ({ row }) => <span className="font-medium">{row.original.folio}</span> },
@@ -273,6 +295,34 @@ export function OrdenesProduccion() {
     ],
     [],
   );
+
+  const contenido = (
+    <>
+      <BarraFiltros>
+        {todas && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+              <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+            </div>
+            <Selector etiqueta="Estado" vacio="Todos" opciones={ESTADOS_ORDEN} value={estado} onChange={(e) => setEstado(e.target.value)} />
+          </>
+        )}
+        <Selector etiqueta="Turno" vacio="Todos" opciones={TURNOS} value={turno} onChange={(e) => setTurno(e.target.value)} />
+        <SelectorProducto etiqueta="Producto" valor={producto?.id} producto={producto} filtro={{ esProducible: true }} onCambiar={setProducto} />
+      </BarraFiltros>
+      <TablaDatos
+        columnas={columnas}
+        datos={data}
+        cargando={isLoading}
+        actualizando={isFetching}
+        idFila={(o) => o.id}
+        alClicFila={(o) => navegar({ to: '/produccion/ordenes/$id', params: { id: o.id } })}
+        mensajeVacio={VACIO_PESTANA[pestana]}
+      />
+    </>
+  );
+
   return (
     <Pagina>
       <EncabezadoPagina
@@ -309,23 +359,43 @@ export function OrdenesProduccion() {
           </>
         }
       />
-      <BarraFiltros>
-        <div className="grid grid-cols-2 gap-3">
-          <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          <Campo etiqueta="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-        </div>
-        <Selector etiqueta="Estado" vacio="Todos" opciones={ESTADOS_ORDEN} value={estado} onChange={(e) => setEstado(e.target.value)} />
-        <Selector etiqueta="Turno" vacio="Todos" opciones={TURNOS} value={turno} onChange={(e) => setTurno(e.target.value)} />
-        <SelectorProducto etiqueta="Producto" valor={producto?.id} producto={producto} filtro={{ esProducible: true }} onCambiar={setProducto} />
-      </BarraFiltros>
-      <TablaDatos
-        columnas={columnas}
-        datos={data}
-        cargando={isLoading}
-        actualizando={isFetching}
-        idFila={(o) => o.id}
-        alClicFila={(o) => navegar({ to: '/produccion/ordenes/$id', params: { id: o.id } })}
-        mensajeVacio="No hay órdenes con esos filtros."
+      <Pestanas
+        estirar
+        valor={pestana}
+        onCambiar={setPestana}
+        pestanas={[
+          { valor: 'todas', etiqueta: 'Todas', contenido },
+          {
+            valor: 'porLiberar',
+            etiqueta: (
+              <>
+                Por liberar
+                <Contador valor={porLiberar.data?.length} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'porProducir',
+            etiqueta: (
+              <>
+                Por producir
+                <Contador valor={porProducir.data?.length} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'enProceso',
+            etiqueta: (
+              <>
+                En proceso
+                <Contador valor={enProceso.data?.length} />
+              </>
+            ),
+            contenido,
+          },
+        ]}
       />
       {planear && <DialogoPlanear abierto onCambiar={setPlanear} fecha={fechaOperativa()} />}
     </Pagina>

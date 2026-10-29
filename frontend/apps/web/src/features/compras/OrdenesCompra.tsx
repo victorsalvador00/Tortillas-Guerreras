@@ -3,7 +3,7 @@ import { useListarOrdenesCompra, type EstadoOrdenCompra, type OrdenCompraResumen
 import { formatoFecha, formatoMoneda } from '@tg/shared';
 import { Boton, Campo, EtiquetaEstado, Pestanas, Selector, TablaDatos, type ColumnDef } from '@tg/ui';
 import { useMemo, useState } from 'react';
-import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
+import { BarraFiltros, Contador, exportarCsv } from '@/componentes/comunes';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { ESTADOS_OC, SelectorProveedor } from './comunes';
@@ -14,12 +14,6 @@ const ESTADOS_PESTANA: Record<string, EstadoOrdenCompra[]> = {
   porAprobar: ['Borrador'],
   porRecibir: ['Autorizada', 'RecibidaParcial'],
 };
-
-function Contador({ valor }: { valor: number | undefined }) {
-  return (
-    <span className="ml-2 rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-primary">{valor ?? '–'}</span>
-  );
-}
 
 export function OrdenesCompra() {
   const navegar = useNavigate();

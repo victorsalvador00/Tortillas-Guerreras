@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { EstadoLiquidacion } from './estadoLiquidacion';
+import type { EtapaLiquidacion } from './etapaLiquidacion';
 
 export type ListarLiquidacionesParams = {
 rutaId?: string;
@@ -15,4 +16,5 @@ hasta?: string;
 estado?: EstadoLiquidacion;
 pagina?: number;
 tamano?: number;
+etapa?: EtapaLiquidacion;
 };

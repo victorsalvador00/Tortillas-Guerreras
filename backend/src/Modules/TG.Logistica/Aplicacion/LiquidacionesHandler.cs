@@ -100,6 +100,19 @@ public sealed record CreditoHojaDto(string Folio, string Cliente, decimal Total)
 public sealed record HojaLiquidacionDto(LiquidacionDto Liquidacion, IReadOnlyList<CreditoHojaDto> Creditos, string? FirmaAlmacen,
     string? FirmaVendedor, string? FirmaSupervisor, string? FirmaLiquidaciones, DateTimeOffset GeneradaEn);
 
+/// <summary>Lo que espera cada área (RN-LOG-20); la revisión del supervisor depende de <c>logistica.requiere_revision_supervisor</c>.</summary>
+public enum EtapaLiquidacion
+{
+    /// <summary><c>Abierta</c>: Almacén confirma el producto.</summary>
+    PorConfirmarProducto,
+
+    /// <summary><c>ProductoConfirmado</c> cuando se requiere revisión del supervisor.</summary>
+    PorRevisar,
+
+    /// <summary><c>Revisada</c>, o <c>ProductoConfirmado</c> si no se requiere revisión: Liquidaciones cierra el dinero.</summary>
+    PorCerrar,
+}
+
 public sealed record LiquidacionResumenDto(
     Guid Id,
     string Folio,
@@ -161,8 +174,9 @@ public sealed class LiquidacionesHandler(
 {
     private sealed record Llave(Guid ProductoId, string Lote);
 
+    /// <param name="etapa">Lo que espera a un área (RN-LOG-20), como el globo del menú (RN-WEB-01).</param>
     public async Task<Paginado<LiquidacionResumenDto>> ListarAsync(Guid? rutaId, DateOnly? fecha, DateOnly? desde, DateOnly? hasta,
-        EstadoLiquidacion? estado, int? pagina, int? tamano, CancellationToken ct)
+        EstadoLiquidacion? estado, int? pagina, int? tamano, CancellationToken ct, EtapaLiquidacion? etapa = null)
     {
         var consulta = db.Liquidaciones.AsNoTracking();
         if (rutaId is not null)
@@ -188,6 +202,20 @@ public sealed class LiquidacionesHandler(
         if (estado is not null)
         {
             consulta = consulta.Where(l => l.Estado == estado);
+        }
+
+        if (etapa is not null)
+        {
+            var requiereRevision = await catalogos.ObtenerParametroAsync(ClavesParametro.RequiereRevisionSupervisor, true, ct);
+            EstadoLiquidacion[] estados = etapa switch
+            {
+                EtapaLiquidacion.PorConfirmarProducto => [EstadoLiquidacion.Abierta],
+                EtapaLiquidacion.PorRevisar => requiereRevision ? [EstadoLiquidacion.ProductoConfirmado] : [],
+                _ => requiereRevision
+                    ? [EstadoLiquidacion.Revisada]
+                    : [EstadoLiquidacion.ProductoConfirmado, EstadoLiquidacion.Revisada],
+            };
+            consulta = consulta.Where(l => estados.Contains(l.Estado));
         }
 
         var rutas = await db.Rutas.AsNoTracking().ToDictionaryAsync(r => r.Id, r => r.Codigo, ct);

@@ -6795,6 +6795,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "etapa",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EtapaLiquidacion"
+            }
           }
         ],
         "responses": {
@@ -12487,6 +12494,14 @@
             "format": "int32"
           }
         }
+      },
+      "EtapaLiquidacion": {
+        "enum": [
+          "PorConfirmarProducto",
+          "PorRevisar",
+          "PorCerrar",
+          null
+        ]
       },
       "EventoTrazaDto": {
         "required": [
