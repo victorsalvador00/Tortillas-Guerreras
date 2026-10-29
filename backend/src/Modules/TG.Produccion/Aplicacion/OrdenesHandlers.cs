@@ -22,7 +22,7 @@ public sealed record MermaDto(Guid Id, Guid ProductoId, string Sku, string Produ
     Guid MotivoMermaId, string Motivo, string? Notas, DateTimeOffset RegistradaEn);
 
 public sealed record MovimientoOrdenDto(Guid Id, TipoMovimiento Tipo, Guid AlmacenId, Guid ProductoId, string Sku,
-    string Producto, string Lote, decimal Cantidad, decimal CostoUnitario, decimal CostoTotal);
+    string Producto, string Unidad, string Lote, decimal Cantidad, decimal CostoUnitario, decimal CostoTotal);
 
 public sealed record OrdenDto(
     Guid Id,
@@ -606,7 +606,8 @@ public sealed class OrdenesHandler(
 
         var productoIds = ordenes.Select(o => o.ProductoId)
             .Concat(ordenes.SelectMany(o => o.Consumos).Select(c => c.ProductoId))
-            .Concat(ordenes.SelectMany(o => o.Mermas).Select(m => m.ProductoId));
+            .Concat(ordenes.SelectMany(o => o.Mermas).Select(m => m.ProductoId))
+            .Concat(movimientos.Values.SelectMany(m => m).Select(m => m.ProductoId));
         var productos = await catalogos.ObtenerProductosAsync(productoIds, ct);
         var motivos = (await catalogos.ListarMotivosAsync(ct)).ToDictionary(m => m.Id, m => m.Nombre);
 
@@ -630,7 +631,8 @@ public sealed class OrdenesHandler(
                     Nombre(m.ProductoId), Unidad(m.ProductoId), m.CantidadBase, m.MotivoMermaId,
                     motivos.GetValueOrDefault(m.MotivoMermaId) ?? "?", m.Notas, m.RegistradaEn)).ToList(),
                 (movimientos.GetValueOrDefault(o.Id) ?? []).Select(m => new MovimientoOrdenDto(m.Id, m.Tipo, m.AlmacenId,
-                    m.ProductoId, Sku(m.ProductoId), Nombre(m.ProductoId), m.Lote, m.Cantidad, m.CostoUnitario, m.CostoTotal))
+                    m.ProductoId, Sku(m.ProductoId), Nombre(m.ProductoId), Unidad(m.ProductoId), m.Lote, m.Cantidad, m.CostoUnitario,
+                    m.CostoTotal))
                     .ToList());
         }).ToList();
     }

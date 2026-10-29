@@ -67,7 +67,7 @@ function MovimientosOrden({ movimientos }: { movimientos: MovimientoOrdenDto[] }
           </span>
         ),
       },
-      { header: 'Cantidad', accessorKey: 'cantidad', cell: ({ row }) => <CantidadConSigno valor={row.original.cantidad} />, meta: { alinear: 'fin' } },
+      { header: 'Cantidad', accessorKey: 'cantidad', cell: ({ row }) => <CantidadConSigno valor={row.original.cantidad} unidad={row.original.unidad} />, meta: { alinear: 'fin' } },
       { header: 'Costo', accessorKey: 'costoTotal', cell: ({ row }) => formatoMoneda(row.original.costoTotal), meta: { alinear: 'fin' } },
     ],
     [],

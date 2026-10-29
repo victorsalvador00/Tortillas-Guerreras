@@ -15123,6 +15123,7 @@
           "productoId",
           "sku",
           "producto",
+          "unidad",
           "lote",
           "cantidad",
           "costoUnitario",
@@ -15149,6 +15150,9 @@
             "type": "string"
           },
           "producto": {
+            "type": "string"
+          },
+          "unidad": {
             "type": "string"
           },
           "lote": {

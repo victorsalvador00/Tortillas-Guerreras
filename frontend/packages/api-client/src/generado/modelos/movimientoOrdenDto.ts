@@ -14,6 +14,7 @@ export interface MovimientoOrdenDto {
   productoId: string;
   sku: string;
   producto: string;
+  unidad: string;
   lote: string;
   cantidad: number;
   costoUnitario: number;
