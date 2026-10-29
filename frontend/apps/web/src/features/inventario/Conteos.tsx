@@ -24,7 +24,7 @@ import {
   Dialogo,
   DialogoConfirmacion,
   EtiquetaEstado,
-  Selector,
+  Pestanas,
   TablaDatos,
   Tarjeta,
   cn,
@@ -32,7 +32,7 @@ import {
   type ColumnDef,
 } from '@tg/ui';
 import { useMemo, useRef, useState } from 'react';
-import { BarraFiltros, SelectorAlmacen, SelectorProducto } from '@/componentes/comunes';
+import { Contador, SelectorAlmacen, SelectorProducto } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { resumenCierre } from './reglas';
 
@@ -54,8 +54,10 @@ function Diferencia({ valor }: { valor: number }) {
 
 export function Conteos() {
   const navegar = useNavigate();
-  const [estado, setEstado] = useState('');
-  const { data, isLoading, isFetching } = useListarConteos({ estado: (estado || undefined) as EstadoConteo | undefined });
+  const [estado, setEstado] = useState<EstadoConteo>('Abierto');
+  const { data, isLoading, isFetching } = useListarConteos({ estado });
+  // El contador muestra los abiertos aunque se vea otra pestaña.
+  const abiertos = useListarConteos({ estado: 'Abierto' });
   const abrir = useAbrirConteo();
   const [dialogo, setDialogo] = useState(false);
   const [almacenId, setAlmacenId] = useState('');
@@ -95,6 +97,18 @@ export function Conteos() {
     }
   };
 
+  const tabla = (
+    <TablaDatos
+      columnas={columnas}
+      datos={data}
+      cargando={isLoading}
+      actualizando={isFetching}
+      idFila={(c) => c.id}
+      alClicFila={(c) => navegar({ to: '/inventario/conteos/$id', params: { id: c.id } })}
+      mensajeVacio={estado === 'Abierto' ? 'No hay conteos abiertos.' : estado === 'Cerrado' ? 'No hay conteos cerrados.' : 'No hay conteos cancelados.'}
+    />
+  );
+
   return (
     <Pagina>
       <EncabezadoPagina
@@ -106,27 +120,24 @@ export function Conteos() {
           </Boton>
         }
       />
-      <BarraFiltros>
-        <Selector
-          etiqueta="Estado"
-          vacio="Todos"
-          opciones={[
-            { valor: 'Abierto', etiqueta: 'Abiertos' },
-            { valor: 'Cerrado', etiqueta: 'Cerrados' },
-            { valor: 'Cancelado', etiqueta: 'Cancelados' },
-          ]}
-          value={estado}
-          onChange={(e) => setEstado(e.target.value)}
-        />
-      </BarraFiltros>
-      <TablaDatos
-        columnas={columnas}
-        datos={data}
-        cargando={isLoading}
-        actualizando={isFetching}
-        idFila={(c) => c.id}
-        alClicFila={(c) => navegar({ to: '/inventario/conteos/$id', params: { id: c.id } })}
-        mensajeVacio="No hay conteos."
+      <Pestanas
+        estirar
+        valor={estado}
+        onCambiar={(v) => setEstado(v as EstadoConteo)}
+        pestanas={[
+          {
+            valor: 'Abierto',
+            etiqueta: (
+              <>
+                Abiertos
+                <Contador valor={abiertos.data?.length} />
+              </>
+            ),
+            contenido: tabla,
+          },
+          { valor: 'Cerrado', etiqueta: 'Cerrados', contenido: tabla },
+          { valor: 'Cancelado', etiqueta: 'Cancelados', contenido: tabla },
+        ]}
       />
       <Dialogo
         abierto={dialogo}

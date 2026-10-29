@@ -13,9 +13,9 @@ import {
   type TipoIncidencia,
 } from '@tg/api-client';
 import { fechaOperativa, formatoFecha, formatoFechaHora, formatoMoneda, sumarDias } from '@tg/shared';
-import { AreaTexto, Aviso, Boton, BotonIcono, Campo, Dato, Datos, Dialogo, EtiquetaEstado, Selector, TablaDatos, toast, type ColumnDef } from '@tg/ui';
+import { AreaTexto, Aviso, Boton, BotonIcono, Campo, Dato, Datos, Dialogo, EtiquetaEstado, Pestanas, Selector, TablaDatos, toast, type ColumnDef } from '@tg/ui';
 import { useMemo, useState } from 'react';
-import { BarraFiltros, exportarCsv } from '@/componentes/comunes';
+import { BarraFiltros, Contador, exportarCsv } from '@/componentes/comunes';
 import { EncabezadoPagina, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 import { ETIQUETAS_FORMA_PAGO, ETIQUETAS_INCIDENCIA, SelectorCliente, SelectorRuta, useRutas } from './selectores';
@@ -238,17 +238,21 @@ function DialogoRevision({ incidencia, onCerrar }: { incidencia: IncidenciaDto |
 
 export function Incidencias() {
   const [tipo, setTipo] = useState('');
-  const [estado, setEstado] = useState('Abierta');
+  const [estado, setEstado] = useState<EstadoIncidencia>('Abierta');
   const [desde, setDesde] = useState(sumarDias(fechaOperativa(), -30));
   const [pagina, setPagina] = useState(1);
   const [revisando, setRevisando] = useState<IncidenciaDto | null>(null);
+  const abiertas = estado === 'Abierta';
+  // Una incidencia abierta espera revisión sin importar su fecha: «Desde» solo acota el historial de revisadas.
   const { data, isLoading, isFetching } = useListarIncidencias({
     tipo: (tipo || undefined) as TipoIncidencia | undefined,
-    estado: (estado || undefined) as EstadoIncidencia | undefined,
-    desde: desde || undefined,
+    estado,
+    desde: abiertas ? undefined : desde || undefined,
     pagina,
     tamano: 50,
   });
+  // El contador muestra todas las abiertas, sin importar los filtros.
+  const pendientes = useListarIncidencias({ estado: 'Abierta', tamano: 1 });
   const columnas = useMemo<ColumnDef<IncidenciaDto, unknown>[]>(
     () => [
       { header: 'Fecha', accessorKey: 'creadoEn', cell: ({ row }) => formatoFechaHora(row.original.creadoEn) },
@@ -273,9 +277,9 @@ export function Incidencias() {
     ],
     [],
   );
-  return (
-    <Pagina>
-      <EncabezadoPagina titulo="Incidencias" subtitulo="GPS, existencia negativa en ruta, precios y totales distintos, crédito y liquidaciones." />
+
+  const contenido = (
+    <>
       <BarraFiltros>
         <Selector
           etiqueta="Tipo"
@@ -284,17 +288,9 @@ export function Incidencias() {
           value={tipo}
           onChange={(e) => { setTipo(e.target.value); setPagina(1); }}
         />
-        <Selector
-          etiqueta="Estado"
-          vacio="Todos"
-          opciones={[
-            { valor: 'Abierta', etiqueta: 'Abiertas' },
-            { valor: 'Revisada', etiqueta: 'Revisadas' },
-          ]}
-          value={estado}
-          onChange={(e) => { setEstado(e.target.value); setPagina(1); }}
-        />
-        <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPagina(1); }} />
+        {!abiertas && (
+          <Campo etiqueta="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPagina(1); }} />
+        )}
       </BarraFiltros>
       <TablaDatos
         columnas={columnas}
@@ -302,7 +298,7 @@ export function Incidencias() {
         cargando={isLoading}
         actualizando={isFetching}
         idFila={(i) => i.id}
-        mensajeVacio="No hay incidencias con esos filtros."
+        mensajeVacio={abiertas ? 'No hay incidencias abiertas.' : 'No hay incidencias revisadas con esos filtros.'}
         detalle={(i) => (
           <Datos>
             <Dato etiqueta="Revisada por">{i.revisadaPor ?? '—'}</Dato>
@@ -311,6 +307,30 @@ export function Incidencias() {
           </Datos>
         )}
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      />
+    </>
+  );
+
+  return (
+    <Pagina>
+      <EncabezadoPagina titulo="Incidencias" subtitulo="GPS, existencia negativa en ruta, precios y totales distintos, crédito y liquidaciones." />
+      <Pestanas
+        estirar
+        valor={estado}
+        onCambiar={(v) => { setEstado(v as EstadoIncidencia); setPagina(1); }}
+        pestanas={[
+          {
+            valor: 'Abierta',
+            etiqueta: (
+              <>
+                Abiertas
+                <Contador valor={pendientes.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          { valor: 'Revisada', etiqueta: 'Revisadas', contenido },
+        ]}
       />
       <DialogoRevision key={revisando?.id} incidencia={revisando} onCerrar={() => setRevisando(null)} />
     </Pagina>

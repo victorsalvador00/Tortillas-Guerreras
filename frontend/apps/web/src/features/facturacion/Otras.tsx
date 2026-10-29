@@ -20,6 +20,7 @@ import {
   Campo,
   DialogoConfirmacion,
   EtiquetaEstado,
+  Pestanas,
   Selector,
   TablaDatos,
   Tarjeta,
@@ -31,7 +32,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { BarraFiltros } from '@/componentes/comunes';
+import { BarraFiltros, Contador } from '@/componentes/comunes';
 import { EncabezadoPagina, EstadoConsulta, Pagina } from '@/app/Pagina';
 import { useSesion } from '@/app/sesion';
 
@@ -39,17 +40,37 @@ import { useSesion } from '@/app/sesion';
 
 const ESTADOS_SOLICITUD: EstadoSolicitud[] = ['Recibida', 'EnProceso', 'Timbrada', 'Rechazada', 'Error'];
 
+/** Estado de cada pestaña; «todas» usa el selector de estado. */
+const ESTADO_PESTANA: Record<string, EstadoSolicitud | undefined> = {
+  todas: undefined,
+  porAtender: 'Recibida',
+  conError: 'Error',
+  emitidas: 'Timbrada',
+};
+
+const VACIO_PESTANA: Record<string, string> = {
+  todas: 'No hay solicitudes de autofactura.',
+  porAtender: 'No hay solicitudes por atender.',
+  conError: 'No hay solicitudes con error.',
+  emitidas: 'No hay solicitudes emitidas.',
+};
+
 export function Solicitudes() {
   const navegar = useNavigate();
+  const [pestana, setPestana] = useState('todas');
   const [estado, setEstado] = useState('');
   const [buscar, setBuscar] = useState('');
   const [pagina, setPagina] = useState(1);
+  const todas = pestana === 'todas';
   const { data, isLoading, isFetching } = useListarSolicitudesAutofactura({
-    estado: (estado || undefined) as EstadoSolicitud | undefined,
+    estado: todas ? ((estado || undefined) as EstadoSolicitud | undefined) : ESTADO_PESTANA[pestana],
     buscar: buscar || undefined,
     pagina,
     tamano: 50,
   });
+  // Los contadores muestran todo lo pendiente, sin importar la búsqueda.
+  const porAtender = useListarSolicitudesAutofactura({ estado: 'Recibida', tamano: 1 });
+  const conError = useListarSolicitudesAutofactura({ estado: 'Error', tamano: 1 });
   const columnas = useMemo<ColumnDef<SolicitudDto, unknown>[]>(
     () => [
       { header: 'Recibida', accessorKey: 'creadoEn', cell: ({ row }) => formatoFechaHora(row.original.creadoEn) },
@@ -86,17 +107,19 @@ export function Solicitudes() {
     ],
     [],
   );
-  return (
-    <Pagina>
-      <EncabezadoPagina titulo="Autofactura" subtitulo="Solicitudes recibidas en el portal público con el folio y total del ticket." />
+
+  const contenido = (
+    <>
       <BarraFiltros>
-        <Selector
-          etiqueta="Estado"
-          vacio="Todos"
-          opciones={ESTADOS_SOLICITUD.map((e) => ({ valor: e, etiqueta: etiquetaEnum(e) }))}
-          value={estado}
-          onChange={(e) => (setEstado(e.target.value), setPagina(1))}
-        />
+        {todas && (
+          <Selector
+            etiqueta="Estado"
+            vacio="Todos"
+            opciones={ESTADOS_SOLICITUD.map((e) => ({ valor: e, etiqueta: etiquetaEnum(e) }))}
+            value={estado}
+            onChange={(e) => (setEstado(e.target.value), setPagina(1))}
+          />
+        )}
         <Campo etiqueta="Buscar ticket, RFC o correo" type="search" value={buscar} onChange={(e) => (setBuscar(e.target.value), setPagina(1))} />
       </BarraFiltros>
       <TablaDatos
@@ -105,8 +128,43 @@ export function Solicitudes() {
         cargando={isLoading}
         actualizando={isFetching}
         idFila={(s) => s.id}
-        mensajeVacio="No hay solicitudes de autofactura."
+        mensajeVacio={VACIO_PESTANA[pestana]}
         paginacion={data ? { pagina: data.pagina, tamano: data.tamano, total: data.total, onCambiar: setPagina } : undefined}
+      />
+    </>
+  );
+
+  return (
+    <Pagina>
+      <EncabezadoPagina titulo="Autofactura" subtitulo="Solicitudes recibidas en el portal público con el folio y total del ticket." />
+      <Pestanas
+        estirar
+        valor={pestana}
+        onCambiar={(v) => (setPestana(v), setPagina(1))}
+        pestanas={[
+          { valor: 'todas', etiqueta: 'Todas', contenido },
+          {
+            valor: 'porAtender',
+            etiqueta: (
+              <>
+                Por atender
+                <Contador valor={porAtender.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          {
+            valor: 'conError',
+            etiqueta: (
+              <>
+                Con error
+                <Contador valor={conError.data?.total} />
+              </>
+            ),
+            contenido,
+          },
+          { valor: 'emitidas', etiqueta: 'Emitidas', contenido },
+        ]}
       />
       {data?.items.some((s) => s.factura) && (
         <p className="mt-2 text-sm text-muted">
