@@ -17,6 +17,7 @@ export interface PlanSugeridoFilaDto {
   demanda: number;
   demandaEstimada: number;
   cambiosPendientes: number;
+  paraOrdenes: number;
   cargado: number;
   disponible: number;
   enOrdenes: number;

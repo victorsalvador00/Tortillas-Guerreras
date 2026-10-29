@@ -30,8 +30,8 @@ public sealed class EstimadoTests(ApiFixture api) : IClassFixture<ApiFixture>
 
     private sealed record Resultado(int Pedidos);
 
-    private sealed record FilaPlan(Guid ProductoId, string Accion, decimal Demanda, decimal Disponible, decimal EnOrdenes, decimal Faltante,
-        bool TieneReceta);
+    private sealed record FilaPlan(Guid ProductoId, string Accion, decimal Demanda, decimal ParaOrdenes, decimal Disponible, decimal EnOrdenes,
+        decimal Faltante, bool TieneReceta);
 
     private sealed record Plan(List<FilaPlan> Filas);
 
@@ -240,6 +240,56 @@ public sealed class EstimadoTests(ApiFixture api) : IClassFixture<ApiFixture>
         creadas.Creadas.ShouldHaveSingleItem().ProductoId.ShouldBe(tortilla.Id);
         creadas.Omitidas.ShouldHaveSingleItem().Codigo.ShouldBe("PRO-008");
         (await admin.GetOkAsync<Plan>(url)).Filas.Single(f => f.ProductoId == tortilla.Id).Faltante.ShouldBe(0m);
+    }
+
+    [Fact]
+    [Trait("Regla", "RN-PRO-13b")]
+    public async Task PlanSugerido_LaOrdenDelPadreDetonaAlSemiterminado_UnNivel_ContraSuAlmacenDeConsumo()
+    {
+        var admin = await api.ClienteAsync();
+        var fecha = await FechaAsync();
+        var auto = await admin.CanalAsync("AUTO");
+        var tortilla = await admin.CrearProductoAsync(tipo: "Terminado", unidad: "PZA");
+        var masa = await admin.CrearProductoAsync(tipo: "Semiterminado");
+        var maiz = await admin.CrearProductoAsync();
+        foreach (var (producto, componente, cantidad) in new[] { (tortilla, masa, 50m), (masa, maiz, 80m) })
+        {
+            var receta = await admin.PostOkAsync<IdRespuesta>("/api/v1/produccion/recetas", new
+            {
+                productoId = producto.Id, nombre = "Receta plan", rendimientoCantidad = 100, mermaEsperadaPct = 0,
+                componentes = new[] { new { productoId = componente.Id, cantidad } },
+            });
+            await admin.PostOkAsync<IdRespuesta>($"/api/v1/produccion/recetas/{receta.Id}/publicar");
+        }
+
+        var cliente = await ClienteAsync(admin, auto, await ListaConPrecioAsync(admin, auto, tortilla));
+        await PedidoAsync(admin, cliente, fecha, tortilla, 200);
+        var url = $"/api/v1/produccion/plan-sugerido?fechaEntrega={fecha:yyyy-MM-dd}";
+
+        // Sin orden de la tortilla, la masa todavía no aparece.
+        (await admin.GetOkAsync<Plan>(url)).Filas.ShouldNotContain(f => f.ProductoId == masa.Id);
+
+        await admin.PostOkAsync<CrearOrdenes>("/api/v1/produccion/plan-sugerido/crear-ordenes", new
+        {
+            fechaOperativa = fecha.AddDays(-1), turno = "Matutino", partidas = new[] { new { productoId = tortilla.Id, cantidad = 200m } },
+        });
+
+        // La orden planeada pide 100 de masa (200 × 50 / 100); 30 en MP (su almacén de consumo) cubren parte.
+        await admin.EntradaAsync(await admin.AlmacenAsync("MP"), masa.Id, 30, 2m, lote: DatosPrueba.Unico("L"));
+        var plan = await admin.GetOkAsync<Plan>(url);
+        var fila = plan.Filas.Single(f => f.ProductoId == masa.Id);
+        (fila.ParaOrdenes, fila.Demanda, fila.Disponible, fila.Faltante, fila.Accion, fila.TieneReceta)
+            .ShouldBe((100m, 100m, 30m, 70m, "Producir", true));
+
+        // Un nivel: el maíz (y el siguiente nivel en general) aparece hasta que exista la orden de la masa.
+        plan.Filas.ShouldNotContain(f => f.ProductoId == maiz.Id);
+
+        var masaOrden = await admin.PostOkAsync<CrearOrdenes>("/api/v1/produccion/plan-sugerido/crear-ordenes", new
+        {
+            fechaOperativa = fecha.AddDays(-1), turno = "Matutino", partidas = new[] { new { productoId = masa.Id, cantidad = 70m } },
+        });
+        masaOrden.Creadas.ShouldHaveSingleItem();
+        (await admin.GetOkAsync<Plan>(url)).Filas.Single(f => f.ProductoId == masa.Id).Faltante.ShouldBe(0m);
     }
 
     // ───────────── Copiar receta ─────────────

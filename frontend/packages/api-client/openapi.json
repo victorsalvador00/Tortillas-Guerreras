@@ -17459,6 +17459,7 @@
           "demanda",
           "demandaEstimada",
           "cambiosPendientes",
+          "paraOrdenes",
           "cargado",
           "disponible",
           "enOrdenes",
@@ -17496,6 +17497,10 @@
             "format": "double"
           },
           "cambiosPendientes": {
+            "type": "number",
+            "format": "double"
+          },
+          "paraOrdenes": {
             "type": "number",
             "format": "double"
           },

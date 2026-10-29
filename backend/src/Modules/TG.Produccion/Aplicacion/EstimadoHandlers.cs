@@ -230,9 +230,10 @@ public enum AccionPlan
 /// <param name="Demanda">Σ partidas (Venta + CambioFisico) en unidad base, incluida la referencia si se pidió.</param>
 /// <param name="DemandaEstimada">Parte de la demanda que viene de la referencia (rutas sin pedido, RN-PRO-12).</param>
 /// <param name="CambiosPendientes">Parte de la demanda por cambios pendientes de los clientes que se visitan ese día (RN-LOG-16).</param>
+/// <param name="ParaOrdenes">Parte de la demanda que consumen las órdenes abiertas que lo usan como componente (RN-PRO-13b).</param>
 /// <param name="EnOrdenes">Órdenes Planeada/Liberada/EnProceso con fecha operativa hasta la fecha de entrega.</param>
 public sealed record PlanSugeridoFilaDto(Guid ProductoId, string Sku, string Producto, string Unidad, short Decimales, AccionPlan Accion,
-    decimal Demanda, decimal DemandaEstimada, decimal CambiosPendientes, decimal Cargado, decimal Disponible, decimal EnOrdenes, decimal Faltante, bool TieneReceta);
+    decimal Demanda, decimal DemandaEstimada, decimal CambiosPendientes, decimal ParaOrdenes, decimal Cargado, decimal Disponible, decimal EnOrdenes, decimal Faltante, bool TieneReceta);
 
 public sealed record PlanSugeridoDto(DateOnly FechaEntrega, bool IncluyeReferencia, IReadOnlyList<PlanSugeridoFilaDto> Filas);
 
@@ -289,15 +290,35 @@ public sealed class PlanSugeridoHandler(
 
         var cargado = (await logistica.CargadoPorFechaAsync(fechaEntrega, ct)).GroupBy(c => c.ProductoId)
             .ToDictionary(g => g.Key, g => g.Sum(c => c.CantidadBase));
-        var pt = await inventario.ObtenerAlmacenPorCodigoAsync("PT", ct);
-        var disponible = pt is null
-            ? new Dictionary<Guid, decimal>()
-            : (await inventario.ExistenciasDeAlmacenAsync(pt.Id, ct))
-                .Where(e => e.Cantidad > 0 && (e.FechaCaducidad is null || e.FechaCaducidad >= fechaEntrega))
-                .GroupBy(e => e.ProductoId).ToDictionary(g => g.Key, g => g.Sum(e => e.Cantidad));
         var pendientes = (await logistica.CambiosPendientesDelDiaAsync(fechaEntrega, ct)).GroupBy(p => p.ProductoId)
             .ToDictionary(g => g.Key, g => g.Sum(p => p.RestanteBase));
-        var productoIds = demanda.Keys.Concat(estimada.Keys).Concat(pendientes.Keys).Distinct().ToList();
+        var paraOrdenes = await ConsumosDeOrdenesAbiertasAsync(fechaEntrega, ct);
+        var productoIds = demanda.Keys.Concat(estimada.Keys).Concat(pendientes.Keys).Concat(paraOrdenes.Select(c => c.ProductoId)).Distinct().ToList();
+
+        // Lo vendible se surte de PT; un componente, además, del almacén de donde lo consumen sus órdenes (RN-PRO-11).
+        var pt = await inventario.ObtenerAlmacenPorCodigoAsync("PT", ct);
+        var disponible = new Dictionary<Guid, decimal>();
+        var almacenes = paraOrdenes.Select(c => (c.AlmacenId, Componente: (Guid?)c.ProductoId));
+        if (pt is not null)
+        {
+            almacenes = almacenes.Prepend((pt.Id, null));
+        }
+
+        foreach (var almacen in almacenes.GroupBy(a => a.AlmacenId))
+        {
+            // PT cuenta para todo; otro almacén, solo para los componentes que de ahí se consumen.
+            var componentes = almacen.Any(a => a.Componente is null) ? null : almacen.Select(a => a.Componente!.Value).ToHashSet();
+            foreach (var e in await inventario.ExistenciasDeAlmacenAsync(almacen.Key, ct))
+            {
+                if (e.Cantidad > 0 && (e.FechaCaducidad is null || e.FechaCaducidad >= fechaEntrega)
+                    && (componentes is null || componentes.Contains(e.ProductoId)))
+                {
+                    disponible[e.ProductoId] = disponible.GetValueOrDefault(e.ProductoId) + e.Cantidad;
+                }
+            }
+        }
+
+        var componenteDe = paraOrdenes.GroupBy(c => c.ProductoId).ToDictionary(g => g.Key, g => g.Sum(c => c.CantidadBase));
         var enOrdenes = (await db.Ordenes.AsNoTracking()
                 .Where(o => productoIds.Contains(o.ProductoId) && Abiertas.Contains(o.Estado) && o.FechaOperativa <= fechaEntrega)
                 .Select(o => new { o.ProductoId, o.CantidadPlaneada }).ToListAsync(ct))
@@ -314,19 +335,56 @@ public sealed class PlanSugeridoHandler(
                 continue;
             }
 
-            var total = demanda.GetValueOrDefault(id) + estimada.GetValueOrDefault(id) + pendientes.GetValueOrDefault(id);
+            // RN-PRO-13b: un componente que se compra (materia prima) va por el requerimiento de compras, no por el plan.
+            var consumo = p.EsProducible ? componenteDe.GetValueOrDefault(id) : 0m;
+            var total = demanda.GetValueOrDefault(id) + estimada.GetValueOrDefault(id) + pendientes.GetValueOrDefault(id) + consumo;
+            if (consumo == 0 && !demanda.ContainsKey(id) && !estimada.ContainsKey(id) && !pendientes.ContainsKey(id))
+            {
+                continue;
+            }
+
             var neta = total - cargado.GetValueOrDefault(id);
             var producir = p.EsProducible;
             var ordenesAbiertas = producir ? enOrdenes.GetValueOrDefault(id) : 0m;
             var faltante = Math.Max(0, neta - disponible.GetValueOrDefault(id) - ordenesAbiertas);
             filas.Add(new PlanSugeridoFilaDto(id, p.Sku, p.Nombre, p.UnidadBaseClave, p.UnidadBaseDecimales,
                 producir ? AccionPlan.Producir : AccionPlan.Comprar, total, estimada.GetValueOrDefault(id), pendientes.GetValueOrDefault(id),
-                cargado.GetValueOrDefault(id),
+                consumo, cargado.GetValueOrDefault(id),
                 disponible.GetValueOrDefault(id), ordenesAbiertas, faltante, conReceta.Contains(id)));
         }
 
         return new PlanSugeridoDto(fechaEntrega, incluirReferencia,
             filas.OrderBy(f => f.Accion).ThenByDescending(f => f.Faltante).ThenBy(f => f.Sku).ToList());
+    }
+
+    private sealed record ConsumoPendiente(Guid ProductoId, Guid AlmacenId, decimal CantidadBase);
+
+    /// <summary>
+    /// RN-PRO-13b: lo que consumirán las órdenes abiertas hasta la fecha. Una orden liberada ya tiene sus consumos (teórico y almacén);
+    /// una planeada los toma de su receta. Es un solo nivel: el componente de un componente aparece hasta que exista la orden de este.
+    /// </summary>
+    private async Task<List<ConsumoPendiente>> ConsumosDeOrdenesAbiertasAsync(DateOnly fechaEntrega, CancellationToken ct)
+    {
+        var abiertas = await db.Ordenes.AsNoTracking().Include(o => o.Consumos)
+            .Where(o => Abiertas.Contains(o.Estado) && o.FechaOperativa <= fechaEntrega).ToListAsync(ct);
+        var recetaIds = abiertas.Where(o => o.Consumos.Count == 0).Select(o => o.RecetaId).Distinct().ToList();
+        var recetas = await db.Recetas.AsNoTracking().Include(r => r.Componentes).Where(r => recetaIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, ct);
+
+        var consumos = new List<ConsumoPendiente>();
+        foreach (var orden in abiertas)
+        {
+            if (orden.Consumos.Count > 0)
+            {
+                consumos.AddRange(orden.Consumos.Select(c => new ConsumoPendiente(c.ProductoId, c.AlmacenId, c.CantidadTeoricaBase)));
+            }
+            else if (recetas.TryGetValue(orden.RecetaId, out var receta))
+            {
+                consumos.AddRange(receta.Componentes.Select(c => new ConsumoPendiente(c.ProductoId, c.AlmacenId ?? orden.AlmacenConsumoId,
+                    ReglasProduccion.ConsumoTeorico(c.CantidadBase, orden.CantidadPlaneada, receta.RendimientoCantidad))));
+            }
+        }
+
+        return consumos.Where(c => c.CantidadBase > 0).ToList();
     }
 
     /// <summary>Una orden por producto (receta vigente); sin receta vigente se omite con PRO-008.</summary>

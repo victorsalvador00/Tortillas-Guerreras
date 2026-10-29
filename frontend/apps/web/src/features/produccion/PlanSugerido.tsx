@@ -149,12 +149,15 @@ export function PlanSugerido() {
             {row.original.demandaEstimada > 0 && (
               <span className="block text-xs text-muted">{formatoCantidad(row.original.demandaEstimada)} estimado</span>
             )}
+            {row.original.paraOrdenes > 0 && (
+              <span className="block text-xs text-muted">{formatoCantidad(row.original.paraOrdenes)} para órdenes</span>
+            )}
           </span>
         ),
         meta: { alinear: 'fin' },
       },
       { header: 'Cargado', accessorKey: 'cargado', ...cant('cargado') },
-      { header: 'Disponible PT', accessorKey: 'disponible', ...cant('disponible') },
+      { header: 'Disponible', accessorKey: 'disponible', ...cant('disponible') },
       { header: 'En órdenes', accessorKey: 'enOrdenes', ...cant('enOrdenes') },
       {
         header: 'Faltante',

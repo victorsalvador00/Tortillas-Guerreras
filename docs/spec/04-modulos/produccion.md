@@ -84,6 +84,13 @@ los dos depende de Producción, no hay ciclo).
   aparecen como "surtir de compra" con su faltante y no generan orden. "Crear órdenes" planea una orden por producto
   con faltante (receta vigente, turno y línea elegidos por el usuario; RN-PRO-08 sin cambios). Sin receta vigente
   se marca y no se crea (`PRO-008`).
+- **RN-PRO-13b** *Componentes producibles (un nivel)*: a la demanda de un producto `es_producible` se suma lo que
+  consumirán las órdenes `Planeada`/`Liberada`/`EnProceso` con fecha operativa hasta la fecha de entrega que lo usan como
+  componente: los consumos teóricos de la orden si ya se liberó, o RN-PRO-02 sobre su receta y cantidad planeada si sigue
+  planeada (columna "para órdenes"). Su `disponible` suma, además de `PT`, la existencia vigente en el almacén de donde lo
+  consumen esas órdenes (RN-PRO-11). La explosión es de **un nivel**: el componente aparece cuando existe la orden del
+  padre, y el componente de un componente, cuando existe la orden de este (decidido con el usuario el 2026-10-29, como
+  RN-67 de Panissimo). Un componente que solo se compra no entra al plan (va por el requerimiento de compras).
 - **RN-PRO-14** *Copiar receta*: crea una receta `Borrador` para el producto destino con los mismos componentes
   y el rendimiento convertido proporcionalmente si el usuario indica el factor (p. ej. 800 g → 450 g). Se publica
   como cualquier receta (RN-PRO-01).
